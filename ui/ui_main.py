@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainTUmIwP.ui'
+## Form generated from reading UI file 'mainOdcSXJ.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.1
 ##
@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox,
-    QGridLayout, QHBoxLayout, QLabel, QMainWindow,
-    QPushButton, QSizePolicy, QWidget)
+    QFrame, QGridLayout, QHBoxLayout, QLabel,
+    QMainWindow, QPushButton, QSizePolicy, QWidget)
 
 
 class Ui_DigitalFilters(object):
@@ -284,31 +284,6 @@ class Ui_DigitalFilters(object):
         self.widget.setObjectName(u"widget")
         self.gridLayout = QGridLayout(self.widget)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.top = QWidget(self.widget)
-        self.top.setObjectName(u"top")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.top.sizePolicy().hasHeightForWidth())
-        self.top.setSizePolicy(sizePolicy1)
-        self.title = QLabel(self.top)
-        self.title.setObjectName(u"title")
-        self.title.setGeometry(QRect(160, 30, 91, 41))
-        font = QFont()
-        font.setFamilies([u"Helvetica"])
-        font.setPointSize(12)
-        font.setBold(False)
-        font.setItalic(False)
-        self.title.setFont(font)
-        self.logo = QLabel(self.top)
-        self.logo.setObjectName(u"logo")
-        self.logo.setGeometry(QRect(20, 10, 101, 81))
-        self.logo.setStyleSheet(u"image: url(:/sim/logo.png);")
-        self.logo.setPixmap(QPixmap(u"imgs/logo.png"))
-        self.logo.setScaledContents(True)
-
-        self.gridLayout.addWidget(self.top, 1, 0, 1, 1)
-
         self.bottom = QWidget(self.widget)
         self.bottom.setObjectName(u"bottom")
         self.horizontalLayout_3 = QHBoxLayout(self.bottom)
@@ -324,7 +299,64 @@ class Ui_DigitalFilters(object):
         self.horizontalLayout_3.addWidget(self.closeButton)
 
 
-        self.gridLayout.addWidget(self.bottom, 4, 0, 1, 1, Qt.AlignBottom)
+        self.gridLayout.addWidget(self.bottom, 7, 0, 1, 1, Qt.AlignBottom)
+
+        self.top = QWidget(self.widget)
+        self.top.setObjectName(u"top")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.top.sizePolicy().hasHeightForWidth())
+        self.top.setSizePolicy(sizePolicy1)
+        self.title = QLabel(self.top)
+        self.title.setObjectName(u"title")
+        self.title.setGeometry(QRect(310, 30, 171, 41))
+        font = QFont()
+        font.setFamilies([u"Helvetica"])
+        font.setBold(False)
+        font.setItalic(False)
+        self.title.setFont(font)
+        self.title.setStyleSheet(u"font: 30px")
+        self.logo = QLabel(self.top)
+        self.logo.setObjectName(u"logo")
+        self.logo.setGeometry(QRect(20, 10, 101, 81))
+        self.logo.setStyleSheet(u"image: url(:/sim/logo.png);")
+        self.logo.setPixmap(QPixmap(u"imgs/logo.png"))
+        self.logo.setScaledContents(True)
+
+        self.gridLayout.addWidget(self.top, 1, 0, 1, 1)
+
+        self.line = QFrame(self.widget)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.HLine)
+        self.line.setFrameShadow(QFrame.Sunken)
+
+        self.gridLayout.addWidget(self.line, 4, 0, 1, 1)
+
+        self.widget_2 = QWidget(self.widget)
+        self.widget_2.setObjectName(u"widget_2")
+        self.horizontalLayout_2 = QHBoxLayout(self.widget_2)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.label_2 = QLabel(self.widget_2)
+        self.label_2.setObjectName(u"label_2")
+
+        self.horizontalLayout_2.addWidget(self.label_2)
+
+        self.comboBox = QComboBox(self.widget_2)
+        self.comboBox.setObjectName(u"comboBox")
+        self.comboBox.setStyleSheet(u"")
+
+        self.horizontalLayout_2.addWidget(self.comboBox)
+
+
+        self.gridLayout.addWidget(self.widget_2, 5, 0, 1, 1)
+
+        self.line_2 = QFrame(self.widget)
+        self.line_2.setObjectName(u"line_2")
+        self.line_2.setFrameShape(QFrame.HLine)
+        self.line_2.setFrameShadow(QFrame.Sunken)
+
+        self.gridLayout.addWidget(self.line_2, 6, 0, 1, 1)
 
         self.mid = QWidget(self.widget)
         self.mid.setObjectName(u"mid")
@@ -357,25 +389,14 @@ class Ui_DigitalFilters(object):
         self.horizontalLayout.addWidget(self.firButton)
 
 
-        self.gridLayout.addWidget(self.mid, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.mid, 3, 0, 1, 1)
 
-        self.widget_2 = QWidget(self.widget)
-        self.widget_2.setObjectName(u"widget_2")
-        self.horizontalLayout_2 = QHBoxLayout(self.widget_2)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_2 = QLabel(self.widget_2)
-        self.label_2.setObjectName(u"label_2")
+        self.line_3 = QFrame(self.widget)
+        self.line_3.setObjectName(u"line_3")
+        self.line_3.setFrameShape(QFrame.HLine)
+        self.line_3.setFrameShadow(QFrame.Sunken)
 
-        self.horizontalLayout_2.addWidget(self.label_2)
-
-        self.comboBox = QComboBox(self.widget_2)
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setStyleSheet(u"")
-
-        self.horizontalLayout_2.addWidget(self.comboBox)
-
-
-        self.gridLayout.addWidget(self.widget_2, 3, 0, 1, 1)
+        self.gridLayout.addWidget(self.line_3, 2, 0, 1, 1)
 
 
         self.gridLayout_2.addWidget(self.widget, 2, 0, 1, 1)
@@ -389,13 +410,17 @@ class Ui_DigitalFilters(object):
 
     def retranslateUi(self, DigitalFilters):
         DigitalFilters.setWindowTitle(QCoreApplication.translate("DigitalFilters", u"MainWindow", None))
+        self.filterButton.setText(QCoreApplication.translate("DigitalFilters", u"FILTER", None))
+        self.closeButton.setText(QCoreApplication.translate("DigitalFilters", u"CLOSE", None))
 #if QT_CONFIG(whatsthis)
         self.title.setWhatsThis(QCoreApplication.translate("DigitalFilters", u"<html><head/><body><p>concordo</p><p><br/></p></body></html>", None))
 #endif // QT_CONFIG(whatsthis)
         self.title.setText(QCoreApplication.translate("DigitalFilters", u"Digital Filters", None))
         self.logo.setText("")
-        self.filterButton.setText(QCoreApplication.translate("DigitalFilters", u"FILTER", None))
-        self.closeButton.setText(QCoreApplication.translate("DigitalFilters", u"CLOSE", None))
+        self.label_2.setText(QCoreApplication.translate("DigitalFilters", u"Select your arduino board:", None))
+#if QT_CONFIG(tooltip)
+        self.comboBox.setToolTip(QCoreApplication.translate("DigitalFilters", u"<html><head/><body><p>Please, select your arduino board</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.label.setText(QCoreApplication.translate("DigitalFilters", u"Select your filter:", None))
 #if QT_CONFIG(tooltip)
         self.iirButton.setToolTip(QCoreApplication.translate("DigitalFilters", u"<html><head/><body><p>Infinite Impulse Response</p></body></html>", None))
@@ -405,9 +430,5 @@ class Ui_DigitalFilters(object):
         self.firButton.setToolTip(QCoreApplication.translate("DigitalFilters", u"<html><head/><body><p>Finitive Impulse Response</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.firButton.setText(QCoreApplication.translate("DigitalFilters", u"FIR", None))
-        self.label_2.setText(QCoreApplication.translate("DigitalFilters", u"Select your arduino board:", None))
-#if QT_CONFIG(tooltip)
-        self.comboBox.setToolTip(QCoreApplication.translate("DigitalFilters", u"<html><head/><body><p>Please, select your arduino board</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
     # retranslateUi
 
