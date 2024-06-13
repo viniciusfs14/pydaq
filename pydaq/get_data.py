@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import warnings
 import PySimpleGUI as sg
@@ -9,6 +10,7 @@ import numpy as np
 import serial
 import serial.tools.list_ports
 from pydaq.utils.base import Base
+
 
 
 class Get_data(Base):
@@ -474,6 +476,5 @@ class Get_data(Base):
                 window['-COM-'].update(port, self.com_ports)
 
         window.close()
-
         return
-
+    

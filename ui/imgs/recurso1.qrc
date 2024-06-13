@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="newPrefix"/>
+  <qresource prefix="newPrefix">
+    <file>drop_down_arrow.png</file>
+    <file>drop_up_arrow.png</file>
+    <file>favicon.ico</file>
+    <file>logo.png</file>
+    <file>pydaq_logo.png</file>
+    <file>recurso1.qrc</file>
+    <file>reload.png</file>
+  </qresource>
+</RCC>
