@@ -2,6 +2,7 @@ import sys
 import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import matplotlib.animation as aplt
+import numpy as np
 from PySide6 import QtWidgets
 from ui.ui_main import Ui_DigitalFilters
 from ui.ui_graphwindow import Ui_GraphWindow
@@ -77,41 +78,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DigitalFilters):
             
     def graphic(self):
         self.update_current_selection()
-        
         ser = serial.Serial(self.porta, 9600)
         # Inicialização da figura do matplotlib
-        fig, ax = plt.subplots()
-        xs = []
-        ys = []
+        
+        x = np.linspace(0, 2 * np.pi, 100)
+        y = np.sin(x)
 
-        def animate(i, xs, ys):
-            # Lê um valor da porta serial
-            line = ser.readline().decode('utf-8').strip()
-            if line:
-                # Converte a linha para um número
-                sensor_value = int(line)
+        # Criando o gráfico
+        plt.figure(figsize=(8, 4))
+        plt.plot(x, y, label='Seno')
+        plt.title('Gráfico de uma Função Senoide')
+        plt.xlabel('Eixo X')
+        plt.ylabel('Eixo Y')
+        plt.legend()
+        plt.grid(True)
 
-                # Adiciona o valor aos eixos x e y
-                xs.append(i)
-                ys.append(sensor_value)
-
-                # Mantém apenas os últimos 50 valores para não sobrecarregar o gráfico
-                xs = xs[-50:]
-                ys = ys[-50:]
-
-                # Limpa o gráfico atual
-                ax.clear()
-
-                # Desenha o novo gráfico
-                ax.plot(xs, ys)
-
-                # Formatação do gráfico
-                plt.title('Leitura de Dados do Arduino')
-                plt.ylabel('Valor do Sensor')
-
-                return xs, ys
-
-        self.ani = aplt.FuncAnimation(fig, animate, fargs=(xs, ys), interval=100)
+        # Mostrando o gráfico
         plt.show()
         
     

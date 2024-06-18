@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>843</width>
-    <height>637</height>
+    <height>822</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -267,7 +267,7 @@ QPushButton#reload_devices:pressed{
     <item row="2" column="0">
      <widget class="QWidget" name="widget" native="true">
       <layout class="QGridLayout" name="gridLayout">
-       <item row="7" column="0" alignment="Qt::AlignBottom">
+       <item row="12" column="0" alignment="Qt::AlignBottom">
         <widget class="QWidget" name="bottom" native="true">
          <property name="enabled">
           <bool>true</bool>
@@ -355,41 +355,96 @@ QPushButton#reload_devices:pressed{
          </widget>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="Line" name="line">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QWidget" name="widget_2" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QLabel" name="label_2">
+       <item row="6" column="0">
+        <widget class="QWidget" name="fiirwidget" native="true">
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_4">
             <property name="text">
-             <string>Select your arduino board:</string>
+             <string>Enter filter numtaps:</string>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QComboBox" name="comboBox">
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please, select your arduino board&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Low (Hz):</string>
             </property>
            </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>High (Hz):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Fs:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_5"/>
+          </item>
+          <item row="2" column="3" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_7"/>
+          </item>
+          <item row="1" column="3" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_6"/>
+          </item>
+          <item row="3" column="3" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_8"/>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="Line" name="line_3">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
+       <item row="5" column="0">
+        <widget class="QWidget" name="iirwidget" native="true">
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="2" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_2"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Enter filter order (N):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Fs:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Low (Hz):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>High (Hz):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_3"/>
+          </item>
+          <item row="4" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lineEdit_4"/>
+          </item>
+         </layout>
         </widget>
        </item>
        <item row="3" column="0">
@@ -438,6 +493,9 @@ QPushButton#reload_devices:pressed{
             <property name="text">
              <string>FIR</string>
             </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
             <attribute name="buttonGroup">
              <string notr="true">buttonGroup</string>
             </attribute>
@@ -446,8 +504,52 @@ QPushButton#reload_devices:pressed{
          </layout>
         </widget>
        </item>
-       <item row="6" column="0">
+       <item row="2" column="0">
+        <widget class="Line" name="line_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
         <widget class="Line" name="line_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QWidget" name="widget_2" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Select your arduino board:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBox">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please, select your arduino board&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="Line" name="line_4">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -462,7 +564,72 @@ QPushButton#reload_devices:pressed{
  <resources>
   <include location="imgs/recursos.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>iirButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>iirwidget</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>343</x>
+     <y>154</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>322</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>firButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>iirwidget</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>598</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>590</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>iirButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fiirwidget</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>367</x>
+     <y>154</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>333</x>
+     <y>414</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>firButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>fiirwidget</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>635</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>624</x>
+     <y>414</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
  <buttongroups>
   <buttongroup name="buttonGroup"/>
  </buttongroups>
