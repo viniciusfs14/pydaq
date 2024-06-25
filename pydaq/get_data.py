@@ -147,7 +147,7 @@ class Get_data(Base):
                 self._update_plot(self.time_var, self.data)
 
             print(f'Iteration: {k} of {self.cycles-1}')
-
+                
             # Getting end time
             et = time.time()
 

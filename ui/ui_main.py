@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainnXWcYQ.ui'
+## Form generated from reading UI file 'mainOAsMDq.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.1
 ##
@@ -25,7 +25,7 @@ class Ui_DigitalFilters(object):
     def setupUi(self, DigitalFilters):
         if not DigitalFilters.objectName():
             DigitalFilters.setObjectName(u"DigitalFilters")
-        DigitalFilters.resize(843, 822)
+        DigitalFilters.resize(666, 656)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -384,45 +384,57 @@ class Ui_DigitalFilters(object):
         self.iirwidget.setObjectName(u"iirwidget")
         self.gridLayout_3 = QGridLayout(self.iirwidget)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.lineEdit_2 = QLineEdit(self.iirwidget)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
-
-        self.gridLayout_3.addWidget(self.lineEdit_2, 2, 1, 1, 1, Qt.AlignRight)
-
         self.label_3 = QLabel(self.iirwidget)
         self.label_3.setObjectName(u"label_3")
 
         self.gridLayout_3.addWidget(self.label_3, 1, 0, 1, 1)
-
-        self.lineEdit = QLineEdit(self.iirwidget)
-        self.lineEdit.setObjectName(u"lineEdit")
-
-        self.gridLayout_3.addWidget(self.lineEdit, 1, 1, 1, 1, Qt.AlignRight)
-
-        self.label_5 = QLabel(self.iirwidget)
-        self.label_5.setObjectName(u"label_5")
-
-        self.gridLayout_3.addWidget(self.label_5, 2, 0, 1, 1)
 
         self.label_6 = QLabel(self.iirwidget)
         self.label_6.setObjectName(u"label_6")
 
         self.gridLayout_3.addWidget(self.label_6, 3, 0, 1, 1)
 
+        self.firOrder = QLineEdit(self.iirwidget)
+        self.firOrder.setObjectName(u"firOrder")
+
+        self.gridLayout_3.addWidget(self.firOrder, 1, 1, 1, 1, Qt.AlignRight)
+
+        self.label_5 = QLabel(self.iirwidget)
+        self.label_5.setObjectName(u"label_5")
+
+        self.gridLayout_3.addWidget(self.label_5, 2, 0, 1, 1)
+
+        self.lowfrequency = QLineEdit(self.iirwidget)
+        self.lowfrequency.setObjectName(u"lowfrequency")
+
+        self.gridLayout_3.addWidget(self.lowfrequency, 3, 1, 1, 1, Qt.AlignRight)
+
         self.label_7 = QLabel(self.iirwidget)
         self.label_7.setObjectName(u"label_7")
 
         self.gridLayout_3.addWidget(self.label_7, 4, 0, 1, 1)
 
-        self.lineEdit_3 = QLineEdit(self.iirwidget)
-        self.lineEdit_3.setObjectName(u"lineEdit_3")
+        self.highfrequency = QLineEdit(self.iirwidget)
+        self.highfrequency.setObjectName(u"highfrequency")
 
-        self.gridLayout_3.addWidget(self.lineEdit_3, 3, 1, 1, 1, Qt.AlignRight)
+        self.gridLayout_3.addWidget(self.highfrequency, 4, 1, 1, 1, Qt.AlignRight)
 
-        self.lineEdit_4 = QLineEdit(self.iirwidget)
-        self.lineEdit_4.setObjectName(u"lineEdit_4")
+        self.Fs = QLineEdit(self.iirwidget)
+        self.Fs.setObjectName(u"Fs")
 
-        self.gridLayout_3.addWidget(self.lineEdit_4, 4, 1, 1, 1, Qt.AlignRight)
+        self.gridLayout_3.addWidget(self.Fs, 2, 1, 1, 1, Qt.AlignRight)
+
+        self.label_11 = QLabel(self.iirwidget)
+        self.label_11.setObjectName(u"label_11")
+
+        self.gridLayout_3.addWidget(self.label_11, 5, 0, 1, 1)
+
+        self.comboBox_2 = QComboBox(self.iirwidget)
+        self.comboBox_2.addItem("")
+        self.comboBox_2.addItem("")
+        self.comboBox_2.setObjectName(u"comboBox_2")
+
+        self.gridLayout_3.addWidget(self.comboBox_2, 5, 1, 1, 1, Qt.AlignRight)
 
 
         self.gridLayout.addWidget(self.iirwidget, 5, 0, 1, 1)
@@ -513,6 +525,7 @@ class Ui_DigitalFilters(object):
         DigitalFilters.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(DigitalFilters)
+        
         if not self.iirButton.isChecked() and not self.firButton.isChecked():
                 self.iirwidget.hide()
                 self.fiirwidget.hide()
@@ -539,9 +552,13 @@ class Ui_DigitalFilters(object):
         self.label_10.setText(QCoreApplication.translate("DigitalFilters", u"High (Hz):", None))
         self.label_8.setText(QCoreApplication.translate("DigitalFilters", u"Fs:", None))
         self.label_3.setText(QCoreApplication.translate("DigitalFilters", u"Enter filter order (N):", None))
-        self.label_5.setText(QCoreApplication.translate("DigitalFilters", u"Fs:", None))
         self.label_6.setText(QCoreApplication.translate("DigitalFilters", u"Low (Hz):", None))
+        self.label_5.setText(QCoreApplication.translate("DigitalFilters", u"Fs:", None))
         self.label_7.setText(QCoreApplication.translate("DigitalFilters", u"High (Hz):", None))
+        self.label_11.setText(QCoreApplication.translate("DigitalFilters", u"Type:", None))
+        self.comboBox_2.setItemText(0, QCoreApplication.translate("DigitalFilters", u"Butter", None))
+        self.comboBox_2.setItemText(1, QCoreApplication.translate("DigitalFilters", u"Bandstop", None))
+
         self.label.setText(QCoreApplication.translate("DigitalFilters", u"Select your filter:", None))
 #if QT_CONFIG(tooltip)
         self.iirButton.setToolTip(QCoreApplication.translate("DigitalFilters", u"<html><head/><body><p>Infinite Impulse Response</p></body></html>", None))

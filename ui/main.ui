@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>843</width>
-    <height>822</height>
+    <width>666</width>
+    <height>656</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -404,23 +404,10 @@ QPushButton#reload_devices:pressed{
        <item row="5" column="0">
         <widget class="QWidget" name="iirwidget" native="true">
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="2" column="1" alignment="Qt::AlignRight">
-           <widget class="QLineEdit" name="lineEdit_2"/>
-          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_3">
             <property name="text">
              <string>Enter filter order (N):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1" alignment="Qt::AlignRight">
-           <widget class="QLineEdit" name="lineEdit"/>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Fs:</string>
             </property>
            </widget>
           </item>
@@ -431,6 +418,19 @@ QPushButton#reload_devices:pressed{
             </property>
            </widget>
           </item>
+          <item row="1" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="firOrder"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Fs:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="lowfrequency"/>
+          </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label_7">
             <property name="text">
@@ -438,11 +438,32 @@ QPushButton#reload_devices:pressed{
             </property>
            </widget>
           </item>
-          <item row="3" column="1" alignment="Qt::AlignRight">
-           <widget class="QLineEdit" name="lineEdit_3"/>
-          </item>
           <item row="4" column="1" alignment="Qt::AlignRight">
-           <widget class="QLineEdit" name="lineEdit_4"/>
+           <widget class="QLineEdit" name="highfrequency"/>
+          </item>
+          <item row="2" column="1" alignment="Qt::AlignRight">
+           <widget class="QLineEdit" name="Fs"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Type:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1" alignment="Qt::AlignRight">
+           <widget class="QComboBox" name="comboBox_2">
+            <item>
+             <property name="text">
+              <string>Butter</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bandstop</string>
+             </property>
+            </item>
+           </widget>
           </item>
          </layout>
         </widget>

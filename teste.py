@@ -3,6 +3,8 @@ import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import matplotlib.animation as aplt
 import numpy as np
+import serial
+from scipy import signal, fftpack
 from PySide6 import QtWidgets
 from ui.ui_main import Ui_DigitalFilters
 from ui.ui_graphwindow import Ui_GraphWindow
@@ -12,7 +14,6 @@ from PySide6.QtCore import QTimer
 
 # O que fazer:
 # Identificar qual porta está selecionada no combo-box
-# 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_DigitalFilters):
     def __init__(self):
@@ -60,11 +61,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DigitalFilters):
         
         if self.firButton.isChecked():
             print("You selected FIR")
-            print(self.porta)
-                  
+                
         if self.iirButton.isChecked():
-            print("You selected IIR")
-            print(self.porta)
+            
+            self.order = self.firOrder.text()
+            self.fs = self.Fs.text()
+            self.low_irr = self.lowfrequency.text()
+            self.high_irr = self.highfrequency.text()
+            self.type = self.comboBox_2.currentText()
+            self.nyq = 0.5 * self.fs
+            self.low = self.low_irr/self.nyq
+            self.high = self.high_irr/self.nyq
+            
+            b, a = signal.iirfilter(self.order, [self.low, self.high], btype="band", analog=False, ftype=self.type)
+            
+    
             
     def reload(self): # Call QTimer to search arduino in every 1 second
         self.timer = QTimer()
@@ -76,27 +87,54 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DigitalFilters):
         if current_text:
             self.porta = current_text.split(' - ')[0]
             
+            
     def graphic(self):
         self.update_current_selection()
-        ser = serial.Serial(self.porta, 9600)
-        # Inicialização da figura do matplotlib
         
-        x = np.linspace(0, 2 * np.pi, 100)
-        y = np.sin(x)
+        ser = serial.Serial(self.porta, 9600)
 
-        # Criando o gráfico
-        plt.figure(figsize=(8, 4))
-        plt.plot(x, y, label='Seno')
-        plt.title('Gráfico de uma Função Senoide')
-        plt.xlabel('Eixo X')
-        plt.ylabel('Eixo Y')
-        plt.legend()
-        plt.grid(True)
+        fig, (ax1, ax2) = plt.subplots(2,1)
+        
+        xs = []
+        accel_x = []
+        accel_y = []
+        
+        def animate(i, xs, accel_x, accel_y):
+            line = ser.readline().decode('utf-8').strip()
+            
+            try: 
+                ax_g, ay_g = map(float, line.split(','))
+                
+            except ValueError:
+                print("dados invalidos")
+                return
+            
+            xs.append(i)
+            accel_x.append(ax_g)
+            accel_y.append(ay_g)
 
-        # Mostrando o gráfico
+            xs[:] = xs[-50:]
+            accel_x[:] = accel_x[-50:]
+            accel_y[:] = accel_y[-50:]
+
+            ax1.clear()
+            ax1.plot(xs, accel_x, label='Aceleração em X (g)')
+            ax1.legend(loc='upper right')
+            
+            ax2.clear()
+            ax2.plot(xs, accel_y, label='Aceleração em Y (g)')
+            ax2.legend(loc='upper right')
+
+            plt.xlabel('Tempo')
+            ax1.set_ylabel('Aceleração em X (g)')
+            ax2.set_ylabel('Aceleração em Y (g)')
+            
+        self.ani = aplt.FuncAnimation(fig, animate, fargs=(xs, accel_x, accel_y), interval=100, cache_frame_data=False)
+
+        plt.tight_layout()
         plt.show()
         
-    
+            
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
 window.show()
