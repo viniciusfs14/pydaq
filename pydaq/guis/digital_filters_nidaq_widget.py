@@ -13,9 +13,10 @@ from ..get_data import GetData
 from .error_window_gui import Error_window
 from .warning_window_digital import Warning_window
 from pydaq.utils.signals import GuiSignals
-
+from PySide6.QtCore import Signal
 
 class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
+    dataEntered = Signal(dict)
     def __init__(self, *args):
         super(Digital_Filters_NIDAQ_Widget, self).__init__()
         self.setupUi(self)
@@ -25,7 +26,7 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         # Signals 
         self.type_filter.currentTextChanged.connect(self.check_filter)
         
-        self.save_button.clicked.connect(self.close)
+        self.save_button.clicked.connect(self.send_data)
         
         self.yes_rt.toggled.connect(self.openWarningWindow)
         self.signals.returned.connect(self.frequency_response)
@@ -37,7 +38,14 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             
     def select_no(self):
         self.no_rt.setChecked(True)     
-          
+    
+    def send_data(self):
+        data = {
+            "1": self.numtaps_fir.text()
+        }
+        self.dataEntered.emit(data)
+        self.close()
+       
     def check_filter(self, text):
         if text == 'FIR':
             self.fir_widget.show()

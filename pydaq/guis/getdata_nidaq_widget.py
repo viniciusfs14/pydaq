@@ -49,19 +49,19 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self.device_combo.currentIndexChanged.connect(self.update_channels)
         self.reload_devices.released.connect(self.reload_devices_handler)
         self.yes_radio.toggled.connect(self.openFilterWindow)
-        self.teste.released.connect(self.var)
+        #self.teste.released.connect(self.update_values)
         self.signals = GuiSignals()
         
         
     def openFilterWindow(self):
         if self.yes_radio.isChecked(): 
             self.filterWindow = Digital_Filters_NIDAQ_Widget()
+            self.filterWindow.dataEntered.connect(self.update_values)
             self.filterWindow.show()
             
-    def var(self):
-        self.var = Digital_Filters_NIDAQ_Widget()
-        self.fs = self.var.fs_fir.text()
-        print(self.fs)
+    def update_values(self, data):
+        self.teste1 = data['1']
+        print(self.teste1)
         
              
     def locate_path(self):  # Calling the Folder Browser Widget
