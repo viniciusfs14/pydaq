@@ -60,8 +60,15 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.filterWindow.show()
             
     def update_values(self, data):
-        self.teste1 = data['1']
-        print(self.teste1)
+        self.numtapsfir = data['numtaps_fir']
+        self.fsfir = data['fs_fir']
+        self.cutofffir = data['Cutoff']
+        self.type = data['Type']
+        print(f'Numtaps FIR: {self.numtapsfir}')
+        print(f'Fs FIR: {self.fsfir}')
+        print(f'Cutoff FIR: {self.cutofffir}')
+        print(f'Type FIR: {self.type}')
+        
         
              
     def locate_path(self):  # Calling the Folder Browser Widget
