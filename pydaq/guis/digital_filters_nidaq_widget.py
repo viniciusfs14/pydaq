@@ -24,17 +24,17 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         self.iir_widget.hide()
         self.fir_widget.show()
         
-        self.path_line.setText(
+        self.data_line.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
-        
+    
         # Signals 
         self.type_filter.currentTextChanged.connect(self.check_filter)
         
         self.save_button.clicked.connect(self.send_data)
         
         self.yes_rt.toggled.connect(self.openWarningWindow)
-        self.search_button.released.connect(self.locate_path)
+        self.search_button.released.connect(self.locate_data_path)
         self.signals.returned.connect(self.frequency_response)
     
     def openWarningWindow(self):
@@ -45,15 +45,17 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             self.warningwindow.exec()
             self.path_widget.hide()
             
-    def locate_path(self):  # Calling the Folder Browser Widget
+    def locate_data_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory(
-            self, caption="Choose a folder to save the data file"
+            self, caption="Choose a folder to open the data file"
         )
         if output_folder_path == "":
             pass
         else:
-            self.path_line.setText(output_folder_path.replace("/", "\\"))
-                    
+            self.data_line.setText(output_folder_path.replace("/", "\\"))
+            
+            
+        
     def select_no(self):
         self.no_rt.setChecked(True)    
         
@@ -61,13 +63,13 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         if self.no_rt.isChecked():
             self.path_widget.show()
 
-            
     def send_data(self):
         data = {
             "numtaps_fir": self.numtaps_fir.text(),
             "fs_fir": self.fs_fir.text(),
             "Cutoff": self.cutoff_fir.text(),
-            "Type": self.comboBox.currentText()
+            "Type": self.comboBox.currentText(),
+            "Path": self.data_line.text()
         }
         self.dataEntered.emit(data)
         self.close()

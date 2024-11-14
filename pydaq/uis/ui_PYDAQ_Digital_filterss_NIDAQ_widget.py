@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PYDAQ_Digital_filterss_NIDAQ_widgetYLTHKG.ui'
+## Form generated from reading UI file 'PYDAQ_Digital_filterss_NIDAQ_widgetCKWiwi.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.1
 ##
@@ -24,7 +24,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
     def setupUi(self, Digitalfilters_NIDAQ_widget):
         if not Digitalfilters_NIDAQ_widget.objectName():
             Digitalfilters_NIDAQ_widget.setObjectName(u"Digitalfilters_NIDAQ_widget")
-        Digitalfilters_NIDAQ_widget.resize(501, 550)
+        Digitalfilters_NIDAQ_widget.resize(501, 569)
         Digitalfilters_NIDAQ_widget.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -316,27 +316,27 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
         self.path_widget.setObjectName(u"path_widget")
         self.gridLayout_11 = QGridLayout(self.path_widget)
         self.gridLayout_11.setObjectName(u"gridLayout_11")
-        self.label_9 = QLabel(self.path_widget)
-        self.label_9.setObjectName(u"label_9")
-
-        self.gridLayout_11.addWidget(self.label_9, 0, 0, 1, 1)
-
         self.widget_9 = QWidget(self.path_widget)
         self.widget_9.setObjectName(u"widget_9")
         self.gridLayout_12 = QGridLayout(self.widget_9)
         self.gridLayout_12.setObjectName(u"gridLayout_12")
-        self.path_line = QLineEdit(self.widget_9)
-        self.path_line.setObjectName(u"path_line")
+        self.data_line = QLineEdit(self.widget_9)
+        self.data_line.setObjectName(u"data_line")
 
-        self.gridLayout_12.addWidget(self.path_line, 0, 0, 1, 1)
+        self.gridLayout_12.addWidget(self.data_line, 0, 0, 1, 1)
 
 
-        self.gridLayout_11.addWidget(self.widget_9, 0, 1, 1, 1)
+        self.gridLayout_11.addWidget(self.widget_9, 0, 2, 1, 1)
 
         self.search_button = QPushButton(self.path_widget)
         self.search_button.setObjectName(u"search_button")
 
-        self.gridLayout_11.addWidget(self.search_button, 0, 2, 1, 1)
+        self.gridLayout_11.addWidget(self.search_button, 0, 3, 1, 1)
+
+        self.label_9 = QLabel(self.path_widget)
+        self.label_9.setObjectName(u"label_9")
+
+        self.gridLayout_11.addWidget(self.label_9, 0, 0, 1, 1)
 
 
         self.gridLayout.addWidget(self.path_widget, 7, 0, 1, 1)
@@ -584,8 +584,14 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
 
     def retranslateUi(self, Digitalfilters_NIDAQ_widget):
         Digitalfilters_NIDAQ_widget.setWindowTitle(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Digital Filters", None))
-        self.label_9.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Path:", None))
         self.search_button.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Search", None))
+#if QT_CONFIG(tooltip)
+        self.label_9.setToolTip(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"<html><head/><body><p><span style=\" font-style:italic;\">Please, select the path that contains time and data files</span></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(whatsthis)
+        self.label_9.setWhatsThis(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"<html><head/><body><p>Chosee</p></body></html>", None))
+#endif // QT_CONFIG(whatsthis)
+        self.label_9.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u" Data path:", None))
         self.save_button.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"SAVE", None))
         self.type_filter.setItemText(0, QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"FIR", None))
         self.type_filter.setItemText(1, QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"IIR", None))
@@ -597,7 +603,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
         self.yes_fr.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Yes", None))
         self.no_fr.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"No", None))
         self.label_8.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Real time?", None))
-        self.comboBox.setItemText(0, QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Hanning", None))
+        self.comboBox.setItemText(0, QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"hamming", None))
         self.comboBox.setItemText(1, QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Haming", None))
 
         self.label_7.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Type:", None))

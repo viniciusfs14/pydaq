@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widgetbakvOE.ui'
+## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widgetKrFVzL.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.1
 ##
@@ -215,13 +215,27 @@ class Ui_NIDAQ_GetData_W(object):
 
         self.gridLayout_2.addWidget(self.line_2, 1, 0, 1, 1)
 
-        self.start_get_data = QPushButton(NIDAQ_GetData_W)
+        self.widget_11 = QWidget(NIDAQ_GetData_W)
+        self.widget_11.setObjectName(u"widget_11")
+        self.gridLayout_8 = QGridLayout(self.widget_11)
+        self.gridLayout_8.setObjectName(u"gridLayout_8")
+        self.start_get_data = QPushButton(self.widget_11)
         self.start_get_data.setObjectName(u"start_get_data")
         self.start_get_data.setMinimumSize(QSize(0, 30))
-        self.start_get_data.setMaximumSize(QSize(16777215, 30))
+        self.start_get_data.setMaximumSize(QSize(100, 30))
         self.start_get_data.setStyleSheet(u"")
 
-        self.gridLayout_2.addWidget(self.start_get_data, 2, 0, 1, 1, Qt.AlignHCenter)
+        self.gridLayout_8.addWidget(self.start_get_data, 0, 0, 1, 1)
+
+        self.filter_button = QPushButton(self.widget_11)
+        self.filter_button.setObjectName(u"filter_button")
+        self.filter_button.setMinimumSize(QSize(0, 30))
+        self.filter_button.setMaximumSize(QSize(100, 30))
+
+        self.gridLayout_8.addWidget(self.filter_button, 0, 1, 1, 1)
+
+
+        self.gridLayout_2.addWidget(self.widget_11, 2, 0, 1, 1)
 
         self.widget = QWidget(NIDAQ_GetData_W)
         self.widget.setObjectName(u"widget")
@@ -473,13 +487,6 @@ class Ui_NIDAQ_GetData_W(object):
 
         self.gridLayout_2.addWidget(self.widget, 0, 0, 1, 1)
 
-        self.teste = QPushButton(NIDAQ_GetData_W)
-        self.teste.setObjectName(u"teste")
-        self.teste.setMinimumSize(QSize(0, 30))
-        self.teste.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout_2.addWidget(self.teste, 3, 0, 1, 1, Qt.AlignHCenter)
-
 
         self.retranslateUi(NIDAQ_GetData_W)
 
@@ -489,23 +496,23 @@ class Ui_NIDAQ_GetData_W(object):
     def retranslateUi(self, NIDAQ_GetData_W):
         NIDAQ_GetData_W.setWindowTitle(QCoreApplication.translate("NIDAQ_GetData_W", u"Form", None))
         self.start_get_data.setText(QCoreApplication.translate("NIDAQ_GetData_W", u" GET DATA ", None))
+        self.filter_button.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"FILTER", None))
         self.label_6.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Plot data?", None))
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
-        self.label.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Choose device:", None))
+        self.label.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Device:", None))
         self.label_4.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Sample period (s)", None))
         self.label_3.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Terminal Config.", None))
         self.reload_devices.setText("")
         self.label_7.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Save data?", None))
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Choose channel:", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Channel:", None))
         self.label_5.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Session duration (s)", None))
         self.path_folder_browse.setText(QCoreApplication.translate("NIDAQ_GetData_W", u" Browse ", None))
-        self.label_8.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Path", None))
+        self.label_8.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Path:", None))
         self.yes_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Yes", None))
         self.no_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
         self.label_9.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Digital Filter?", None))
         self.yes_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Yes", None))
         self.No_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
-        self.teste.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"TESTE", None))
     # retranslateUi
 
