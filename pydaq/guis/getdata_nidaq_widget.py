@@ -15,6 +15,8 @@ from ..guis.digital_filters_nidaq_widget import Digital_Filters_NIDAQ_Widget
 from .error_window_gui import Error_window
 from ..get_data import GetData
 
+from scipy.signal import lfilter, butter, firwin
+
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):
         super(GetData_NIDAQ_Widget, self).__init__()
@@ -146,7 +148,17 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
         if not g.error_path:
             # Calling data aquisition method
-            g.get_data_nidaq()
+            fs = self.fsfir
+            fc = self.cutofffir
+            numtaps = self.numtapsfir
+            
+            # project iir filter
+            #b, a = butter(N=10, Wn=fc / (fs / 2), btype="low")
+            #self.fs = 1/np.mean(np.diff(g.time_var))
+            #g.get_data_nidaq(filter_coefs=(b, a))
+            
+            fir_coeff = firwin(numtaps, fc, fs=fs, pass_zero="lowpass")
+            g.get_data_nidaq(filter_coefs=(fir_coeff))
             self.signals.returned.emit(g)
 
     def _nidaq_info(self):

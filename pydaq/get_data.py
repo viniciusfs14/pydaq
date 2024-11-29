@@ -9,6 +9,9 @@ import numpy as np
 import serial
 import serial.tools.list_ports
 from pydaq.utils.base import Base
+from scipy.signal import lfilter, butter, firwin
+
+
 
 
 class GetData(Base):
@@ -56,6 +59,7 @@ class GetData(Base):
 
         # Initializing variables
         self.data = []
+        self.data_filtered = []
         self.time_var = []
 
         # Gathering nidaq info
@@ -86,7 +90,7 @@ class GetData(Base):
         # Value per bit - Arduino
         self.ard_vpb = (self.ard_ai_max - self.ard_ai_min) / ((2 ** self.arduino_ai_bits)-1)
 
-    def get_data_nidaq(self):
+    def get_data_nidaq(self, filter_coefs=None):
         """
             This function can be used for data acquisition and step response experiments using Python + NIDAQ boards.
 
@@ -96,8 +100,9 @@ class GetData(Base):
 
         # Cleaning data array
         self.data = []
+        self.data_filtered = []
         self.time_var = []
-
+        
         # Checking if path was defined
         self._check_path()
 
@@ -126,7 +131,21 @@ class GetData(Base):
             # Queue data in a list
             self.data.append(temp)
             self.time_var.append(k * self.ts)
+            
+            # Apply filter if coefficients are provided
+            if filter_coefs is not None: # for IIR filter I have to remove 'is not None'
+                fir_coeff = filter_coefs
+                # To IIR filter
+                #b, a = filter_coefs
+                #self.data_filtered = lfilter(b, a, self.data) 
+                
+                # For FIR Filter
+                self.data_filtered = lfilter(fir_coeff, 1.0, self.data) 
+            else:
+                self.data_filtered = self.data.copy()  # Sem filtro
 
+            
+            
             if self.plot:
 
                 # Checking if there is still an open figure. If not, stop the
@@ -137,7 +156,7 @@ class GetData(Base):
                     break
 
                 # Updating data values
-                self._update_plot(self.time_var, self.data)
+                self._update_plot_dual(self.time_var, self.data, self.data_filtered)
 
             print(f"Iteration: {k} of {self.cycles - 1}")
 
@@ -162,6 +181,7 @@ class GetData(Base):
             # Saving time_var and data
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.data, "data.dat")
+            self._save_data(self.data_filtered, "data_filtered.dat")
             print("\nData saved ...")
 
         return
@@ -220,7 +240,7 @@ class GetData(Base):
                     break
 
                 # Updating data values
-                self._update_plot(self.time_var, self.data)
+                self._update_plot_dual(self.time_var, self.data, self.data_filtered)
 
             print(f"Iteration: {k} of {self.cycles - 1}")
 
@@ -245,5 +265,21 @@ class GetData(Base):
             # Saving time_var and data
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.data, "data.dat")
+            self._save_data(self.data_filtered, "data_filtered.dat")
             print("\nData saved ...")
         return
+
+    def _update_plot_dual(self, time_var, data, data_filtered):
+        plt.figure("iter_plot")
+        plt.clf()
+        plt.plot(time_var, data, label="Original Data", color="blue")
+        plt.scatter(time_var, data, color='blue')
+        plt.plot(time_var, data_filtered, label="Filtered Data", color="red")
+        plt.scatter(time_var, data_filtered, color='red')
+        plt.title(self.title)
+        plt.xlabel("Time (s)")
+        plt.ylabel("Amplitude")
+        plt.grid()
+        plt.legend()
+        plt.pause(0.01)
+        
