@@ -1,6 +1,7 @@
 import os
 import time
 import warnings
+import threading
 
 import matplotlib.pyplot as plt
 import nidaqmx
@@ -133,18 +134,14 @@ class GetData(Base):
             self.time_var.append(k * self.ts)
             
             # Apply filter if coefficients are provided
-            if filter_coefs is not None: # for IIR filter I have to remove 'is not None'
+            if filter_coefs is not None: 
                 fir_coeff = filter_coefs
-                # To IIR filter
-                #b, a = filter_coefs
-                #self.data_filtered = lfilter(b, a, self.data) 
-                
+             
                 # For FIR Filter
                 self.data_filtered = lfilter(fir_coeff, 1.0, self.data) 
             else:
-                self.data_filtered = self.data.copy()  # Sem filtro
+                self.data_filtered = self.data.copy()  
 
-            
             
             if self.plot:
 
@@ -270,16 +267,35 @@ class GetData(Base):
         return
 
     def _update_plot_dual(self, time_var, data, data_filtered):
-        plt.figure("iter_plot")
-        plt.clf()
-        plt.plot(time_var, data, label="Original Data", color="blue")
-        plt.scatter(time_var, data, color='blue')
-        plt.plot(time_var, data_filtered, label="Filtered Data", color="red")
-        plt.scatter(time_var, data_filtered, color='red')
-        plt.title(self.title)
-        plt.xlabel("Time (s)")
-        plt.ylabel("Amplitude")
-        plt.grid()
-        plt.legend()
-        plt.pause(0.01)
+        # Se estiver rodando dentro de um loop, ativar o modo interativo
+        plt.ion()  # Modo interativo para atualizações em tempo real
+
+        # Verifica se a figura já existe, caso contrário, cria uma nova
+        fig = plt.gcf()
+        ax = fig.gca()
+
+        # Limpa a área de plotagem
+        ax.clear()
+
+        # Plotando os dados
+        ax.plot(time_var, data, label="Original Data", color="blue")
+        ax.scatter(time_var, data, color='blue')
+        ax.plot(time_var, data_filtered, label="Filtered Data", color="red")
+        ax.scatter(time_var, data_filtered, color='red')
+
+        # Definindo os rótulos e título
+        ax.set_title(self.title)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Amplitude")
+        ax.grid()
+        ax.legend()
+
+        # Atualiza a tela
+        plt.draw()
+
+        # Pausa para permitir a atualização visual (ajustar o valor conforme necessário)
+        plt.pause(0.5)  # Um tempo maior pode melhorar a performance
+
+        # Desativa o modo interativo para continuar a execução normal após o final
+        plt.ioff()
         

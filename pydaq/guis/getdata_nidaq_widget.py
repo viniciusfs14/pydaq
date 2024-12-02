@@ -55,7 +55,6 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self.start_get_data.released.connect(self.start_func_get_data)
         self.device_combo.currentIndexChanged.connect(self.update_channels)
         self.reload_devices.released.connect(self.reload_devices_handler)
-        self.filter_button.released.connect(self.fir_project)
         self.yes_radio.toggled.connect(self.openFilterWindow)
         #self.teste.released.connect(self.update_values)
         self.signals = GuiSignals()
@@ -68,42 +67,11 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.filterWindow.show()
             
     def update_values(self, data):
-        self.numtapsfir = data['numtaps_fir']
-        self.numtapsfir = int(self.numtapsfir)
-        self.fsfir = data['fs_fir']
-        self.fsfir = float(self.fsfir)
+        self.orderfir = data['numtaps_fir']
+        self.orderfir = int(self.orderfir)
         self.cutofffir = data['Cutoff']
         self.cutofffir = float(self.cutofffir)
         self.type = data['Type']
-        self.path = data['Path']
-        
-        
-    def fir_project(self):
-        self.time_way = self.path + "\\" + "time.dat"
-        self.data_way = self.path + "\\" + "data.dat"
-        
-        self.time = np.loadtxt(self.time_way)
-        self.data = np.loadtxt(self.data_way)
-        
-        self.fs = 1/np.mean(np.diff(self.time))
-        
-        fir_coeff = firwin(self.numtapsfir, self.cutofffir, window='hamming', fs=self.fs)
-        filtered_signal = lfilter(fir_coeff, 1.0, self.data)
-
-        plt.figure(figsize=(10,6))
-        plt.subplot(2,1,1)
-        plt.plot(self.time, self.data, label = 'Sinal original')
-        plt.title('Sinal Original')
-        plt.xlabel('Tempo [s]')
-        plt.ylabel('Amplitude')
-        plt.grid()
-
-        plt.subplot(2,1,2)
-        plt.plot(self.time, filtered_signal, label='Sinal Filtrado', color='r')
-        plt.grid()
-
-        plt.tight_layout()
-        plt.show()
         
      
     def locate_path(self):  # Calling the Folder Browser Widget
@@ -116,7 +84,6 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
    
-    
     def start_func_get_data(self):  # Start getting data
         try:
             # Instantiating the GetData class
@@ -148,9 +115,11 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
         if not g.error_path:
             # Calling data aquisition method
-            fs = self.fsfir
+            #self.ts = float(self.Ts_in.text())
+            #fs = 1/(self.Ts_in.value())
+            fs = 1000
             fc = self.cutofffir
-            numtaps = self.numtapsfir
+            numtaps = self.orderfir
             
             # project iir filter
             #b, a = butter(N=10, Wn=fc / (fs / 2), btype="low")
