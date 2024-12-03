@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from PySide6.QtWidgets import QFileDialog, QWidget
 from pydaq.utils.signals import GuiSignals
 from scipy.signal import firwin, lfilter, freqz
+import scipy.signal as signal
 
 from ..uis.ui_PyDAQ_get_data_NIDAQ_widget import Ui_NIDAQ_GetData_W
 from ..guis.digital_filters_nidaq_widget import Digital_Filters_NIDAQ_Widget
@@ -72,6 +73,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self.cutofffir = data['Cutoff']
         self.cutofffir = float(self.cutofffir)
         self.type = data['Type']
+        self.fr = data['fr']
         
      
     def locate_path(self):  # Calling the Folder Browser Widget
@@ -126,9 +128,11 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             #self.fs = 1/np.mean(np.diff(g.time_var))
             #g.get_data_nidaq(filter_coefs=(b, a))
             
-            fir_coeff = firwin(numtaps, fc, fs=fs, pass_zero="lowpass")
-            g.get_data_nidaq(filter_coefs=(fir_coeff))
+            self.fir_coeff = firwin(numtaps, fc, fs=fs, window='hamming')
+            g.get_data_nidaq(filter_coefs=(self.fir_coeff))
+        
             self.signals.returned.emit(g)
+            self.frequency_response()
 
     def _nidaq_info(self):
         """Gathering NIDAQ info"""
@@ -180,4 +184,36 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         # Reconnecting the signal
         self.device_combo.currentIndexChanged.connect(self.update_channels)
 
-    
+    def frequency_response(self):
+        if self.fr == True:
+            
+            x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
+            y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
+            
+            ts = x[1] - x[0]
+            fs = 1/ts
+            
+            w, h = signal.freqz(self.fir_coeff, 1.0, worN=None, fs=fs)
+            mag = 20*np.log10(np.abs(h))
+            phase = np.angle(h)
+            
+            
+            plt.figure(figsize=(12,8))
+            plt.subplot(2,1,1)
+            plt.plot(w, mag, 'b')
+            plt.title("Frequence response - magnitude")
+            plt.xlabel("Frequency [Hz]")
+            plt.ylabel("Magnitude [dB]")
+            plt.grid()
+            
+            plt.subplot(2,1,2)
+            plt.plot(w, phase, 'r')
+            plt.title("Frequence response - phase")
+            plt.xlabel("Frequency [Hz]")
+            plt.ylabel("Phase [rad]")
+            plt.grid()
+            
+            plt.tight_layout()
+            plt.show()
+        else:
+            pass

@@ -267,35 +267,25 @@ class GetData(Base):
         return
 
     def _update_plot_dual(self, time_var, data, data_filtered):
-        # Se estiver rodando dentro de um loop, ativar o modo interativo
-        plt.ion()  # Modo interativo para atualizações em tempo real
-
-        # Verifica se a figura já existe, caso contrário, cria uma nova
+        plt.ion()  
+        
         fig = plt.gcf()
         ax = fig.gca()
 
-        # Limpa a área de plotagem
         ax.clear()
 
-        # Plotando os dados
         ax.plot(time_var, data, label="Original Data", color="blue")
         ax.scatter(time_var, data, color='blue')
         ax.plot(time_var, data_filtered, label="Filtered Data", color="red")
         ax.scatter(time_var, data_filtered, color='red')
 
-        # Definindo os rótulos e título
         ax.set_title(self.title)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Amplitude")
         ax.grid()
         ax.legend()
 
-        # Atualiza a tela
         plt.draw()
-
-        # Pausa para permitir a atualização visual (ajustar o valor conforme necessário)
-        plt.pause(0.5)  # Um tempo maior pode melhorar a performance
-
-        # Desativa o modo interativo para continuar a execução normal após o final
+        plt.pause(self.ts)  
         plt.ioff()
         

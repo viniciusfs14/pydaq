@@ -25,7 +25,6 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         self.iir_widget.hide()
         self.fir_widget.show()
         
-
         # Signals 
         self.type_filter.currentTextChanged.connect(self.check_filter)
         self.save_button.clicked.connect(self.send_data)
@@ -36,10 +35,16 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             "numtaps_fir": self.order_fir.text(),
             "Cutoff": self.cutoff_fir.text(),
             "Type": self.comboBox.currentText(),
+            "fr": self.yes_fr.isChecked(),
         }
         self.dataEntered.emit(data)
         self.close()
-       
+    
+    def s_fr(self):
+        if self.yes_fr.isChecked():
+            self.dataEntered.emit()
+            
+        
     def check_filter(self, text):
         if text == 'FIR':
             self.fir_widget.show()
