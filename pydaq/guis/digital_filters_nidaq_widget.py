@@ -42,6 +42,8 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             "design_iir": self.designbox_iir.currentText(),
             "type_iir": self.typebox_iir.currentText(),
             "filter": self.type_filter.currentText(),
+            'rp': self.rp.text(),
+            'rs': self.rs.text(),
         }
         
         self.dataEntered.emit(data)

@@ -16,7 +16,7 @@ from ..guis.digital_filters_nidaq_widget import Digital_Filters_NIDAQ_Widget
 from .error_window_gui import Error_window
 from ..get_data import GetData
 
-from scipy.signal import lfilter, butter, firwin, cheby1, cheby2
+from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip
 
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):
@@ -91,6 +91,12 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         
         self.design_iir = data['design_iir']
         self.type_irr = data['type_iir']
+        
+        self.rp = data['rp']
+        self.rp = int(self.rp)
+        
+        self.rs = data['rs']
+        self.rs = int(self.rs)
      
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory(
@@ -153,8 +159,21 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 numtaps_iir = self.orderiir
                 window_iir = self.design_iir
                 type_iir = self.type_irr
-                rp = 1 #ripple in band pass
-                self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype='low')
+                rp = self.rp #ripple in band pass
+                rs = self.rs
+                
+                if window_iir == 'cheby1':
+                    self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype=type_iir)
+                    
+                elif window_iir == 'cheby2':
+                    self.b, self.a = cheby2(numtaps_iir, rs, fc_iir/(0.5*fs), btype=type_iir)
+                    
+                elif window_iir == 'butter':
+                    self.b, self.a = butter(numtaps_iir, fc_iir/(0.5*fs), btype=type_iir)
+                    
+                elif window_iir == 'ellip':
+                    self.b, self.a = ellip(numtaps_iir, rp, rs, fc_iir/(0.5*fs), btype=type_iir)
+                    
                 g.get_data_nidaq(filter_coefs=(self.b, self.a))
                 self.signals.returned.emit(g)
                 self.frequency_response()
@@ -211,66 +230,127 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
     def frequency_response(self):
         if self.fr == True:
-            
-            x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
-            y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
-            y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
-            
-            ts = x[1] - x[0]
-            fs = 1/ts
-            
-            w, h = signal.freqz(self.fir_coeff, 1.0, worN=None, fs=fs)
-            mag = 20*np.log10(np.abs(h))
-            phase = np.angle(h)
-            
-            # Calculando o intervalo de amostragem e a frequência de amostragem
-            dt = 1/(fs*2)  # 1/(fs*2)
-    
-            # FFT do sinal original
-            fft_data = np.fft.fft(y2)
-            freqs = np.fft.fftfreq(len(y2), dt)
+            if self.filter == 'FIR':
+                x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
+                y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
+                y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
+                
+                ts = x[1] - x[0]
+                fs = 1/ts
+                
+                w, h = signal.freqz(self.fir_coeff, 1.0, worN=None, fs=fs)
+                mag = 20*np.log10(np.abs(h))
+                phase = np.angle(h)
+                
+                # Calculando o intervalo de amostragem e a frequência de amostragem
+                dt = 1/(fs*2)  # 1/(fs*2)
+        
+                # FFT do sinal original
+                fft_data = np.fft.fft(y2)
+                freqs = np.fft.fftfreq(len(y2), dt)
 
-            # FFT do sinal filtrado
-            fft_data_filtered = np.fft.fft(y)
+                # FFT do sinal filtrado
+                fft_data_filtered = np.fft.fft(y)
 
-            # Apenas a parte positiva do espectro
-            positive_freqs = freqs[:len(freqs) // 2]
-            fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
-            fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
-            
-            
-            plt.figure(figsize=(10,8))
-            plt.subplot(2,2,1)
-            plt.plot(w, mag, 'b')
-            plt.title("Frequence response - magnitude")
-            plt.xlabel("Frequency [Hz]")
-            plt.ylabel("Magnitude [dB]")
-            plt.grid()
-            
-            plt.subplot(2,2,2)
-            plt.plot(w, phase, 'r')
-            plt.title("Frequence response - phase")
-            plt.xlabel("Frequency [Hz]")
-            plt.ylabel("Phase [rad]")
-            plt.grid()
-            
-            plt.subplot(2,2,3)
-            plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='b')
-            plt.title('Original Signal in Frequency')
-            plt.xlabel('Frequency (Hz)')
-            plt.ylabel('Magnitude')
-            plt.legend()
-            plt.grid()
-            
-            plt.subplot(2,2,4)
-            plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
-            plt.title('Filtered Signal in Frequency')
-            plt.xlabel('Frequency (Hz)')
-            plt.ylabel('Magnitude')
-            plt.legend()
-            plt.grid()
-            
-            plt.tight_layout()
-            plt.show()
+                # Apenas a parte positiva do espectro
+                positive_freqs = freqs[:len(freqs) // 2]
+                fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+                fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                
+                
+                plt.figure(figsize=(10,8))
+                plt.subplot(2,2,1)
+                plt.plot(w, mag, 'b')
+                plt.title("Frequence response - magnitude")
+                plt.xlabel("Frequency [Hz]")
+                plt.ylabel("Magnitude [dB]")
+                plt.grid()
+                
+                plt.subplot(2,2,2)
+                plt.plot(w, phase, 'r')
+                plt.title("Frequence response - phase")
+                plt.xlabel("Frequency [Hz]")
+                plt.ylabel("Phase [rad]")
+                plt.grid()
+                
+                plt.subplot(2,2,3)
+                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='b')
+                plt.title('Original Signal in Frequency')
+                plt.xlabel('Frequency (Hz)')
+                plt.ylabel('Magnitude')
+                plt.legend()
+                plt.grid()
+                
+                plt.subplot(2,2,4)
+                plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
+                plt.title('Filtered Signal in Frequency')
+                plt.xlabel('Frequency (Hz)')
+                plt.ylabel('Magnitude')
+                plt.legend()
+                plt.grid()
+                
+                plt.tight_layout()
+                plt.show()
+            else:
+                x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
+                y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
+                y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
+                
+                ts = x[1] - x[0]
+                fs = 1/ts
+                
+                w, h = signal.freqz(self.b, self.a, worN=None, fs=fs)
+                mag = 20*np.log10(np.abs(h))
+                phase = np.angle(h)
+                
+                # Calculando o intervalo de amostragem e a frequência de amostragem
+                dt = 1/(fs*2)  # 1/(fs*2)
+        
+                # FFT do sinal original
+                fft_data = np.fft.fft(y2)
+                freqs = np.fft.fftfreq(len(y2), dt)
+
+                # FFT do sinal filtrado
+                fft_data_filtered = np.fft.fft(y)
+
+                # Apenas a parte positiva do espectro
+                positive_freqs = freqs[:len(freqs) // 2]
+                fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+                fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                
+                
+                plt.figure(figsize=(10,8))
+                plt.subplot(2,2,1)
+                plt.plot(w, mag, 'b')
+                plt.title("Frequence response - magnitude")
+                plt.xlabel("Frequency [Hz]")
+                plt.ylabel("Magnitude [dB]")
+                plt.grid()
+                
+                plt.subplot(2,2,2)
+                plt.plot(w, phase, 'r')
+                plt.title("Frequence response - phase")
+                plt.xlabel("Frequency [Hz]")
+                plt.ylabel("Phase [rad]")
+                plt.grid()
+                
+                plt.subplot(2,2,3)
+                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='b')
+                plt.title('Original Signal in Frequency')
+                plt.xlabel('Frequency (Hz)')
+                plt.ylabel('Magnitude')
+                plt.legend()
+                plt.grid()
+                
+                plt.subplot(2,2,4)
+                plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
+                plt.title('Filtered Signal in Frequency')
+                plt.xlabel('Frequency (Hz)')
+                plt.ylabel('Magnitude')
+                plt.legend()
+                plt.grid()
+                
+                plt.tight_layout()
+                plt.show()
         else:
             pass

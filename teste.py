@@ -6,10 +6,8 @@ PydaqGui()
 
 # utilizar outra biblioteca para o plot, bokeh ou plotly 
 
-
 # asyncio ou threading (https://www.youtube.com/watch?v=Pov1kt21nr8&t=385s)
 
-# zero padding ou aumentar o N
 
 # sex 13/12 13h30 - Reunião!!!!!!!!!
 

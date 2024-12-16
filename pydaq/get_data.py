@@ -134,14 +134,21 @@ class GetData(Base):
             self.time_var.append(k * self.ts)
             
             # Apply filter if coefficients are provided
-            if filter_coefs is not None: 
-                fir_coeff = filter_coefs  # Coeficientes FIR
-                self.data_filtered = lfilter(fir_coeff, 1.0, self.data)
-        
-            else:
-                self.data_filtered = self.data.copy()  
-
+            if filter_coefs is not None and len(filter_coefs) > 0:
+           
+                if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
+                    b, a = filter_coefs
+                    self.data_filtered = lfilter(b, a, self.data)
+                else:
             
+                    fir_coeff = filter_coefs
+                    self.data_filtered = lfilter(fir_coeff, 1.0, self.data)
+
+            elif filter_coefs is None:
+                self.data_filtered = self.data.copy()
+            
+
+    
             if self.plot:
 
                 # Checking if there is still an open figure. If not, stop the
