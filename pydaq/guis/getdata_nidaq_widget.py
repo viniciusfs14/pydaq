@@ -16,7 +16,7 @@ from ..guis.digital_filters_nidaq_widget import Digital_Filters_NIDAQ_Widget
 from .error_window_gui import Error_window
 from ..get_data import GetData
 
-from scipy.signal import lfilter, butter, firwin
+from scipy.signal import lfilter, butter, firwin, cheby1, cheby2
 
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):
@@ -68,13 +68,29 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.filterWindow.show()
             
     def update_values(self, data):
+        # type of filter
+        self.filter = data['filter']
+        
+        # FIR values
         self.orderfir = data['numtaps_fir']
         self.orderfir = int(self.orderfir)
+        
         self.cutofffir = data['Cutoff']
         self.cutofffir = float(self.cutofffir)
-        self.type = data['Type']
+        
+        self.design = data['design']
+        self.type = data['type']
         self.fr = data['fr']
         
+        # IIR values
+        self.orderiir = data['numtaps_iir']
+        self.orderiir = int(self.orderiir)
+        
+        self.cutoffiir = data['Cutoff_iir']
+        self.cutoffiir = float(self.cutoffiir)
+        
+        self.design_iir = data['design_iir']
+        self.type_irr = data['type_iir']
      
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory(
@@ -116,23 +132,32 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             g.error_path = True
 
         if not g.error_path:
-            # Calling data aquisition method
-            #self.ts = float(self.Ts_in.text())
-            #fs = 1/(self.Ts_in.value())
-            fs = 1000
-            fc = self.cutofffir
-            numtaps = self.orderfir
+            # Fs
+            fs = (1/float(self.Ts_in.value()))*2
             
-            # project iir filter
-            #b, a = butter(N=10, Wn=fc / (fs / 2), btype="low")
-            #self.fs = 1/np.mean(np.diff(g.time_var))
-            #g.get_data_nidaq(filter_coefs=(b, a))
+            if self.filter == 'FIR':
+                # Create the project of FIR filter
+                fc_fir = self.cutofffir
+                numtaps_fir = self.orderfir
+                window_fir = self.design
+                type_fir = self.type
+                
+                self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
+                g.get_data_nidaq(filter_coefs=(self.fir_coeff))
+                self.signals.returned.emit(g)
+                self.frequency_response()
             
-            self.fir_coeff = firwin(numtaps, fc, fs=fs, window='hamming')
-            g.get_data_nidaq(filter_coefs=(self.fir_coeff))
-        
-            self.signals.returned.emit(g)
-            self.frequency_response()
+            elif self.filter == 'IIR':
+                # Create the project of IIR filter
+                fc_iir = self.cutoffiir
+                numtaps_iir = self.orderiir
+                window_iir = self.design_iir
+                type_iir = self.type_irr
+                rp = 1 #ripple in band pass
+                self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype='low')
+                g.get_data_nidaq(filter_coefs=(self.b, self.a))
+                self.signals.returned.emit(g)
+                self.frequency_response()
 
     def _nidaq_info(self):
         """Gathering NIDAQ info"""
@@ -189,6 +214,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             
             x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
             y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
+            y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
             
             ts = x[1] - x[0]
             fs = 1/ts
@@ -197,20 +223,51 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             mag = 20*np.log10(np.abs(h))
             phase = np.angle(h)
             
+            # Calculando o intervalo de amostragem e a frequência de amostragem
+            dt = 1/(fs*2)  # 1/(fs*2)
+    
+            # FFT do sinal original
+            fft_data = np.fft.fft(y2)
+            freqs = np.fft.fftfreq(len(y2), dt)
+
+            # FFT do sinal filtrado
+            fft_data_filtered = np.fft.fft(y)
+
+            # Apenas a parte positiva do espectro
+            positive_freqs = freqs[:len(freqs) // 2]
+            fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+            fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
             
-            plt.figure(figsize=(12,8))
-            plt.subplot(2,1,1)
+            
+            plt.figure(figsize=(10,8))
+            plt.subplot(2,2,1)
             plt.plot(w, mag, 'b')
             plt.title("Frequence response - magnitude")
             plt.xlabel("Frequency [Hz]")
             plt.ylabel("Magnitude [dB]")
             plt.grid()
             
-            plt.subplot(2,1,2)
+            plt.subplot(2,2,2)
             plt.plot(w, phase, 'r')
             plt.title("Frequence response - phase")
             plt.xlabel("Frequency [Hz]")
             plt.ylabel("Phase [rad]")
+            plt.grid()
+            
+            plt.subplot(2,2,3)
+            plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='b')
+            plt.title('Original Signal in Frequency')
+            plt.xlabel('Frequency (Hz)')
+            plt.ylabel('Magnitude')
+            plt.legend()
+            plt.grid()
+            
+            plt.subplot(2,2,4)
+            plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
+            plt.title('Filtered Signal in Frequency')
+            plt.xlabel('Frequency (Hz)')
+            plt.ylabel('Magnitude')
+            plt.legend()
             plt.grid()
             
             plt.tight_layout()

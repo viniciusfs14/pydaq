@@ -10,7 +10,7 @@ import numpy as np
 import serial
 import serial.tools.list_ports
 from pydaq.utils.base import Base
-from scipy.signal import lfilter, butter, firwin
+from scipy.signal import lfilter, butter, firwin, filtfilt
 
 
 
@@ -135,10 +135,9 @@ class GetData(Base):
             
             # Apply filter if coefficients are provided
             if filter_coefs is not None: 
-                fir_coeff = filter_coefs
-             
-                # For FIR Filter
-                self.data_filtered = lfilter(fir_coeff, 1.0, self.data) 
+                fir_coeff = filter_coefs  # Coeficientes FIR
+                self.data_filtered = lfilter(fir_coeff, 1.0, self.data)
+        
             else:
                 self.data_filtered = self.data.copy()  
 
@@ -237,7 +236,7 @@ class GetData(Base):
                     break
 
                 # Updating data values
-                self._update_plot_dual(self.time_var, self.data, self.data_filtered)
+                #self._update_plot_dual(self.time_var, self.data, self.data_filtered)
 
             print(f"Iteration: {k} of {self.cycles - 1}")
 

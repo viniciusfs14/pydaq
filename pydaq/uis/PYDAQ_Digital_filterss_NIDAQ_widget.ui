@@ -7,8 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>501</width>
-    <height>400</height>
+    <height>646</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>501</width>
+    <height>646</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Digital Filters</string>
@@ -302,112 +308,12 @@ QDoubleSpinBox::down-button:hover{
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
-    <widget class="QWidget" name="fir_widget" native="true">
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="1" rowspan="3">
-       <widget class="Line" name="line_3">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Order:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Cutoff:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2" alignment="Qt::AlignRight">
-       <widget class="QWidget" name="widget_7" native="true">
-        <layout class="QGridLayout" name="gridLayout_8">
-         <item row="0" column="0">
-          <widget class="QLineEdit" name="cutoff_fir">
-           <property name="text">
-            <string>0.1</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="3" column="2">
-       <widget class="QWidget" name="widget" native="true">
-        <layout class="QGridLayout" name="gridLayout_10">
-         <item row="1" column="0" alignment="Qt::AlignRight">
-          <widget class="QComboBox" name="comboBox">
-           <property name="minimumSize">
-            <size>
-             <width>145</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>300</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <item>
-            <property name="text">
-             <string>hamming</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Haming</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Type:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2" alignment="Qt::AlignRight">
-       <widget class="QWidget" name="widget_2" native="true">
-        <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="0" alignment="Qt::AlignRight">
-          <widget class="QLineEdit" name="order_fir">
-           <property name="font">
-            <font>
-             <family>Helvetica</family>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>10</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item row="3" column="0">
     <widget class="QWidget" name="left_side" native="true">
      <property name="minimumSize">
       <size>
        <width>483</width>
-       <height>0</height>
+       <height>108</height>
       </size>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
@@ -520,19 +426,6 @@ QDoubleSpinBox::down-button:hover{
      </layout>
     </widget>
    </item>
-   <item row="7" column="0">
-    <widget class="QWidget" name="iir_widget" native="true">
-     <layout class="QGridLayout" name="gridLayout_9">
-      <item row="0" column="0" alignment="Qt::AlignHCenter">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>loading...</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item row="8" column="0">
     <widget class="QWidget" name="widget_6" native="true">
      <property name="minimumSize">
@@ -577,6 +470,303 @@ QDoubleSpinBox::down-button:hover{
      </property>
     </widget>
    </item>
+   <item row="5" column="0">
+    <widget class="QWidget" name="fir_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>483</width>
+       <height>234</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="1" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_2" native="true">
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0" alignment="Qt::AlignRight">
+          <widget class="QLineEdit" name="order_fir">
+           <property name="font">
+            <font>
+             <family>Helvetica</family>
+             <pointsize>12</pointsize>
+             <italic>false</italic>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>10</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Filter Design:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Type:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget" native="true">
+        <layout class="QGridLayout" name="gridLayout_10">
+         <item row="1" column="0" alignment="Qt::AlignRight">
+          <widget class="QComboBox" name="design_box">
+           <property name="minimumSize">
+            <size>
+             <width>145</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>300</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>hamming</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hann</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_8" native="true">
+        <layout class="QGridLayout" name="gridLayout_11">
+         <item row="0" column="0">
+          <widget class="QComboBox" name="type_box">
+           <property name="minimumSize">
+            <size>
+             <width>145</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>145</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>lowpass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>highpass</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Order:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" rowspan="4">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Cutoff:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_7" native="true">
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="cutoff_fir">
+           <property name="text">
+            <string>0.1</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="5" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_3" native="true">
+        <layout class="QGridLayout" name="gridLayout_5"/>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QWidget" name="iir_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>483</width>
+       <height>210</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_9">
+      <item row="2" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_11" native="true">
+        <layout class="QGridLayout" name="gridLayout_14">
+         <item row="0" column="0">
+          <widget class="QComboBox" name="designbox_iir">
+           <property name="minimumSize">
+            <size>
+             <width>145</width>
+             <height>0</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>cheby1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>cheby2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>butter</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>ellip</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_10" native="true">
+        <layout class="QGridLayout" name="gridLayout_13">
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="cutoff_iir">
+           <property name="text">
+            <string>0.1</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Filter Design:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" alignment="Qt::AlignLeft">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Order:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Cutoff:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" rowspan="4">
+       <widget class="Line" name="line_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_12" native="true">
+        <layout class="QGridLayout" name="gridLayout_15">
+         <item row="0" column="0">
+          <widget class="QComboBox" name="typebox_iir">
+           <property name="minimumSize">
+            <size>
+             <width>145</width>
+             <height>0</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>lowpass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>highpass</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="0" column="2" alignment="Qt::AlignRight">
+       <widget class="QWidget" name="widget_9" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_12">
+         <item row="0" column="0" alignment="Qt::AlignRight">
+          <widget class="QLineEdit" name="order_iir">
+           <property name="text">
+            <string>10</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Type:</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources>
@@ -584,7 +774,6 @@ QDoubleSpinBox::down-button:hover{
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="real_time_radio"/>
   <buttongroup name="ratio_fr"/>
  </buttongroups>
 </ui>

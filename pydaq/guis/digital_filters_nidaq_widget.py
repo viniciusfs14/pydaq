@@ -34,9 +34,16 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         data = {
             "numtaps_fir": self.order_fir.text(),
             "Cutoff": self.cutoff_fir.text(),
-            "Type": self.comboBox.currentText(),
+            "design": self.design_box.currentText(),
             "fr": self.yes_fr.isChecked(),
+            "type": self.type_box.currentText(),
+            "numtaps_iir": self.order_iir.text(),
+            "Cutoff_iir": self.cutoff_iir.text(),
+            "design_iir": self.designbox_iir.currentText(),
+            "type_iir": self.typebox_iir.currentText(),
+            "filter": self.type_filter.currentText(),
         }
+        
         self.dataEntered.emit(data)
         self.close()
     
