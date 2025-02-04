@@ -62,10 +62,9 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         
         
     def openFilterWindow(self):
-        if self.yes_radio.isChecked(): 
-            self.filterWindow = Digital_Filters_NIDAQ_Widget()
-            self.filterWindow.dataEntered.connect(self.update_values)
-            self.filterWindow.show()
+        self.filterWindow = Digital_Filters_NIDAQ_Widget()
+        self.filterWindow.dataEntered.connect(self.update_values)
+        self.filterWindow.show()
             
     def update_values(self, data):
         # type of filter
@@ -77,6 +76,12 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         
         self.cutofffir = data['Cutoff']
         self.cutofffir = float(self.cutofffir)
+        
+        self.fc1 = data['Fc1']
+        self.fc1 = float(self.fc1)
+        
+        self.fc2 = data['Fc2']
+        self.fc2 = float(self.fc2)
         
         self.design = data['design']
         self.type = data['type']
@@ -142,13 +147,38 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             fs = (1/float(self.Ts_in.value()))*2
             
             if self.filter == 'FIR':
-                # Create the project of FIR filter
+                
                 fc_fir = self.cutofffir
+                
                 numtaps_fir = self.orderfir
                 window_fir = self.design
                 type_fir = self.type
                 
-                self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
+                if window_fir == 'Blackman':
+                    window_fir = 'blackman'
+                    
+                elif window_fir == 'Hamming':
+                    window_fir = 'hamming'
+                
+                elif window_fir == 'Hann':
+                    window_fir = 'hann'
+                    
+                elif window_fir == 'Bartlett-Hann':
+                    window_fir = 'barthann'
+                    
+                elif window_fir == 'Kaiser':
+                    window_fir = 'kaiser'
+                    
+                elif window_fir == 'Gauss':
+                    window_fir == 'gauss'
+                    
+                if type_fir == 'bandstop':
+                    fc1_stop = self.fc1
+                    fc2_stop = self.fc2
+                    self.fir_coeff = firwin(numtaps_fir, [fc1_stop/(0.5*fs), fc2_stop/(0.5*fs)], window=window_fir, pass_zero='bandstop')
+                else:
+                    self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
+                
                 g.get_data_nidaq(filter_coefs=(self.fir_coeff))
                 self.signals.returned.emit(g)
                 self.frequency_response()
@@ -159,19 +189,19 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 numtaps_iir = self.orderiir
                 window_iir = self.design_iir
                 type_iir = self.type_irr
-                rp = self.rp #ripple in band pass
+                rp = self.rp 
                 rs = self.rs
                 
-                if window_iir == 'cheby1':
+                if window_iir == 'Chebyshev Type I':
                     self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype=type_iir)
                     
-                elif window_iir == 'cheby2':
+                elif window_iir == 'Chebyshev Type II':
                     self.b, self.a = cheby2(numtaps_iir, rs, fc_iir/(0.5*fs), btype=type_iir)
                     
-                elif window_iir == 'butter':
+                elif window_iir == 'Butterworth':
                     self.b, self.a = butter(numtaps_iir, fc_iir/(0.5*fs), btype=type_iir)
                     
-                elif window_iir == 'ellip':
+                elif window_iir == 'Elliptic':
                     self.b, self.a = ellip(numtaps_iir, rp, rs, fc_iir/(0.5*fs), btype=type_iir)
                     
                 g.get_data_nidaq(filter_coefs=(self.b, self.a))
@@ -242,47 +272,35 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 mag = 20*np.log10(np.abs(h))
                 phase = np.angle(h)
                 
-                # Calculando o intervalo de amostragem e a frequência de amostragem
                 dt = 1/(fs*2)  # 1/(fs*2)
         
-                # FFT do sinal original
                 fft_data = np.fft.fft(y2)
                 freqs = np.fft.fftfreq(len(y2), dt)
 
-                # FFT do sinal filtrado
+                
                 fft_data_filtered = np.fft.fft(y)
 
-                # Apenas a parte positiva do espectro
+                
                 positive_freqs = freqs[:len(freqs) // 2]
                 fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
                 fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
                 
+                fft_data_magnitude_norm = (fft_data_magnitude/np.max(fft_data_magnitude))*100
+                fft_data_filtered_magnitude_norm = (fft_data_filtered_magnitude/np.max(fft_data_filtered_magnitude))*100
+                
                 
                 plt.figure(figsize=(10,8))
-                plt.subplot(2,2,1)
-                plt.plot(w, mag, 'b')
-                plt.title("Frequence response - magnitude")
-                plt.xlabel("Frequency [Hz]")
-                plt.ylabel("Magnitude [dB]")
-                plt.grid()
                 
-                plt.subplot(2,2,2)
-                plt.plot(w, phase, 'r')
-                plt.title("Frequence response - phase")
-                plt.xlabel("Frequency [Hz]")
-                plt.ylabel("Phase [rad]")
-                plt.grid()
-                
-                plt.subplot(2,2,3)
-                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='b')
+                plt.subplot(2,1,1)
+                plt.plot(positive_freqs, fft_data_magnitude_norm, label='FFT Original', color='r')
                 plt.title('Original Signal in Frequency')
                 plt.xlabel('Frequency (Hz)')
                 plt.ylabel('Magnitude')
                 plt.legend()
                 plt.grid()
                 
-                plt.subplot(2,2,4)
-                plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
+                plt.subplot(2,1,2)
+                plt.plot(positive_freqs, fft_data_filtered_magnitude_norm, label='FFT Filtered', color='r')
                 plt.title('Filtered Signal in Frequency')
                 plt.xlabel('Frequency (Hz)')
                 plt.ylabel('Magnitude')
@@ -291,6 +309,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 
                 plt.tight_layout()
                 plt.show()
+                
             else:
                 x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
@@ -303,46 +322,30 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 mag = 20*np.log10(np.abs(h))
                 phase = np.angle(h)
                 
-                # Calculando o intervalo de amostragem e a frequência de amostragem
+               
                 dt = 1/(fs*2)  # 1/(fs*2)
         
-                # FFT do sinal original
+                
                 fft_data = np.fft.fft(y2)
                 freqs = np.fft.fftfreq(len(y2), dt)
 
-                # FFT do sinal filtrado
                 fft_data_filtered = np.fft.fft(y)
 
-                # Apenas a parte positiva do espectro
                 positive_freqs = freqs[:len(freqs) // 2]
                 fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
                 fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
                 
                 
-                plt.figure(figsize=(10,8))
-                plt.subplot(2,2,1)
-                plt.plot(w, mag, 'b')
-                plt.title("Frequence response - magnitude")
-                plt.xlabel("Frequency [Hz]")
-                plt.ylabel("Magnitude [dB]")
-                plt.grid()
-                
-                plt.subplot(2,2,2)
-                plt.plot(w, phase, 'r')
-                plt.title("Frequence response - phase")
-                plt.xlabel("Frequency [Hz]")
-                plt.ylabel("Phase [rad]")
-                plt.grid()
-                
-                plt.subplot(2,2,3)
-                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='b')
+            
+                plt.subplot(2,1,1)
+                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='r')
                 plt.title('Original Signal in Frequency')
                 plt.xlabel('Frequency (Hz)')
                 plt.ylabel('Magnitude')
                 plt.legend()
                 plt.grid()
                 
-                plt.subplot(2,2,4)
+                plt.subplot(2,1,2)
                 plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
                 plt.title('Filtered Signal in Frequency')
                 plt.xlabel('Frequency (Hz)')

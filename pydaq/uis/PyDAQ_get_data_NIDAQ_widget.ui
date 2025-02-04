@@ -224,25 +224,6 @@ QPushButton#reload_devices:pressed{
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="filter_button">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>100</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>FILTER</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -689,7 +670,7 @@ QPushButton#reload_devices:pressed{
            </attribute>
           </widget>
          </item>
-         <item alignment="Qt::AlignLeft">
+         <item>
           <widget class="QRadioButton" name="No_radio">
            <property name="text">
             <string>No</string>
@@ -715,8 +696,8 @@ QPushButton#reload_devices:pressed{
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="filter_radio_group"/>
   <buttongroup name="save_radio_group"/>
+  <buttongroup name="filter_radio_group"/>
   <buttongroup name="plot_radio_group"/>
  </buttongroups>
 </ui>

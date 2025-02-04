@@ -62,6 +62,7 @@ class GetData(Base):
         self.data = []
         self.data_filtered = []
         self.time_var = []
+        self.coeffs = []
 
         # Gathering nidaq info
         self._nidaq_info()
@@ -103,6 +104,7 @@ class GetData(Base):
         self.data = []
         self.data_filtered = []
         self.time_var = []
+        self.coeffs = []
         
         # Checking if path was defined
         self._check_path()
@@ -138,10 +140,12 @@ class GetData(Base):
            
                 if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
                     b, a = filter_coefs
+                    self.coeffs = filter_coefs
                     self.data_filtered = lfilter(b, a, self.data)
                 else:
             
                     fir_coeff = filter_coefs
+                    self.coeffs = filter_coefs
                     self.data_filtered = lfilter(fir_coeff, 1.0, self.data)
 
             elif filter_coefs is None:
@@ -185,6 +189,7 @@ class GetData(Base):
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.data, "data.dat")
             self._save_data(self.data_filtered, "data_filtered.dat")
+            self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")
 
         return
@@ -269,6 +274,7 @@ class GetData(Base):
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.data, "data.dat")
             self._save_data(self.data_filtered, "data_filtered.dat")
+            self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")
         return
 

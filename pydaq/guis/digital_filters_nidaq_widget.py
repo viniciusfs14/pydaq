@@ -24,9 +24,12 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         self.signals = GuiSignals()
         self.iir_widget.hide()
         self.fir_widget.show()
+        self.bd_widget.hide()
+        self.fc_widget.hide()
         
         # Signals 
         self.type_filter.currentTextChanged.connect(self.check_filter)
+        self.type_box.currentTextChanged.connect(self.bandstop_ui)
         self.save_button.clicked.connect(self.send_data)
 
     # Function to send the variables to get data window
@@ -44,6 +47,8 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             "filter": self.type_filter.currentText(),
             'rp': self.rp.text(),
             'rs': self.rs.text(),
+            'Fc1': self.fc1_line.text(),
+            'Fc2': self.fc2_line.text(),
         }
         
         self.dataEntered.emit(data)
@@ -58,9 +63,23 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         if text == 'FIR':
             self.fir_widget.show()
             self.iir_widget.hide()
+            
         if text == 'IIR':
             self.iir_widget.show()
             self.fir_widget.hide()
+            
+    def bandstop_ui(self, text):
+        if text == 'bandstop':
+            self.bd_widget.show()
+            self.fc_widget.show()
+            self.cof_widget.hide()
+            self.cutoff_widget.hide()
+        else:
+            self.cof_widget.show()
+            self.cutoff_widget.show()
+            self.bd_widget.hide()
+            self.fc_widget.hide()
+            
     
 
     

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widgetKrFVzL.ui'
+## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widgetKoPeIG.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.1
 ##
@@ -226,13 +226,6 @@ class Ui_NIDAQ_GetData_W(object):
         self.start_get_data.setStyleSheet(u"")
 
         self.gridLayout_8.addWidget(self.start_get_data, 0, 0, 1, 1)
-
-        self.filter_button = QPushButton(self.widget_11)
-        self.filter_button.setObjectName(u"filter_button")
-        self.filter_button.setMinimumSize(QSize(0, 30))
-        self.filter_button.setMaximumSize(QSize(100, 30))
-
-        self.gridLayout_8.addWidget(self.filter_button, 0, 1, 1, 1)
 
 
         self.gridLayout_2.addWidget(self.widget_11, 2, 0, 1, 1)
@@ -479,7 +472,7 @@ class Ui_NIDAQ_GetData_W(object):
         self.No_radio.setObjectName(u"No_radio")
         self.No_radio.setChecked(True)
 
-        self.horizontalLayout_4.addWidget(self.No_radio, 0, Qt.AlignLeft)
+        self.horizontalLayout_4.addWidget(self.No_radio)
 
 
         self.gridLayout.addWidget(self.widget_10, 5, 2, 1, 1, Qt.AlignLeft)
@@ -496,7 +489,6 @@ class Ui_NIDAQ_GetData_W(object):
     def retranslateUi(self, NIDAQ_GetData_W):
         NIDAQ_GetData_W.setWindowTitle(QCoreApplication.translate("NIDAQ_GetData_W", u"Form", None))
         self.start_get_data.setText(QCoreApplication.translate("NIDAQ_GetData_W", u" GET DATA ", None))
-        self.filter_button.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"FILTER", None))
         self.label_6.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Plot data?", None))
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
