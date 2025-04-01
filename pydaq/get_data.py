@@ -142,6 +142,7 @@ class GetData(Base):
                     b, a = filter_coefs
                     self.coeffs = filter_coefs
                     self.data_filtered = lfilter(b, a, self.data)
+    
                 else:
             
                     fir_coeff = filter_coefs

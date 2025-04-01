@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PYDAQ_Digital_filterss_NIDAQ_widgetEmfPsJ.ui'
+## Form generated from reading UI file 'PYDAQ_Digital_filterss_NIDAQ_widgetMpDfuZ.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.1
 ##
@@ -24,7 +24,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
     def setupUi(self, Digitalfilters_NIDAQ_widget):
         if not Digitalfilters_NIDAQ_widget.objectName():
             Digitalfilters_NIDAQ_widget.setObjectName(u"Digitalfilters_NIDAQ_widget")
-        Digitalfilters_NIDAQ_widget.resize(537, 800)
+        Digitalfilters_NIDAQ_widget.resize(537, 757)
         Digitalfilters_NIDAQ_widget.setMinimumSize(QSize(537, 407))
         Digitalfilters_NIDAQ_widget.setMaximumSize(QSize(537, 800))
         Digitalfilters_NIDAQ_widget.setStyleSheet(u"QWidget{\n"
@@ -784,7 +784,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
         self.fc1_line.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"0.1", None))
         self.label_13.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"to", None))
         self.fc2_line.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"0.2", None))
-        self.label_3.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Bandstop (Hz):", None))
+        self.label_3.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Cutoff (Hz):", None))
         self.label_14.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Cutoff (Hz):", None))
         self.label_2.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Type:", None))
         self.label.setText(QCoreApplication.translate("Digitalfilters_NIDAQ_widget", u"Order:", None))
