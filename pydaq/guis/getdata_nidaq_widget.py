@@ -144,12 +144,11 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
         if not g.error_path:
             # Fs
-            fs = (1/float(self.Ts_in.value()))*2
+            fs = (1/float(self.Ts_in.value()))*2.5
             
             if self.filter == 'FIR':
                 
                 fc_fir = self.cutofffir
-                
                 numtaps_fir = self.orderfir
                 window_fir = self.design
                 type_fir = self.type
@@ -173,11 +172,18 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                     window_fir == 'gauss'
                     
                 if type_fir == 'bandstop':
-                    fc1_stop = self.fc1
-                    fc2_stop = self.fc2
-                    self.fir_coeff = firwin(numtaps_fir, [fc1_stop/(0.5*fs), fc2_stop/(0.5*fs)], window=window_fir, pass_zero='bandstop')
+                    fc1 = self.fc1
+                    fc2 = self.fc2
+                    self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandstop')
+
+                elif type_fir == 'bandpass':
+                    fc1 = self.fc1
+                    fc2 = self.fc2
+                    self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandpass')
+
                 else:
                     self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
+  
                 
                 g.get_data_nidaq(filter_coefs=(self.fir_coeff))
                 self.signals.returned.emit(g)
@@ -272,7 +278,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 mag = 20*np.log10(np.abs(h))
                 phase = np.angle(h)
                 
-                dt = 1/(fs*2)  # 1/(fs*2)
+                dt = 1/(fs*2.5)  # 1/(fs*2)
         
                 fft_data = np.fft.fft(y2)
                 freqs = np.fft.fftfreq(len(y2), dt)
@@ -289,7 +295,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 fft_data_filtered_magnitude_norm = (fft_data_filtered_magnitude/np.max(fft_data_filtered_magnitude))*100
                 
                 
-                plt.figure(figsize=(10,8))
+                plt.figure(figsize=(7,5))
                 
                 plt.subplot(2,1,1)
                 plt.plot(positive_freqs, fft_data_magnitude_norm, label='FFT Original', color='r')
@@ -323,7 +329,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 phase = np.angle(h)
                 
                
-                dt = 1/(fs*2)  # 1/(fs*2)
+                dt = 1/(fs*2.5)  # 1/(fs*2)
         
                 
                 fft_data = np.fft.fft(y2)
@@ -336,7 +342,8 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
                 
                 
-            
+                plt.figure(figsize=(7,5))
+                
                 plt.subplot(2,1,1)
                 plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='r')
                 plt.title('Original Signal in Frequency')

@@ -69,7 +69,7 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             self.fir_widget.hide()
             
     def bandstop_ui(self, text):
-        if text == 'bandstop':
+        if text == 'bandstop' or text == 'bandpass':
             self.bd_widget.show()
             self.fc_widget.show()
             self.cof_widget.hide()
@@ -79,6 +79,8 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
             self.cutoff_widget.show()
             self.bd_widget.hide()
             self.fc_widget.hide()
+            
+            
             
     
 

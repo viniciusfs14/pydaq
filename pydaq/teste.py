@@ -1,3 +1,2 @@
-from pydaq_global import PYDAQ_Global_GUI
-
+from pydaq.pydaq_global import PydaqGui
 PydaqGui()

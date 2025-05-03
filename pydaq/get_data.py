@@ -248,10 +248,10 @@ class GetData(Base):
                     break
 
                 # Updating data values
-                #self._update_plot_dual(self.time_var, self.data, self.data_filtered)
+                self._update_plot(self.time_var, self.data)
 
             print(f"Iteration: {k} of {self.cycles - 1}")
-
+            
             # Getting end time
             et = time.time()
 
