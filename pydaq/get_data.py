@@ -152,8 +152,6 @@ class GetData(Base):
             elif filter_coefs is None:
                 self.data_filtered = self.data.copy()
             
-
-    
             if self.plot:
 
                 # Checking if there is still an open figure. If not, stop the

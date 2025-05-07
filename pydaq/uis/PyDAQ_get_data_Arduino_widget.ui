@@ -394,7 +394,7 @@ QPushButton#reload_devices:pressed{
        <widget class="QWidget" name="widget_3" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item alignment="Qt::AlignmentFlag::AlignLeft">
-          <widget class="QRadioButton" name="radioButton_2">
+          <widget class="QRadioButton" name="yes_radio">
            <property name="text">
             <string>Yes</string>
            </property>
@@ -404,7 +404,7 @@ QPushButton#reload_devices:pressed{
           </widget>
          </item>
          <item alignment="Qt::AlignmentFlag::AlignLeft">
-          <widget class="QRadioButton" name="radioButton">
+          <widget class="QRadioButton" name="no_radio">
            <property name="text">
             <string>No</string>
            </property>
@@ -615,7 +615,7 @@ QPushButton#reload_devices:pressed{
  <connections/>
  <buttongroups>
   <buttongroup name="plot_radio_group"/>
-  <buttongroup name="save_radio_group"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="save_radio_group"/>
  </buttongroups>
 </ui>

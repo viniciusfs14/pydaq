@@ -57,7 +57,6 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self.device_combo.currentIndexChanged.connect(self.update_channels)
         self.reload_devices.released.connect(self.reload_devices_handler)
         self.yes_radio.toggled.connect(self.openFilterWindow)
-        #self.teste.released.connect(self.update_values)
         self.signals = GuiSignals()
         
         
@@ -142,77 +141,80 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             error_w.exec()
             g.error_path = True
 
+        # this conditional checks if will have filter or not
         if not g.error_path:
-            # Fs
-            fs = (1/float(self.Ts_in.value()))*2.5
-            
-            if self.filter == 'FIR':
-                
-                fc_fir = self.cutofffir
-                numtaps_fir = self.orderfir
-                window_fir = self.design
-                type_fir = self.type
-                
-                if window_fir == 'Blackman':
-                    window_fir = 'blackman'
-                    
-                elif window_fir == 'Hamming':
-                    window_fir = 'hamming'
-                
-                elif window_fir == 'Hann':
-                    window_fir = 'hann'
-                    
-                elif window_fir == 'Bartlett-Hann':
-                    window_fir = 'barthann'
-                    
-                elif window_fir == 'Kaiser':
-                    window_fir = 'kaiser'
-                    
-                elif window_fir == 'Gauss':
-                    window_fir == 'gauss'
-                    
-                if type_fir == 'bandstop':
-                    fc1 = self.fc1
-                    fc2 = self.fc2
-                    self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandstop')
-
-                elif type_fir == 'bandpass':
-                    fc1 = self.fc1
-                    fc2 = self.fc2
-                    self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandpass')
-
-                else:
-                    self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
-  
-                
-                g.get_data_nidaq(filter_coefs=(self.fir_coeff))
+            if self.No_radio.isChecked():
+                g.get_data_nidaq()
                 self.signals.returned.emit(g)
-                self.frequency_response()
-            
-            elif self.filter == 'IIR':
-                # Create the project of IIR filter
-                fc_iir = self.cutoffiir
-                numtaps_iir = self.orderiir
-                window_iir = self.design_iir
-                type_iir = self.type_irr
-                rp = self.rp 
-                rs = self.rs
+            else:
+                fs = (1/float(self.Ts_in.value()))*2.5
+                if self.filter == 'FIR':
+                    
+                    fc_fir = self.cutofffir
+                    numtaps_fir = self.orderfir
+                    window_fir = self.design
+                    type_fir = self.type
+                    
+                    if window_fir == 'Blackman':
+                        window_fir = 'blackman'
+                        
+                    elif window_fir == 'Hamming':
+                        window_fir = 'hamming'
+                    
+                    elif window_fir == 'Hann':
+                        window_fir = 'hann'
+                        
+                    elif window_fir == 'Bartlett-Hann':
+                        window_fir = 'barthann'
+                        
+                    elif window_fir == 'Kaiser':
+                        window_fir = 'kaiser'
+                        
+                    elif window_fir == 'Gauss':
+                        window_fir == 'gauss'
+                        
+                    if type_fir == 'bandstop':
+                        fc1 = self.fc1
+                        fc2 = self.fc2
+                        self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandstop')
+
+                    elif type_fir == 'bandpass':
+                        fc1 = self.fc1
+                        fc2 = self.fc2
+                        self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandpass')
+
+                    else:
+                        self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
+    
+                    
+                    g.get_data_nidaq(filter_coefs=(self.fir_coeff))
+                    self.signals.returned.emit(g)
+                    self.frequency_response()
                 
-                if window_iir == 'Chebyshev Type I':
-                    self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype=type_iir)
+                elif self.filter == 'IIR':
+                    # Create the project of IIR filter
+                    fc_iir = self.cutoffiir
+                    numtaps_iir = self.orderiir
+                    window_iir = self.design_iir
+                    type_iir = self.type_irr
+                    rp = self.rp 
+                    rs = self.rs
                     
-                elif window_iir == 'Chebyshev Type II':
-                    self.b, self.a = cheby2(numtaps_iir, rs, fc_iir/(0.5*fs), btype=type_iir)
-                    
-                elif window_iir == 'Butterworth':
-                    self.b, self.a = butter(numtaps_iir, fc_iir/(0.5*fs), btype=type_iir)
-                    
-                elif window_iir == 'Elliptic':
-                    self.b, self.a = ellip(numtaps_iir, rp, rs, fc_iir/(0.5*fs), btype=type_iir)
-                    
-                g.get_data_nidaq(filter_coefs=(self.b, self.a))
-                self.signals.returned.emit(g)
-                self.frequency_response()
+                    if window_iir == 'Chebyshev Type I':
+                        self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype=type_iir)
+                        
+                    elif window_iir == 'Chebyshev Type II':
+                        self.b, self.a = cheby2(numtaps_iir, rs, fc_iir/(0.5*fs), btype=type_iir)
+                        
+                    elif window_iir == 'Butterworth':
+                        self.b, self.a = butter(numtaps_iir, fc_iir/(0.5*fs), btype=type_iir)
+                        
+                    elif window_iir == 'Elliptic':
+                        self.b, self.a = ellip(numtaps_iir, rp, rs, fc_iir/(0.5*fs), btype=type_iir)
+                        
+                    g.get_data_nidaq(filter_coefs=(self.b, self.a))
+                    self.signals.returned.emit(g)
+                    self.frequency_response()
 
     def _nidaq_info(self):
         """Gathering NIDAQ info"""

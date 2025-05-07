@@ -31,7 +31,7 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
         self.type_filter.currentTextChanged.connect(self.check_filter)
         self.type_box.currentTextChanged.connect(self.bandstop_ui)
         self.save_button.clicked.connect(self.send_data)
-        
+
     # Function to send the variables to get data window
     def send_data(self):
         data = {

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_data_Arduino_widgetxAQSJg.ui'
+## Form generated from reading UI file 'PyDAQ_get_data_Arduino_widgetmjpSHP.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -309,20 +309,20 @@ class Ui_Arduino_GetData_W(object):
         self.widget_3.setObjectName(u"widget_3")
         self.horizontalLayout_4 = QHBoxLayout(self.widget_3)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.radioButton_2 = QRadioButton(self.widget_3)
+        self.yes_radio = QRadioButton(self.widget_3)
         self.buttonGroup = QButtonGroup(Arduino_GetData_W)
         self.buttonGroup.setObjectName(u"buttonGroup")
-        self.buttonGroup.addButton(self.radioButton_2)
-        self.radioButton_2.setObjectName(u"radioButton_2")
+        self.buttonGroup.addButton(self.yes_radio)
+        self.yes_radio.setObjectName(u"yes_radio")
 
-        self.horizontalLayout_4.addWidget(self.radioButton_2, 0, Qt.AlignmentFlag.AlignLeft)
+        self.horizontalLayout_4.addWidget(self.yes_radio, 0, Qt.AlignmentFlag.AlignLeft)
 
-        self.radioButton = QRadioButton(self.widget_3)
-        self.buttonGroup.addButton(self.radioButton)
-        self.radioButton.setObjectName(u"radioButton")
-        self.radioButton.setChecked(True)
+        self.no_radio = QRadioButton(self.widget_3)
+        self.buttonGroup.addButton(self.no_radio)
+        self.no_radio.setObjectName(u"no_radio")
+        self.no_radio.setChecked(True)
 
-        self.horizontalLayout_4.addWidget(self.radioButton, 0, Qt.AlignmentFlag.AlignLeft)
+        self.horizontalLayout_4.addWidget(self.no_radio, 0, Qt.AlignmentFlag.AlignLeft)
 
 
         self.gridLayout.addWidget(self.widget_3, 3, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
@@ -447,8 +447,8 @@ class Ui_Arduino_GetData_W(object):
         self.reload_devices.setText("")
         self.label_5.setText(QCoreApplication.translate("Arduino_GetData_W", u"Session duration (s)", None))
         self.label_2.setText(QCoreApplication.translate("Arduino_GetData_W", u"Digital Filter?", None))
-        self.radioButton_2.setText(QCoreApplication.translate("Arduino_GetData_W", u"Yes", None))
-        self.radioButton.setText(QCoreApplication.translate("Arduino_GetData_W", u"No", None))
+        self.yes_radio.setText(QCoreApplication.translate("Arduino_GetData_W", u"Yes", None))
+        self.no_radio.setText(QCoreApplication.translate("Arduino_GetData_W", u"No", None))
         self.label_6.setText(QCoreApplication.translate("Arduino_GetData_W", u"Plot data?", None))
         self.label_7.setText(QCoreApplication.translate("Arduino_GetData_W", u"Save data?", None))
         self.label_8.setText(QCoreApplication.translate("Arduino_GetData_W", u"Path", None))
