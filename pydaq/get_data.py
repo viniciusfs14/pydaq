@@ -193,7 +193,7 @@ class GetData(Base):
 
         return
 
-    def get_data_arduino(self):
+    def get_data_arduino(self, filter_coefs=None):
         """
             This function can be used for data acquisition and step response experiments using Python + Arduino
             through serial communication
@@ -237,6 +237,23 @@ class GetData(Base):
             self.data.append(temp)
             self.time_var.append(k * self.ts)
 
+            # Apply filter if coefficients are provided
+            if filter_coefs is not None and len(filter_coefs) > 0:
+           
+                if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
+                    b, a = filter_coefs
+                    self.coeffs = filter_coefs
+                    self.data_filtered = lfilter(b, a, self.data)
+    
+                else:
+            
+                    fir_coeff = filter_coefs
+                    self.coeffs = filter_coefs
+                    self.data_filtered = lfilter(fir_coeff, 1.0, self.data)
+
+            elif filter_coefs is None:
+                self.data_filtered = self.data.copy()
+
             if self.plot:
 
                 # Checking if there is still an open figure. If not, stop the
@@ -247,7 +264,7 @@ class GetData(Base):
                     break
 
                 # Updating data values
-                self._update_plot(self.time_var, self.data)
+                self._update_plot_dual(self.time_var, self.data, self.data_filtered)
 
             print(f"Iteration: {k} of {self.cycles - 1}")
             
