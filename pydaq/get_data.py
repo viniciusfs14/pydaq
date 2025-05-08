@@ -190,7 +190,6 @@ class GetData(Base):
             self._save_data(self.data_filtered, "data_filtered.dat")
             self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")
-
         return
 
     def get_data_arduino(self, filter_coefs=None):

@@ -200,7 +200,7 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
                     elif window_iir == 'Elliptic':
                         self.b, self.a = ellip(numtaps_iir, rp, rs, fc_iir/(0.5*fs), btype=type_iir)
                         
-                    g.get_data_nidaq(filter_coefs=(self.b, self.a))
+                    g.get_data_arduino(filter_coefs=(self.b, self.a))
                     self.signals.returned.emit(g)
                     self.frequency_response()
 
