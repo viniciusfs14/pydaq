@@ -5,8 +5,6 @@ import numpy as np
 
 from ..uis.ui_PYDAQ_Digital_filterss_NIDAQ_widget import Ui_Digitalfilters_NIDAQ_widget
 
-from ..guis.fir_window_widget import FirWindow
-from ..guis.iir_window_widget import IrrWindow
 from PySide6.QtWidgets import QFileDialog, QWidget
 
 from ..get_data import GetData
