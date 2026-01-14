@@ -2,7 +2,10 @@ import os
 import serial
 import serial.tools.list_ports
 
-from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt
+
 from pydaq.utils.signals import GuiSignals
 import scipy.signal as signal
 
@@ -13,14 +16,14 @@ from .error_window_gui import Error_window
 from ..get_data import GetData
 
 from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip, freqz
-import asyncio
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
+class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W): 
     def __init__(self, *args):
         super(GetData_Arduino_Widget, self).__init__()
-        self.setupUi(self)
+        self.setupUi(self) 
 
         # Connecting Signals
         self.reload_devices.released.connect(self.update_com_ports)
@@ -36,6 +39,10 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
         self.yes_radio.clicked.connect(self.openFilterWindow)
+
+        # Channel selection
+        self.available_channels = [f"A{i}" for i in range(8)]
+        self._setup_channel_selector()
 
     def _update_warning_label(self):
         if self.yes_rt_plot_radio.isChecked():
@@ -135,6 +142,8 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             g.data = []
             g.time_var = []
             g.error_path = False
+
+            g.channels = self.get_selected_channels()
 
         except BaseException:
             error_w = Error_window()
@@ -314,4 +323,43 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
         else:
             pass
     
+    def _setup_channel_selector(self):
+        self.comboChannels.setEditable(True)
+        self.comboChannels.lineEdit().setReadOnly(True)
+        self.comboChannels.lineEdit().setPlaceholderText("Select channels...")
+
+        self.channel_menu = QMenu(self)
+        self.channel_actions = []
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        self.comboChannels.showPopup = self._show_channel_menu
+
+    def _show_channel_menu(self):
+        self.channel_menu.exec(
+            self.comboChannels.mapToGlobal(
+                self.comboChannels.rect().bottomLeft()
+            )
+        )
+    
+    def _update_channel_text(self):
+        selected = self.get_selected_channels()
+
+        if not any(a.isChecked() for a in self.channel_actions):
+            self.channel_actions[0].setChecked(True)
+            selected = [self.channel_actions[0].text()]
+
+        self.comboChannels.lineEdit().setText(", ".join(selected))
+
+    def get_selected_channels(self):
+        selected = [a.text() for a in self.channel_actions if a.isChecked()]
+        return selected if selected else [self.available_channels[0]]
+
+
+
     

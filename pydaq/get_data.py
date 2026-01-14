@@ -53,6 +53,7 @@ class GetData(Base):
         self.session_duration = session_duration
         self.save = save
         self.plot_mode = plot_mode
+        self.channels = []
 
         # Terminal configuration
         self.terminal = self.term_map[terminal]
@@ -140,6 +141,8 @@ class GetData(Base):
                 print(f"\nAcquisition Thread finished. Total time: {total_acquisition_duration:.5f}s | Cycles acquired: {num_cycles_performed} | Average time per cycle: {avg_acquisition_time_per_cycle:.5f}s")
             else:
                 print("\nAcquisition Thread finished. No data cycles acquired.")
+        
+
 
     # Handler for plot window closure
     def _on_plot_close(self, event):
@@ -288,20 +291,20 @@ class GetData(Base):
         This function runs in a separate thread to acquire data from Arduino via serial.
         It does not touch the GUI, it only collects data and puts it on the queue.
         """
+
+        channels = self.channels
+        n_channels = len(channels)
+
         # Wait for plot to be ready before starting acquisition to synchronize time_now to ~0
         self.plot_ready_event.wait()
-
         num_cycles_performed = 0
-        
+
         try:
             self._open_serial()
             
-            
-
             # --- WARM-UP SECTION ---
             # Send an initial command (b"0") to "wake up" the Arduino.
             time.sleep(0.05)
-            self.ser.write(b"0")
             self.ser.reset_input_buffer()
 
             # Perform a "warm-up read". This is the call that will be slow.
@@ -312,19 +315,33 @@ class GetData(Base):
             st_worker = time.perf_counter()
             self.st_worker = st_worker
             
-            for k in range(self.cycles):
+            for k in range(self.cycles * n_channels):
+
                 if not self.acquisition_running:
                     break
+                
+                raw = self.ser.readline()
 
-                self.ser.reset_input_buffer()
+                try:
+                    values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                temp = int(self.ser.read(14).split()[-2].decode("UTF-8")) * self.ard_vpb
+                    if len(values) < n_channels:
+                        raise ValueError("Incomplete multichannel frame")
 
-                time_now = time.perf_counter() - st_worker
-                data_queue.put((time_now, temp))
-                num_cycles_performed += 1
+                    time_now = time.perf_counter() - st_worker
 
-                wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
+                    # Distribui os valores por canal
+                    for i, ch in enumerate(channels):
+                        value = values[i] * self.ard_vpb
+                        data_queue.put((time_now, ch, value))
+
+                    num_cycles_performed += 1
+
+                except (ValueError, UnicodeDecodeError):
+                    warnings.warn(f"Invalid multichannel read: {raw}")
+                    continue
+
+                wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
@@ -343,7 +360,12 @@ class GetData(Base):
             total_acquisition_duration = time.perf_counter() - st_worker
             if num_cycles_performed > 0:
                 avg_acquisition_time_per_cycle = total_acquisition_duration / num_cycles_performed
-                print(f"\nAcquisition Thread finished. Total time: {total_acquisition_duration:.5f}s | Cycles acquired: {num_cycles_performed} | Average time per cycle: {avg_acquisition_time_per_cycle:.5f}s")
+                print(
+                    f"\nAcquisition Thread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles acquired: {num_cycles_performed} | "
+                    f"Average time per cycle: {avg_acquisition_time_per_cycle:.5f}s"
+                )
             else:
                 print("\nAcquisition Thread finished. No data cycles acquired.")
 
@@ -352,10 +374,13 @@ class GetData(Base):
         This function can be used for data acquisition and step response experiments using Python + Arduino
         through serial communication. Now adapted to threading model for consistent plot handling.
         """
-        self.data = []
-        self.data_filtered = []
-        self.time_var = []
+
+        # Data storage per channel
+        self.data = {ch: [] for ch in self.channels}
+        self.time_var = {ch: [] for ch in self.channels}
+        self.data_filtered = {ch: [] for ch in self.channels}
         self.coeffs = []
+
         if filter_coefs is not None and (isinstance(filter_coefs, tuple) or len(filter_coefs) > 0):
             self.coeffs = filter_coefs
         else:
@@ -399,35 +424,38 @@ class GetData(Base):
 
                 if item is None:
                     self.acquisition_running = False
-                    # Flushes the queue to ensure all data is processed
-                    while not data_queue.empty():
-                        remaining_item = data_queue.get_nowait()
-                        if remaining_item is not None:
-                            timestamp, value = remaining_item
-                            self.time_var.append(timestamp)
-                            self.data.append(value)
                     break
 
-                timestamp, value = item
-                self.time_var.append(timestamp)
-                self.data.append(value)
+                timestamp, channel, value = item
+                self.time_var[channel].append(timestamp)
+                self.data[channel].append(value)
 
                 now = time.perf_counter()
+
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
+
                     # Applies the filter for real-time plotting
                     if filter_coefs is not None and (isinstance(filter_coefs, tuple) or len(filter_coefs) > 0):
-                        if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
-                            b, a = filter_coefs
-                            self.data_filtered = lfilter(b, a, np.array(self.data)).tolist()
-                        else:
-                            self.data_filtered = lfilter(filter_coefs, 1.0, np.array(self.data)).tolist()
+                        
+                        for ch in self.channels:
+                            if len(self.data[ch]) == 0:
+                                continue
+
+                            if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
+                                b, a = filter_coefs
+
+                                self.data_filtered[ch] = lfilter(b, a, np.array(self.data[ch])).tolist()
+
+                            else:
+                                self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
                     
+                    labels = [f"Channel {ch}" for ch in self.channels]
+                    labels_filtered = [f"Channel {ch} - Filtered" for ch in self.channels]
+
                     self._update_plot(
                         self.time_var,
                         self.data,
-                        y2_values=self.data_filtered if self.data_filtered else None,
-                        y1_label="Original Data",
-                        y2_label="Filtered Data"
+                        y2_values=self.data_filtered if self.data_filtered else None
                     )
                     last_plot_update_time = now
 
@@ -440,11 +468,14 @@ class GetData(Base):
 
         # Applies final filter if coefficients are present (to save and plot at the end)
         if filter_coefs is not None and (isinstance(filter_coefs, tuple) or len(filter_coefs) > 0):
-            if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
-                b, a = filter_coefs
-                self.data_filtered = lfilter(b, a, np.array(self.data)).tolist()
-            else:
-                self.data_filtered = lfilter(filter_coefs, 1.0, np.array(self.data)).tolist()
+            for ch in self.channels:
+                if len(self.data[ch]) == 0:
+                    continue
+                if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
+                    b, a = filter_coefs
+                    self.data_filtered[ch] = lfilter(b, a, np.array(self.data[ch])).tolist()
+                else:
+                    self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
             print("Plot remaining open. Close window manually to exit.")
@@ -458,21 +489,22 @@ class GetData(Base):
             self._update_plot(
                 self.time_var,
                 self.data,
-                y2_values=self.data_filtered if self.data_filtered else None,
-                y1_label="Original Data",
-                y2_label="Filtered Data"
+                y2_values=self.data_filtered if self.data_filtered else None
             )
             plt.show(block=True) # Keeps the final plot open
 
         if self.save:
             print("\nSaving data ...")
-            time_formated = [f"{t:.10f}" for t in self.time_var]
-            self._save_data(time_formated, "time.dat")
-            self._save_data(self.data, "data.dat")
-            if self.data_filtered:
-                self._save_data(self.data_filtered, "data_filtered.dat")
+            for ch in self.channels:
+                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+                self._save_data(time_formated, f"time_{ch}.dat")
+                self._save_data(self.data[ch], f"data_{ch}.dat")
+                if self.data_filtered[ch]:
+                    self._save_data(self.data_filtered[ch], f"data_filtered_{ch}.dat")
+
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
+
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and self.plot_closed_by_user:
@@ -480,7 +512,6 @@ class GetData(Base):
             plt.close(self.fig)
 
         return
-
 
     def _update_plot_dual(self, time_var, data, data_filtered):
         warnings.warn("`_update_plot_dual` is deprecated. Use `_update_plot` from Base class instead.")

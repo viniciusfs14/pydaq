@@ -90,7 +90,19 @@ class Base:
     def _update_plot(self, x_values, y1_values, y2_values=None, y1_label="Original Data", y2_label="Filtered Data"):
         """
         Method to update plot by clearing and redrawing all points up to current moment.
+
+        Supports:
+        - Single channel:
+            x_values: list
+            y1_values: list
+            y2_values: list or None
+
+        - Multi channel:
+            x_values: dict[channel] -> list
+            y1_values: dict[channel] -> list
+            y2_values: dict[channel] -> list (optional)
         """
+
         if self.fig is None or self.ax is None:
             warnings.warn("Plot not initialized. Call _start_updatable_plot first.")
             return
@@ -103,14 +115,59 @@ class Base:
         self.ax.set_ylabel("Amplitude") # Ensure labels are set again after clear
         self.ax.grid(True)
         
-        # Plot original data (always)
-        # Using marker='o' and linestyle='-' separately for 'o-' style
-        self.ax.plot(x_values, y1_values, color="blue", marker='o', linestyle='-', label=y1_label)
-        
-        # Plot filtered data if provided
-        if y2_values is not None:
-            self.ax.plot(x_values, y2_values, color="red", marker='o', linestyle='-', label=y2_label)
-        
+
+        # ==========================
+        # MULTI-CHANNEL MODE
+        # ==========================
+        if isinstance(x_values, dict):
+
+            for ch in x_values.keys():
+                if len(x_values[ch]) == 0:
+                    continue
+                    
+                # --- FIRST CHANNEL: legacy colors ---
+                if idx == 0:
+                    raw_color = "blue"
+                    filt_color = "red"
+
+                # --- OTHER CHANNELS: matplotlib default cycle ---
+                else:
+                    raw_color = None   # None → matplotlib escolhe
+                    filt_color = None
+
+                self.ax.plot(
+                    x_values[ch],
+                    y1_values[ch],
+                    marker='o',
+                    linestyle='-',
+                    color=raw_color,
+                    label=f"Channel {ch}"
+                )
+
+                if y2_values is not None and ch in y2_values and len(y2_values[ch]) > 0:
+                    self.ax.plot(
+                        x_values[ch],
+                        y2_values[ch],
+                        marker='o',
+                        linestyle='-',
+                        color=filt_color,
+                        label=f"Channel {ch} - Filtered"
+                        )
+
+        # ==========================
+        # SINGLE-CHANNEL MODE (LEGACY)
+        # ==========================
+
+        else:
+
+            # Plot original data (always)
+            # Using marker='o' and linestyle='-' separately for 'o-' style
+            self.ax.plot(x_values, y1_values, color="blue", marker='o', linestyle='-', label=y1_label)
+            
+            # Plot filtered data if provided
+            if y2_values is not None:
+                self.ax.plot(x_values, y2_values, color="red", marker='o', linestyle='-', label=y2_label)
+            
         self.ax.relim() # Recalculate limits
         self.ax.autoscale_view() # Autoscale axes
 
@@ -119,28 +176,7 @@ class Base:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def _update_plot_dual(self, time_var, data, data_filtered):
-        plt.ion()  
 
-        fig = plt.gcf()
-        ax = fig.gca()
-
-        ax.clear()
-
-        ax.plot(time_var, data, label="Original Data", color="blue")
-        ax.scatter(time_var, data, color='blue')
-        ax.plot(time_var, data_filtered, label="Filtered Data", color="red")
-        ax.scatter(time_var, data_filtered, color='red')
-
-        ax.set_title(self.title)
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Amplitude")
-        ax.grid()
-        ax.legend()
-
-        plt.draw()
-        plt.pause(self.ts)  
-        plt.ioff()
         
     def _save_data(self, data, name):
         """Method to save data in self.path with name"""

@@ -272,17 +272,18 @@ class StepResponse(Base):
 
             self.pid_parameters = [Kp, Ki, Kd]
 
-            # Plot tuning results
-            plt.figure(figsize=(10, 6))
-            plt.plot(self.time_var[0:-1], self.output[1:], label="System Output", linewidth=2)
-            plt.plot(self.time_var[0:-1], self.input[0:-1], label="Step Input (Gain K)", linewidth=2)
-            plt.plot(self.time_var[0:-1], tangent_plot, '--', label="Tangent Line (Inflection)", linewidth=2, color='r')
-            plt.title("Ziegler-Nichols Tuning Analysis", fontsize=16)
-            plt.xlabel("Time (s)", fontsize=14)
-            plt.ylabel("Amplitude", fontsize=14)
-            plt.legend()
-            plt.grid(True)
-            plt.show(block=False) # Show the plot without blocking the code
+            if self.plot_mode != 'no':
+                # Plot tuning results
+                plt.figure(figsize=(10, 6))
+                plt.plot(self.time_var[0:-1], self.output[1:], label="System Output", linewidth=2)
+                plt.plot(self.time_var[0:-1], self.input[0:-1], label="Step Input (Gain K)", linewidth=2)
+                plt.plot(self.time_var[0:-1], tangent_plot, '--', label="Tangent Line (Inflection)", linewidth=2, color='r')
+                plt.title("Ziegler-Nichols Tuning Analysis", fontsize=16)
+                plt.xlabel("Time (s)", fontsize=14)
+                plt.ylabel("Amplitude", fontsize=14)
+                plt.legend()
+                plt.grid(True)
+                plt.show(block=False) # Show the plot without blocking the code
 
         if self.plot_mode == 'end' and self.time_var:
             self.title = f"PYDAQ - Step Response (Arduino)"
