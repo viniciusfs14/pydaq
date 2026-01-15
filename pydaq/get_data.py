@@ -109,20 +109,31 @@ class GetData(Base):
         task = nidaqmx.Task()
         
         try:
+            # --- MULTICHANNEL SUPPORT ---
+            channel_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])
+
             task.ai_channels.add_ai_voltage_chan(
-                self.device + "/" + self.channel, terminal_config=self.terminal
+                channel_str, terminal_config=self.terminal
             )
+
+            n_channels = len(self.channels)
             num_cycles_performed = 0
-            
+
             st_worker = time.perf_counter()
             self.st_worker = st_worker
             
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
+
                 temp = task.read()
                 time_now = time.perf_counter() - st_worker
-                data_queue.put((time_now, temp))
+                if n_channels == 1:
+                    temp = [temp]
+
+                for i, ch in enumerate(self.channels):
+                    data_queue.put((time_now, ch, temp[i]))
+
                 num_cycles_performed += 1
 
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
@@ -137,12 +148,16 @@ class GetData(Base):
             data_queue.put(None) # Signal end of data acquisition
             total_acquisition_duration = time.perf_counter() - st_worker
             if num_cycles_performed > 0:
-                avg_acquisition_time_per_cycle = total_acquisition_duration / num_cycles_performed
-                print(f"\nAcquisition Thread finished. Total time: {total_acquisition_duration:.5f}s | Cycles acquired: {num_cycles_performed} | Average time per cycle: {avg_acquisition_time_per_cycle:.5f}s")
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nAcquisition Thread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )           
             else:
                 print("\nAcquisition Thread finished. No data cycles acquired.")
         
-
 
     # Handler for plot window closure
     def _on_plot_close(self, event):
@@ -159,10 +174,11 @@ class GetData(Base):
         Data acquisition method using NI-DAQ and threading.
         Now includes a secondary plot thread using a complete redraw approach.
         """
-        self.data = []
-        self.data_filtered = []
-        self.time_var = []
+        self.data = {ch: [] for ch in self.channels}
+        self.time_var = {ch: [] for ch in self.channels}
+        self.data_filtered = {ch: [] for ch in self.channels}
         self.coeffs = []
+
         if filter_coefs is not None and (isinstance(filter_coefs, tuple) or len(filter_coefs) > 0):
             self.coeffs = filter_coefs
         else:
@@ -214,26 +230,28 @@ class GetData(Base):
                             self.data.append(value)
                     break
 
-                timestamp, value = item
-                self.time_var.append(timestamp)
-                self.data.append(value)
+                timestamp, channel, value = item
+                self.time_var[channel].append(timestamp)
+                self.data[channel].append(value)
 
                 now = time.perf_counter()
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
                     # Applies the filter for real-time plotting
                     if filter_coefs is not None and (isinstance(filter_coefs, tuple) or len(filter_coefs) > 0):
-                        if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
-                            b, a = filter_coefs
-                            self.data_filtered = lfilter(b, a, np.array(self.data)).tolist()
-                        else:
-                            self.data_filtered = lfilter(filter_coefs, 1.0, np.array(self.data)).tolist()
+                        for ch in self.channels:
+                            if len(self.data[ch]) == 0:
+                                continue
+
+                            if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
+                                b, a = filter_coefs
+                                self.data_filtered[ch] = lfilter(b, a, np.array(self.data[ch])).tolist()
+                            else:
+                                self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
 
                     self._update_plot(
                         self.time_var,
                         self.data,
-                        y2_values=self.data_filtered if self.data_filtered else None,
-                        y1_label="Original Data",
-                        y2_label="Filtered Data"
+                        y2_values=self.data_filtered if self.data_filtered else None
                     )
                     last_plot_update_time = now
 
@@ -246,11 +264,15 @@ class GetData(Base):
 
         # Applies final filter if coefficients are present (to save and plot at the end)
         if filter_coefs is not None and (isinstance(filter_coefs, tuple) or len(filter_coefs) > 0):
-            if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
-                b, a = filter_coefs
-                self.data_filtered = lfilter(b, a, np.array(self.data)).tolist()
-            else:
-                self.data_filtered = lfilter(filter_coefs, 1.0, np.array(self.data)).tolist()
+            for ch in self.channels:
+                if len(self.data[ch]) == 0:
+                    continue
+
+                if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
+                    b, a = filter_coefs
+                    self.data_filtered[ch] = lfilter(b, a, np.array(self.data[ch])).tolist()
+                else:
+                    self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
             print("Plot remaining open. Close window manually to exit.")
@@ -264,19 +286,16 @@ class GetData(Base):
             self._update_plot(
                 self.time_var,
                 self.data,
-                y2_values=self.data_filtered if self.data_filtered else None,
-                y1_label="Original Data",
-                y2_label="Filtered Data"
+                y2_values=self.data_filtered if self.data_filtered else None
             )
             plt.show(block=True) # Keeps the final plot open
 
-        if self.save:
-            print("\nSaving data ...")
-            time_formated = [f"{t:.10f}" for t in self.time_var]
-            self._save_data(time_formated, "time.dat")
-            self._save_data(self.data, "data.dat")
-            if self.data_filtered:
-                self._save_data(self.data_filtered, "data_filtered.dat")
+        for ch in self.channels:
+            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+            self._save_data(time_formated, f"time_{ch}.dat")
+            self._save_data(self.data[ch], f"data_{ch}.dat")
+            if self.data_filtered[ch]:
+                self._save_data(self.data_filtered[ch], f"data_filtered_{ch}.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")
@@ -448,9 +467,6 @@ class GetData(Base):
 
                             else:
                                 self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
-                    
-                    labels = [f"Channel {ch}" for ch in self.channels]
-                    labels_filtered = [f"Channel {ch} - Filtered" for ch in self.channels]
 
                     self._update_plot(
                         self.time_var,
@@ -512,25 +528,3 @@ class GetData(Base):
             plt.close(self.fig)
 
         return
-
-    def _update_plot_dual(self, time_var, data, data_filtered):
-        warnings.warn("`_update_plot_dual` is deprecated. Use `_update_plot` from Base class instead.")
-        plt.ion() # This would cause issues if called within a loop
-
-        fig = plt.gcf()
-        ax = fig.gca()
-
-        ax.clear()
-
-        ax.plot(time_var, data, label="Original Data", color="blue", marker='o', linestyle='-')
-        ax.plot(time_var, data_filtered, label="Filtered Data", color="red", marker='o', linestyle='-')
-
-        ax.set_title(self.title if hasattr(self, 'title') else "Plot")
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Amplitude")
-        ax.grid()
-        ax.legend()
-
-        plt.draw()
-        plt.pause(self.ts)
-        plt.ioff()

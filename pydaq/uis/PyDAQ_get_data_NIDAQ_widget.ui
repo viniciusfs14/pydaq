@@ -617,7 +617,7 @@ QPushButton#reload_devices:pressed{
          </size>
         </property>
         <property name="text">
-         <string>Channel:</string>
+         <string>Channel (s):</string>
         </property>
        </widget>
       </item>
@@ -729,7 +729,7 @@ QPushButton#reload_devices:pressed{
  <connections/>
  <buttongroups>
   <buttongroup name="save_radio_group"/>
-  <buttongroup name="plot_radio_group"/>
   <buttongroup name="filter_radio_group"/>
+  <buttongroup name="plot_radio_group"/>
  </buttongroups>
 </ui>

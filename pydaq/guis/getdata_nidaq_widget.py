@@ -1,11 +1,11 @@
 import os
 import nidaqmx
-
 import numpy as np
 import matplotlib.pyplot as plt
 
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
+from PySide6.QtGui import QAction
 
-from PySide6.QtWidgets import QFileDialog, QWidget
 from pydaq.utils.signals import GuiSignals
 from scipy.signal import firwin, lfilter, freqz
 import scipy.signal as signal
@@ -17,7 +17,6 @@ from .error_window_gui import Error_window
 from ..get_data import GetData
 
 from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip
-import asyncio
 
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):
@@ -39,18 +38,13 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
         # Setting the starting values for some widgets
         self.device_combo.addItems(self.device_type)
-        self.channel_combo.addItems(chan)
+        self.available_channels = chan
+        self._setup_channel_selector()
+
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
         self.terminal_config_combo.addItems(["Diff", "RSE", "NRSE"])
-
-        defchan_index = self.channel_combo.findText(defchan)
-
-        if defchan_index == -1:
-            pass
-        else:
-            self.channel_combo.setCurrentIndex(defchan_index)
 
         # Connecting Signals
         self.path_folder_browse.released.connect(self.locate_path)
@@ -67,6 +61,45 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.label_warning.show()
         else:
             self.label_warning.hide()
+    
+    def _setup_channel_selector(self):
+        self.channel_combo.setEditable(True)
+        self.channel_combo.lineEdit().setReadOnly(True)
+        self.channel_combo.lineEdit().setPlaceholderText("Select channels...")
+
+        self.channel_menu = QMenu(self)
+        self.channel_actions = []
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        self.channel_combo.showPopup = self._show_channel_menu
+        
+    def _show_channel_menu(self):
+        self.channel_menu.exec(
+            self.channel_combo.mapToGlobal(
+                self.channel_combo.rect().bottomLeft()
+            )
+        )
+
+    def _update_channel_text(self):
+        selected = self.get_selected_channels()
+
+        # Garante que ao menos 1 canal fique marcado
+        if not any(a.isChecked() for a in self.channel_actions):
+            self.channel_actions[0].setChecked(True)
+            selected = [self.channel_actions[0].text()]
+
+        self.channel_combo.lineEdit().setText(", ".join(selected))
+
+
+    def get_selected_channels(self):
+        selected = [a.text() for a in self.channel_actions if a.isChecked()]
+        return selected if selected else [self.available_channels[0]]
             
     def openFilterWindow(self):
         self.filterWindow = Digital_Filters_NIDAQ_Widget()
@@ -119,15 +152,17 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         else:
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
-   
     def start_func_get_data(self):  # Start getting data
         try:
             # Instantiating the GetData class
             g = GetData()
 
             # Separating variables
-            g.device = self.channel_combo.currentText().split("/")[0]
-            g.channel = self.channel_combo.currentText().split("/")[1]
+            selected = self.get_selected_channels()   # ["Dev1/ai0", "Dev1/ai2"]
+
+            g.device = selected[0].split("/")[0]
+            g.channels = [ch.split("/")[1] for ch in selected]
+
             g.terminal = g.term_map[self.terminal_config_combo.currentText()]
             g.ts = self.Ts_in.value()
             g.session_duration = self.sesh_dur_in.value()
@@ -241,26 +276,25 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        # Changing availables channels if device changes
-        new_ai_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ai_physical_chans.channel_names
+        dev_name = self.device_names[self.device_type.index(self.device_combo.currentText())]
+        new_ai_channels = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
 
-        # Default channel
-        try:
-            default_channel = new_ai_channels[0]
-        except BaseException:
-            default_channel = "There is no analog input in this board"
+        self.available_channels = new_ai_channels
 
-        # Rewriting new ai channels into the right place
-        self.channel_combo.clear()
-        self.channel_combo.addItems(new_ai_channels)
-        defchan_index = self.channel_combo.findText(default_channel)
+        # Recria o menu de canais
+        self.channel_menu.clear()
+        self.channel_actions = []
 
-        if defchan_index == -1:
-            pass
-        else:
-            self.channel_combo.setCurrentIndex(defchan_index)
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        # Marca o primeiro canal por padrão
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
