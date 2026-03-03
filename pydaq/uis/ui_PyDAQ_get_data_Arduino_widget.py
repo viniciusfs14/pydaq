@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_data_Arduino_widgettBCCcF.ui'
+## Form generated from reading UI file 'PyDAQ_get_data_Arduino_widgetWdpmhO.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QVBoxLayout, QWidget)
+import resources_1_rc
 
 class Ui_Arduino_GetData_W(object):
     def setupUi(self, Arduino_GetData_W):
@@ -433,12 +434,12 @@ class Ui_Arduino_GetData_W(object):
         self.widget_4.setObjectName(u"widget_4")
         self.gridLayout_2 = QGridLayout(self.widget_4)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.comboChannels = QComboBox(self.widget_4)
-        self.comboChannels.setObjectName(u"comboChannels")
-        self.comboChannels.setEditable(True)
-        self.comboChannels.setInsertPolicy(QComboBox.InsertPolicy.InsertAtBottom)
+        self.channel_combo = QComboBox(self.widget_4)
+        self.channel_combo.setObjectName(u"channel_combo")
+        self.channel_combo.setEditable(True)
+        self.channel_combo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtBottom)
 
-        self.gridLayout_2.addWidget(self.comboChannels, 0, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.channel_combo, 0, 0, 1, 1)
 
 
         self.gridLayout.addWidget(self.widget_4, 1, 2, 1, 1)
@@ -492,7 +493,7 @@ class Ui_Arduino_GetData_W(object):
         self.reload_devices.setText("")
         self.label_5.setText(QCoreApplication.translate("Arduino_GetData_W", u"Session duration (s):", None))
         self.label.setText(QCoreApplication.translate("Arduino_GetData_W", u"Device:", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_GetData_W", u"Channels:", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_GetData_W", u"Channel (s):", None))
         self.start_get_data.setText(QCoreApplication.translate("Arduino_GetData_W", u" GET DATA ", None))
     # retranslateUi
 

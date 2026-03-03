@@ -3,9 +3,10 @@ import serial
 import serial.tools.list_ports
 import numpy as np
 
-from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu   
 from pydaq.utils.signals import GuiSignals
-
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt
 from ..uis.ui_PyDAQ_send_data_Arduino_widget import Ui_Arduino_SendData_W
 from .error_window_gui import Error_window
 
@@ -30,6 +31,11 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop", "data.dat")
         )
+        
+        # Channel selection
+        # Assuming digital pins 0-13 for Arduino
+        self.available_channels = [f"D{i}" for i in range(14)] 
+        self._setup_channel_selector()
 
     def _update_warning_label(self):
         if self.yes_rt_plot_radio.isChecked():
@@ -71,18 +77,21 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
 
             # Reading data from defined path and rearranjing it
             s.path = self.path_line_edit.text()
-            s.data = np.loadtxt(s.path)
-            s.data = list(s.data)
-            s.data = [5 if i > 2.5 else 0 for i in s.data]
+            
+            # Passing the selected digital pins (channels) to the backend
+            s.channels = self.get_selected_channels()
+
+            s.data = self._prepare_data_matrix(s.path, s.channels)
 
             # Getting the remaining values from the GUI
             s.com_port = serial.tools.list_ports.comports()[
                 self.com_ports.index(self.device_combo.currentText())
             ].name
+            
             s.ts = self.Ts_in.value()
-            if self.yes_rt_plot_radio.isChecked(): # Assumindo que 'yes_radio' agora significa 'Real time'
+            if self.yes_rt_plot_radio.isChecked():
                 s.plot_mode = 'realtime'
-            elif self.yes_ate_plot_radio.isChecked(): # Supondo que você criou um radio button com este nome
+            elif self.yes_ate_plot_radio.isChecked(): 
                 s.plot_mode = 'end'
             else: # self.No_radio.isChecked()
                 s.plot_mode = 'no'
@@ -97,3 +106,77 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
             # Calling send data method
             s.send_data_arduino()
             self.signals.returned.emit(s)
+
+    def _prepare_data_matrix(self, path, selected_channels):
+        """
+        Reads file and prepares a 2D matrix:
+        - If file is 1D → replicate column to all channels
+        - If file is 2D → each column must match a channel
+        - Binarizes values using 2.5V threshold
+        """
+
+        raw_data = np.loadtxt(path)
+        n_channels = len(selected_channels)
+
+        # ----------------------------------------
+        # Case 1: 1D file
+        # ----------------------------------------
+        if raw_data.ndim == 1:
+            raw_data = np.where(raw_data > 2.5, 5, 0)
+            data_matrix = np.tile(raw_data.reshape(-1, 1), (1, n_channels))
+
+        # ----------------------------------------
+        # Case 2: 2D file
+        # ----------------------------------------
+        elif raw_data.ndim == 2:
+            if raw_data.shape[1] != n_channels:
+                raise ValueError(
+                    f"File has {raw_data.shape[1]} columns but "
+                    f"{n_channels} channels were selected."
+                )
+
+            raw_data = np.where(raw_data > 2.5, 5, 0)
+            data_matrix = raw_data
+
+        else:
+            raise ValueError("Unsupported file format.")
+
+        return data_matrix.tolist()
+
+
+    def _setup_channel_selector(self):
+        self.channel_combo.setEditable(True)
+        self.channel_combo.lineEdit().setReadOnly(True)
+        self.channel_combo.lineEdit().setPlaceholderText("Select channels...")
+
+        self.channel_menu = QMenu(self)
+        self.channel_actions = []
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        self.channel_combo.showPopup = self._show_channel_menu
+    
+    def _show_channel_menu(self):
+        self.channel_menu.exec(
+            self.channel_combo.mapToGlobal(
+                self.channel_combo.rect().bottomLeft()
+            )
+        )
+    
+    def _update_channel_text(self):
+        selected = self.get_selected_channels()
+
+        if not any(a.isChecked() for a in self.channel_actions):
+            self.channel_actions[0].setChecked(True)
+            selected = [self.channel_actions[0].text()]
+
+        self.channel_combo.lineEdit().setText(", ".join(selected))
+
+    def get_selected_channels(self):
+        selected = [a.text() for a in self.channel_actions if a.isChecked()]
+        return selected if selected else [self.available_channels[0]]

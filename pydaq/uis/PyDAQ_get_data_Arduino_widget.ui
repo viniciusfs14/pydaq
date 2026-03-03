@@ -609,7 +609,7 @@ QPushButton#reload_devices:pressed{
        <widget class="QWidget" name="widget_4" native="true">
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
-          <widget class="QComboBox" name="comboChannels">
+          <widget class="QComboBox" name="channel_combo">
            <property name="editable">
             <bool>true</bool>
            </property>
@@ -660,8 +660,8 @@ QPushButton#reload_devices:pressed{
  </resources>
  <connections/>
  <buttongroups>
+  <buttongroup name="plot_radio_group"/>
   <buttongroup name="buttonGroup"/>
   <buttongroup name="save_radio_group"/>
-  <buttongroup name="plot_radio_group"/>
  </buttongroups>
 </ui>

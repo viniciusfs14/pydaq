@@ -338,12 +338,12 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             self.channel_menu.addAction(action)
             self.channel_actions.append(action)
 
-        self.comboChannels.showPopup = self._show_channel_menu
+        self.channel_combo.showPopup = self._show_channel_menu
 
     def _show_channel_menu(self):
         self.channel_menu.exec(
-            self.comboChannels.mapToGlobal(
-                self.comboChannels.rect().bottomLeft()
+            self.channel_combo.mapToGlobal(
+                self.channel_combo.rect().bottomLeft()
             )
         )
     
@@ -354,7 +354,7 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             self.channel_actions[0].setChecked(True)
             selected = [self.channel_actions[0].text()]
 
-        self.comboChannels.lineEdit().setText(", ".join(selected))
+        self.channel_combo.lineEdit().setText(", ".join(selected))
 
     def get_selected_channels(self):
         selected = [a.text() for a in self.channel_actions if a.isChecked()]

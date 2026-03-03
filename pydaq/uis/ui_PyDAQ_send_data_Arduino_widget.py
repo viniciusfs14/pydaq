@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_send_data_Arduino_widgetZiJSNi.ui'
+## Form generated from reading UI file 'PyDAQ_send_data_Arduino_widgetkObDWP.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.7.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -20,12 +20,11 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QWidget)
 
-
 class Ui_Arduino_SendData_W(object):
     def setupUi(self, Arduino_SendData_W):
         if not Arduino_SendData_W.objectName():
             Arduino_SendData_W.setObjectName(u"Arduino_SendData_W")
-        Arduino_SendData_W.resize(475, 320)
+        Arduino_SendData_W.resize(475, 362)
         Arduino_SendData_W.setStyleSheet(u"QComboBox QAbstractItemView {\n"
 "    background-color: rgb(77, 77, 77);\n"
 "}\n"
@@ -212,6 +211,13 @@ class Ui_Arduino_SendData_W(object):
         self.widget.setObjectName(u"widget")
         self.gridLayout = QGridLayout(self.widget)
         self.gridLayout.setObjectName(u"gridLayout")
+        self.label_4 = QLabel(self.widget)
+        self.label_4.setObjectName(u"label_4")
+        self.label_4.setMinimumSize(QSize(0, 30))
+        self.label_4.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_4, 2, 0, 1, 1)
+
         self.widget_7 = QWidget(self.widget)
         self.widget_7.setObjectName(u"widget_7")
         self.horizontalLayout = QHBoxLayout(self.widget_7)
@@ -244,44 +250,7 @@ class Ui_Arduino_SendData_W(object):
         self.horizontalLayout.addWidget(self.no_plot_radio)
 
 
-        self.gridLayout.addWidget(self.widget_7, 2, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
-
-        self.label_4 = QLabel(self.widget)
-        self.label_4.setObjectName(u"label_4")
-        self.label_4.setMinimumSize(QSize(0, 30))
-        self.label_4.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout.addWidget(self.label_4, 1, 0, 1, 1)
-
-        self.label_8 = QLabel(self.widget)
-        self.label_8.setObjectName(u"label_8")
-        self.label_8.setMinimumSize(QSize(0, 30))
-        self.label_8.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout.addWidget(self.label_8, 4, 0, 1, 1)
-
-        self.widget_9 = QWidget(self.widget)
-        self.widget_9.setObjectName(u"widget_9")
-        self.widget_9.setMinimumSize(QSize(0, 50))
-        self.widget_9.setMaximumSize(QSize(16777215, 50))
-        self.horizontalLayout_3 = QHBoxLayout(self.widget_9)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.path_line_edit = QLineEdit(self.widget_9)
-        self.path_line_edit.setObjectName(u"path_line_edit")
-        self.path_line_edit.setMinimumSize(QSize(0, 22))
-        self.path_line_edit.setMaximumSize(QSize(16777215, 22))
-
-        self.horizontalLayout_3.addWidget(self.path_line_edit, 0, Qt.AlignmentFlag.AlignVCenter)
-
-        self.path_folder_browse = QPushButton(self.widget_9)
-        self.path_folder_browse.setObjectName(u"path_folder_browse")
-        self.path_folder_browse.setMinimumSize(QSize(0, 30))
-        self.path_folder_browse.setMaximumSize(QSize(16777215, 30))
-
-        self.horizontalLayout_3.addWidget(self.path_folder_browse, 0, Qt.AlignmentFlag.AlignVCenter)
-
-
-        self.gridLayout.addWidget(self.widget_9, 4, 2, 1, 1)
+        self.gridLayout.addWidget(self.widget_7, 3, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
         self.widget_2 = QWidget(self.widget)
         self.widget_2.setObjectName(u"widget_2")
@@ -304,20 +273,6 @@ class Ui_Arduino_SendData_W(object):
 
         self.gridLayout.addWidget(self.widget_2, 0, 2, 1, 1)
 
-        self.label_6 = QLabel(self.widget)
-        self.label_6.setObjectName(u"label_6")
-        self.label_6.setMinimumSize(QSize(0, 30))
-        self.label_6.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout.addWidget(self.label_6, 2, 0, 1, 1)
-
-        self.label = QLabel(self.widget)
-        self.label.setObjectName(u"label")
-        self.label.setMinimumSize(QSize(0, 30))
-        self.label.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
-
         self.widget_5 = QWidget(self.widget)
         self.widget_5.setObjectName(u"widget_5")
         self.gridLayout_6 = QGridLayout(self.widget_5)
@@ -335,14 +290,75 @@ class Ui_Arduino_SendData_W(object):
         self.gridLayout_6.addWidget(self.Ts_in, 0, 0, 1, 1)
 
 
-        self.gridLayout.addWidget(self.widget_5, 1, 2, 1, 1)
+        self.gridLayout.addWidget(self.widget_5, 2, 2, 1, 1)
+
+        self.label = QLabel(self.widget)
+        self.label.setObjectName(u"label")
+        self.label.setMinimumSize(QSize(0, 30))
+        self.label.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
+
+        self.label_8 = QLabel(self.widget)
+        self.label_8.setObjectName(u"label_8")
+        self.label_8.setMinimumSize(QSize(0, 30))
+        self.label_8.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_8, 5, 0, 1, 1)
 
         self.line = QFrame(self.widget)
         self.line.setObjectName(u"line")
         self.line.setFrameShape(QFrame.Shape.VLine)
         self.line.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.gridLayout.addWidget(self.line, 0, 1, 6, 1)
+        self.gridLayout.addWidget(self.line, 0, 1, 7, 1)
+
+        self.label_6 = QLabel(self.widget)
+        self.label_6.setObjectName(u"label_6")
+        self.label_6.setMinimumSize(QSize(0, 30))
+        self.label_6.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_6, 3, 0, 1, 1)
+
+        self.widget_9 = QWidget(self.widget)
+        self.widget_9.setObjectName(u"widget_9")
+        self.widget_9.setMinimumSize(QSize(0, 50))
+        self.widget_9.setMaximumSize(QSize(16777215, 50))
+        self.horizontalLayout_3 = QHBoxLayout(self.widget_9)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.path_line_edit = QLineEdit(self.widget_9)
+        self.path_line_edit.setObjectName(u"path_line_edit")
+        self.path_line_edit.setMinimumSize(QSize(0, 22))
+        self.path_line_edit.setMaximumSize(QSize(16777215, 22))
+
+        self.horizontalLayout_3.addWidget(self.path_line_edit, 0, Qt.AlignmentFlag.AlignVCenter)
+
+        self.path_folder_browse = QPushButton(self.widget_9)
+        self.path_folder_browse.setObjectName(u"path_folder_browse")
+        self.path_folder_browse.setMinimumSize(QSize(0, 30))
+        self.path_folder_browse.setMaximumSize(QSize(16777215, 30))
+
+        self.horizontalLayout_3.addWidget(self.path_folder_browse, 0, Qt.AlignmentFlag.AlignVCenter)
+
+
+        self.gridLayout.addWidget(self.widget_9, 5, 2, 1, 1)
+
+        self.label_2 = QLabel(self.widget)
+        self.label_2.setObjectName(u"label_2")
+
+        self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
+
+        self.widget_3 = QWidget(self.widget)
+        self.widget_3.setObjectName(u"widget_3")
+        self.gridLayout_4 = QGridLayout(self.widget_3)
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.channel_combo = QComboBox(self.widget_3)
+        self.channel_combo.setObjectName(u"channel_combo")
+
+        self.gridLayout_4.addWidget(self.channel_combo, 0, 0, 1, 1)
+
+
+        self.gridLayout.addWidget(self.widget_3, 1, 2, 1, 1)
 
 
         self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 1)
@@ -369,6 +385,7 @@ class Ui_Arduino_SendData_W(object):
 
     def retranslateUi(self, Arduino_SendData_W):
         Arduino_SendData_W.setWindowTitle(QCoreApplication.translate("Arduino_SendData_W", u"Form", None))
+        self.label_4.setText(QCoreApplication.translate("Arduino_SendData_W", u"Sample period (s):", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("Arduino_SendData_W", u"Real time", None))
 #if QT_CONFIG(tooltip)
         self.label_warning.setToolTip(QCoreApplication.translate("Arduino_SendData_W", u"<html><head/><body><p><span style=\" font-size:16pt;\">Selecting Real Time may reduce your acquisition performance if you need to collect data at high frequencies ( sample period &lt; 0.05 s ). We suggest plotting at the end of the acquisition if you don't want to be affected.</span></p></body></html>", None))
@@ -376,15 +393,15 @@ class Ui_Arduino_SendData_W(object):
         self.label_warning.setText(QCoreApplication.translate("Arduino_SendData_W", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
         self.yes_ate_plot_radio.setText(QCoreApplication.translate("Arduino_SendData_W", u"At the end", None))
         self.no_plot_radio.setText(QCoreApplication.translate("Arduino_SendData_W", u"No", None))
-        self.label_4.setText(QCoreApplication.translate("Arduino_SendData_W", u"Sample period (s):", None))
-        self.label_8.setText(QCoreApplication.translate("Arduino_SendData_W", u"Path:", None))
-        self.path_folder_browse.setText(QCoreApplication.translate("Arduino_SendData_W", u" BROWSE ", None))
 #if QT_CONFIG(tooltip)
         self.reload_devices.setToolTip(QCoreApplication.translate("Arduino_SendData_W", u"<html><head/><body><p>Update COM ports</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.reload_devices.setText("")
-        self.label_6.setText(QCoreApplication.translate("Arduino_SendData_W", u"Plot data?", None))
         self.label.setText(QCoreApplication.translate("Arduino_SendData_W", u"Device:", None))
+        self.label_8.setText(QCoreApplication.translate("Arduino_SendData_W", u"Path:", None))
+        self.label_6.setText(QCoreApplication.translate("Arduino_SendData_W", u"Plot data?", None))
+        self.path_folder_browse.setText(QCoreApplication.translate("Arduino_SendData_W", u" BROWSE ", None))
+        self.label_2.setText(QCoreApplication.translate("Arduino_SendData_W", u"Channel (s):", None))
         self.start_send_data.setText(QCoreApplication.translate("Arduino_SendData_W", u"SEND DATA", None))
     # retranslateUi
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widgetLqORks.ui'
+## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widgetpLPgxC.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.7.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QWidget)
-
+import resources_1_rc
 
 class Ui_NIDAQ_GetData_W(object):
     def setupUi(self, NIDAQ_GetData_W):
@@ -525,7 +525,7 @@ class Ui_NIDAQ_GetData_W(object):
         self.label_warning.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
         self.yes_ate_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"At the end", None))
         self.no_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Channel:", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Channel (s):", None))
         self.label_3.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Terminal Config.", None))
         self.label_4.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Sample period (s):", None))
     # retranslateUi

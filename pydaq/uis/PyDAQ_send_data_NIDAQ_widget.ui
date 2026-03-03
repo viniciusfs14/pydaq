@@ -252,7 +252,7 @@ QPushButton#reload_devices:pressed{
          </size>
         </property>
         <property name="text">
-         <string>Channel:</string>
+         <string>Channel (s):</string>
         </property>
        </widget>
       </item>

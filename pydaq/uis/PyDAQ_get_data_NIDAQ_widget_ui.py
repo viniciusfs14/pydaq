@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QWidget)
-import resources_1_rc
 
 class Ui_NIDAQ_GetData_W(object):
     def setupUi(self, NIDAQ_GetData_W):
