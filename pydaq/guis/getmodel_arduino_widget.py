@@ -56,7 +56,7 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
 
         # Available channels (Arduino logic)
         self.available_ai_channels = [f"A{i}" for i in range(8)]
-        self.available_ao_channels = [f"D{i}" for i in range(2, 14)]
+        self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
 
         self._setup_ai_selector()
         self._setup_ao_selector()
@@ -155,6 +155,7 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
 
             g.input_channels = self.get_selected_ai()
             g.output_channels = self.get_selected_ao()
+            
             # Getting the values from the GUI
             g.com_port = serial.tools.list_ports.comports()[
                 self.com_ports.index(self.device_combo.currentText())

@@ -185,11 +185,8 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
 
             g.device = selected_ao[0].split("/")[0]
             g.ao_channels = [ch.split("/")[1] for ch in selected_ao]
-            g.ai_channels = [ch.split("/")[1] for ch in selected_ai]
+            g.channels = [ch.split("/")[1] for ch in selected_ai]
 
-            g.device = self.ao_channel_combo.currentText().split("/")[0]
-            g.ao_channel = self.ao_channel_combo.currentText().split("/")[1]
-            g.ai_channel = self.ai_channel_combo.currentText().split("/")[1]
             g.terminal = g.term_map[self.terminal_config_combo.currentText()]
             g.ts = self.Ts_in.value()
             g.start_save_time = self.save_time_in.value()

@@ -114,9 +114,14 @@ class StepResponse(Base):
         self.plot_closed_by_user = True
 
     def _step_response_worker_arduino(self, data_queue):
+
         channels = self.channels  # === NEW ===
+        print("Worker channels:", channels)
+        print("Worker AO channels:", self.ao_channels)
         n_channels = len(channels)  # === NEW ===
 
+        print("n_channels in worker:", n_channels)
+        
         self.plot_ready_event.wait()
         num_cycles_performed = 0  # === NEW ===
         
@@ -166,6 +171,9 @@ class StepResponse(Base):
                     for i, ch in enumerate(channels):
                         value = values[i] * self.ard_vpb
                         data_queue.put((time_now, ch, digital_val * 5.0, value))
+                    
+                    #scaled_values = [v * self.ard_vpb for v in values[:n_channels]]
+                    #data_queue.put((time_now, channels, digital_val * 5.0, scaled_values))
 
                     num_cycles_performed += 1
 
@@ -198,6 +206,8 @@ class StepResponse(Base):
             data_queue.put(None)
     
     def step_response_arduino(self):
+        print("Saving channels:", self.channels)
+
         """
         This method performs the step response using an Arduino board for given parameters.
 

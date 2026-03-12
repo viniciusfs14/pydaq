@@ -6,7 +6,6 @@ from pydaq.guis.benchmarking_widget import BenchmarkingWidget
 from pydaq.guis.benchmarking_widget import BenchmarkingNIWidget
 import webbrowser
 
-
 class PYDAQ_Global_GUI(QtWidgets.QMainWindow, Ui_PydaqGlobal):
     def __init__(self):
         super(PYDAQ_Global_GUI, self).__init__()

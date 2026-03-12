@@ -358,6 +358,9 @@ class GetData(Base):
                         value = values[i] * self.ard_vpb
                         data_queue.put((time_now, ch, value))
 
+                    #scaled_values = [v * self.ard_vpb for v in values[:n_channels]]
+                    #data_queue.put((time_now, channels, digital_val * 5.0, scaled_values))
+
                     num_cycles_performed += 1
 
                 except (ValueError, UnicodeDecodeError):
