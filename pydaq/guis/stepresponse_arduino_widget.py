@@ -2,7 +2,10 @@ import os
 import serial
 import serial.tools.list_ports
 
-from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt
+
 from pydaq.utils.signals import GuiSignals
 
 from ..uis.ui_PyDAQ_step_response_Arduino_widget import Ui_Arduino_StepResponse_W
@@ -31,6 +34,13 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
+
+        # Available channels (Arduino logic)
+        self.available_ai_channels = [f"A{i}" for i in range(8)]
+        self.available_ao_channels = [f"D{i}" for i in range(2, 14)]
+
+        self._setup_ai_selector()
+        self._setup_ao_selector()
 
     def _update_warning_label(self):
         if self.yes_rt_plot_radio.isChecked():
@@ -68,7 +78,8 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             s = StepResponse()
 
             # Getting the values from the GUI
-
+            s.input_channels = self.get_selected_ai()
+            s.output_channels = self.get_selected_ao()
             s.com_port = serial.tools.list_ports.comports()[
                 self.com_ports.index(self.device_combo.currentText())
             ].name
@@ -112,3 +123,73 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             self.sintony_type = self.PID_comboBox.currentIndex() # Can be 0, 1 or 2: P, PI or PID
         else:
             self.sintony_type = None # None if disabled
+
+    def _setup_ai_selector(self):
+        self.ai_channel_combo.setEditable(True)
+        self.ai_channel_combo.lineEdit().setReadOnly(True)
+        self.ai_channel_combo.lineEdit().setPlaceholderText("Select input channels...")
+        self.ai_menu = QMenu(self)
+        self.ai_actions = []
+        for ch in self.available_ai_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ai_text)
+            self.ai_menu.addAction(action)
+            self.ai_actions.append(action)
+
+        self.ai_channel_combo.showPopup = self._show_ai_menu
+
+    def _show_ai_menu(self):
+        self.ai_menu.exec(
+            self.ai_channel_combo.mapToGlobal(
+                self.ai_channel_combo.rect().bottomLeft()
+            )
+        )
+
+    def _update_ai_text(self):
+        selected = self.get_selected_ai()
+
+        if not any(a.isChecked() for a in self.ai_actions):
+            self.ai_actions[0].setChecked(True)
+            selected = [self.ai_actions[0].text()]
+
+        self.ai_channel_combo.lineEdit().setText(", ".join(selected))
+
+    def get_selected_ai(self):
+        selected = [a.text() for a in self.ai_actions if a.isChecked()]
+        return selected if selected else [self.available_ai_channels[0]]
+    
+    def _setup_ao_selector(self):
+        self.ao_channel_combo.setEditable(True)
+        self.ao_channel_combo.lineEdit().setReadOnly(True)
+        self.ao_channel_combo.lineEdit().setPlaceholderText("Select output channels...")
+        self.ao_menu = QMenu(self)
+        self.ao_actions = []
+        for ch in self.available_ao_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ao_text)
+            self.ao_menu.addAction(action)
+            self.ao_actions.append(action)
+
+        self.ao_channel_combo.showPopup = self._show_ao_menu
+
+    def _show_ao_menu(self):
+        self.ao_menu.exec(
+            self.ao_channel_combo.mapToGlobal(
+                self.ao_channel_combo.rect().bottomLeft()
+            )
+        )
+
+    def _update_ao_text(self):
+        selected = self.get_selected_ao()
+
+        if not any(a.isChecked() for a in self.ao_actions):
+            self.ao_actions[0].setChecked(True)
+            selected = [self.ao_actions[0].text()]
+
+        self.ao_channel_combo.lineEdit().setText(", ".join(selected))
+
+    def get_selected_ao(self):
+        selected = [a.text() for a in self.ao_actions if a.isChecked()]
+        return selected if selected else [self.available_ao_channels[0]]

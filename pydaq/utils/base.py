@@ -141,7 +141,7 @@ class Base:
                     marker='o',
                     linestyle='-',
                     color=raw_color,
-                    label=f"Channel {ch}"
+                    label=f"{y1_label} - Channel {ch}"  # modified: now uses generic label
                 )
 
                 if y2_values is not None and ch in y2_values and len(y2_values[ch]) > 0:
@@ -151,7 +151,7 @@ class Base:
                         marker='o',
                         linestyle='-',
                         color=filt_color,
-                        label=f"Channel {ch} - Filtered"
+                        label=f"{y2_label} - Channel {ch}"  # modified: now uses generic label
                         )
 
         # ==========================

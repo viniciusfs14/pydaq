@@ -251,7 +251,9 @@ class GetData(Base):
                     self._update_plot(
                         self.time_var,
                         self.data,
-                        y2_values=self.data_filtered if self.data_filtered else None
+                        y2_values=self.data_filtered if self.data_filtered else None,
+                        y1_label="Original Data", 
+                        y2_label="Filtered Data"
                     )
                     last_plot_update_time = now
 
@@ -286,7 +288,9 @@ class GetData(Base):
             self._update_plot(
                 self.time_var,
                 self.data,
-                y2_values=self.data_filtered if self.data_filtered else None
+                y2_values=self.data_filtered if self.data_filtered else None,
+                y1_label="Original Data", 
+                y2_label="Filtered Data"
             )
             plt.show(block=True) # Keeps the final plot open
 
@@ -334,7 +338,7 @@ class GetData(Base):
             st_worker = time.perf_counter()
             self.st_worker = st_worker
             
-            for k in range(self.cycles * n_channels):
+            for k in range(self.cycles):
 
                 if not self.acquisition_running:
                     break
@@ -471,7 +475,9 @@ class GetData(Base):
                     self._update_plot(
                         self.time_var,
                         self.data,
-                        y2_values=self.data_filtered if self.data_filtered else None
+                        y2_values=self.data_filtered if self.data_filtered else None,
+                        y1_label="Original Data", 
+                        y2_label="Filtered Data"
                     )
                     last_plot_update_time = now
 
@@ -505,7 +511,9 @@ class GetData(Base):
             self._update_plot(
                 self.time_var,
                 self.data,
-                y2_values=self.data_filtered if self.data_filtered else None
+                y2_values=self.data_filtered if self.data_filtered else None,
+                y1_label="Original Data", 
+                y2_label="Filtered Data"
             )
             plt.show(block=True) # Keeps the final plot open
 

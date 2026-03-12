@@ -4,7 +4,10 @@ import serial
 import serial.tools.list_ports
 from sysidentpy.parameter_estimation import estimators
 
-from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt
+from pydaq.utils.signals import GuiSignals
 
 from ..uis.ui_PyDAQ_get_model_NIDAQ_widget import Ui_Arduino_GetModel_W
 from .error_window_gui import Error_window
@@ -23,47 +26,43 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
         # Gathering nidaq info
         self._nidaq_info()
 
+        # Discover AO channels
         try:
-            ao_chan = nidaqmx.system.device.Device(
-                self.device_names[-1]
+            self.available_ao_channels = nidaqmx.system.device.Device(
+                self.device_names[0]
             ).ao_physical_chans.channel_names
-            ao_def_chan = ao_chan[0]
         except BaseException:
-            ao_chan = ""
-            ao_def_chan = "There is no analog output in this board"
+            self.available_ao_channels = []
 
+        # Discover AI channels
         try:
-            ai_chan = nidaqmx.system.device.Device(
-                self.device_names[-1]
+            self.available_ai_channels = nidaqmx.system.device.Device(
+                self.device_names[0]
             ).ai_physical_chans.channel_names
-            ai_def_chan = ai_chan[0]
         except BaseException:
-            ai_chan = ""
-            ai_def_chan = "There is no analog input in this board"
+            self.available_ai_channels = []
+
+        # ----------------------------
+        # Setting initial widget values
+        # ----------------------------
+        self.device_combo.addItems(self.device_type)
+
+        self.path_line_edit.setText(
+            os.path.join(
+                os.path.expanduser("~"),
+                "Desktop"
+            )
+        )
+        # Setup multichannel selectors
+        self._setup_ao_selector()
+        self._setup_ai_selector()
 
         # Setting the starting values for some widgets
         self.device_combo.addItems(self.device_type)
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
-        self.ao_channel_combo.addItems(ao_chan)
-
-        ao_def_chan_index = self.ao_channel_combo.findText(ao_def_chan)
-
-        if ao_def_chan_index == -1:
-            pass
-        else:
-            self.ao_channel_combo.setCurrentIndex(ao_def_chan_index)
-
-        self.ai_channel_combo.addItems(ai_chan)
-
-        ai_def_chan_index = self.ai_channel_combo.findText(ai_def_chan)
-
-        if ai_def_chan_index == -1:
-            pass
-        else:
-            self.ai_channel_combo.setCurrentIndex(ai_def_chan_index)
-
+        
         self.terminal_config_combo.addItems(["Diff", "RSE", "NRSE"])
 
         self.inp_signal_combo.addItem("PRBS")
@@ -177,6 +176,16 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             g = GetModel()
 
             # Getting the values from the GUI
+            # Input and output range
+            selected_ao = self.get_selected_ao()
+            selected_ai = self.get_selected_ai()
+
+            if not selected_ao or not selected_ai:
+                raise ValueError("Select at least one AO and one AI channel")
+
+            g.device = selected_ao[0].split("/")[0]
+            g.ao_channels = [ch.split("/")[1] for ch in selected_ao]
+            g.ai_channels = [ch.split("/")[1] for ch in selected_ai]
 
             g.device = self.ao_channel_combo.currentText().split("/")[0]
             g.ao_channel = self.ao_channel_combo.currentText().split("/")[1]
@@ -239,44 +248,43 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        # Changing availables channels if device changes
+        dev_name = self.device_names[
+            self.device_type.index(self.device_combo.currentText())
+        ]
 
-        new_ao_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ao_physical_chans.channel_names
-        new_ai_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ai_physical_chans.channel_names
+        new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+        new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
 
-        # Default channel
-        try:
-            default_ao_channel = new_ao_channels[0]
-        except BaseException:
-            default_ao_channel = "There is no analog output in this board"
-        try:
-            default_ai_channel = new_ai_channels[0]
-        except BaseException:
-            default_ai_channel = "There is no analog input in this board"
+        self.available_ao_channels = new_ao
+        self.available_ai_channels = new_ai
 
-        # Rewriting new ai channels into the right place
-        self.ao_channel_combo.clear()
-        self.ai_channel_combo.clear()
-        self.ao_channel_combo.addItems(new_ao_channels)
-        self.ai_channel_combo.addItems(new_ai_channels)
+        # Recreate AO menu
+        self.ao_menu.clear()
+        self.ao_actions = []
 
-        ao_defchan_index = self.ao_channel_combo.findText(default_ao_channel)
+        for ch in self.available_ao_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ao_text)
+            self.ao_menu.addAction(action)
+            self.ao_actions.append(action)
 
-        if ao_defchan_index == -1:
-            pass
-        else:
-            self.ao_channel_combo.setCurrentIndex(ao_defchan_index)
+        if self.ao_actions:
+            self.ao_actions[0].setChecked(True)
 
-        ai_defchan_index = self.ai_channel_combo.findText(default_ai_channel)
+        # Recreate AI menu
+        self.ai_menu.clear()
+        self.ai_actions = []
 
-        if ai_defchan_index == -1:
-            pass
-        else:
-            self.ai_channel_combo.setCurrentIndex(ai_defchan_index)
+        for ch in self.available_ai_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ai_text)
+            self.ai_menu.addAction(action)
+            self.ai_actions.append(action)
+
+        if self.ai_actions:
+            self.ai_actions[0].setChecked(True)
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
@@ -291,3 +299,83 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
 
         # Reconnecting the signal
         self.device_combo.currentIndexChanged.connect(self.update_channels)
+
+    def _setup_ao_selector(self):
+        self.ao_channel_combo.setEditable(True)
+        self.ao_channel_combo.lineEdit().setReadOnly(True)
+        self.ao_channel_combo.lineEdit().setPlaceholderText("Select AO channels...")
+
+        self.ao_menu = QMenu(self)
+        self.ao_actions = []
+
+        for ch in self.available_ao_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ao_text)
+            self.ao_menu.addAction(action)
+            self.ao_actions.append(action)
+
+        self.ao_channel_combo.showPopup = self._show_ao_menu
+
+
+    def _show_ao_menu(self):
+        self.ao_menu.exec(
+            self.ao_channel_combo.mapToGlobal(
+                self.ao_channel_combo.rect().bottomLeft()
+            )
+        )
+
+
+    def _update_ao_text(self):
+        selected = self.get_selected_ao()
+
+        if not any(a.isChecked() for a in self.ao_actions) and self.ao_actions:
+            self.ao_actions[0].setChecked(True)
+            selected = [self.ao_actions[0].text()]
+
+        self.ao_channel_combo.lineEdit().setText(", ".join(selected))
+
+
+    def get_selected_ao(self):
+        selected = [a.text() for a in self.ao_actions if a.isChecked()]
+        return selected if selected else (self.available_ao_channels[:1] if self.available_ao_channels else [])
+    
+    def _setup_ai_selector(self):
+        self.ai_channel_combo.setEditable(True)
+        self.ai_channel_combo.lineEdit().setReadOnly(True)
+        self.ai_channel_combo.lineEdit().setPlaceholderText("Select AI channels...")
+
+        self.ai_menu = QMenu(self)
+        self.ai_actions = []
+
+        for ch in self.available_ai_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ai_text)
+            self.ai_menu.addAction(action)
+            self.ai_actions.append(action)
+
+        self.ai_channel_combo.showPopup = self._show_ai_menu
+
+
+    def _show_ai_menu(self):
+        self.ai_menu.exec(
+            self.ai_channel_combo.mapToGlobal(
+                self.ai_channel_combo.rect().bottomLeft()
+            )
+        )
+
+
+    def _update_ai_text(self):
+        selected = self.get_selected_ai()
+
+        if not any(a.isChecked() for a in self.ai_actions) and self.ai_actions:
+            self.ai_actions[0].setChecked(True)
+            selected = [self.ai_actions[0].text()]
+
+        self.ai_channel_combo.lineEdit().setText(", ".join(selected))
+
+
+    def get_selected_ai(self):
+        selected = [a.text() for a in self.ai_actions if a.isChecked()]
+        return selected if selected else (self.available_ai_channels[:1] if self.available_ai_channels else [])

@@ -14,6 +14,7 @@ import sysidentpy.metrics as metrics
 import threading
 import queue
 
+
 from pydaq.utils.signals import Signal
 from math import floor
 from sysidentpy.model_structure_selection import FROLS
