@@ -641,7 +641,6 @@ class StepResponse(Base):
             baseline = np.min(system_value)  # Use the minimum value of the entire signal
         system_value_normalized = system_value - baseline
 
-
         # Calculate the process gain K
         delta_input = max_val - min_val
         if delta_input == 0:
@@ -649,7 +648,6 @@ class StepResponse(Base):
             k = np.inf
         else:
             k = (system_value_normalized[-1] - system_value_normalized[0]) / delta_input
-
 
         if n >= 5:
             # escolher janela ímpar permitida

@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QWidget)
+import resources_1_rc
 
 class Ui_Arduino_StepResponse_W(object):
     def setupUi(self, Arduino_StepResponse_W):

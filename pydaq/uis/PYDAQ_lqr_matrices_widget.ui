@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Select_LQR_Matrices_Widget</class>
+ <widget class="QWidget" name="Select_LQR_Matrices_Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>907</width>
+    <height>705</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget{
+	background-color: rgb(64, 64, 64);
+}
+
+QTabWidget::pane { 
+   border: 1px solid rgb(166, 166, 166);
+}
+
+QTabBar::tab {
+  	background-color: rgb(77, 77, 77);
+ }
+
+ QTabBar::tab:selected {
+  	background-color: rgb(140, 140, 140);
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 12px;
+	padding-right: 12px;
+ }
+
+ QTabBar::tab:selected:hover {
+  	background-color: rgb(140, 140, 140);
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 12px;
+	padding-right: 12px;
+ }
+
+ QTabBar::tab:hover {
+  	background-color: rgb(109, 109, 109);
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 12px;
+	padding-right: 12px;
+ }
+
+ QTabBar::tab:middle {
+	border-right: 1px dashed rgb(166, 166, 166);
+	border-left: 1px dashed rgb(166, 166, 166);
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 12px;
+	padding-right: 12px;
+ }
+
+ QTabBar::tab:last {
+	border-top-right-radius: 10px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 12px;
+	padding-right: 12px;
+ }
+
+ QTabBar::tab:first {
+	border-top-left-radius: 10px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 12px;
+	padding-right: 12px;
+ }
+
+
+QComboBox QAbstractItemView {
+    background-color: rgb(77, 77, 77);
+}
+
+QComboBox QAbstractItemView::item:focus{
+    background-color: rgb(140, 140, 140);
+}
+
+QDoubleSpinBox{
+	background-color: rgb(77, 77, 77);
+	
+	border-top: 1.5px solid rgb(46, 46, 46);
+	border-left: 1.5px solid rgb(46, 46, 46);
+
+	border-bottom: 1.5px solid rgb(166, 166, 166);
+	border-right: 1.5px solid rgb(166, 166, 166);
+}
+
+QDoubleSpinBox::up-button{
+    image: url(:/imgs/drop_up_arrow.png);
+	width: 11px;
+
+	background-color: rgb(0, 79, 0);
+	border-top: 1.5px solid rgb(127, 167, 127);
+	border-left: 1.5px solid rgb(127, 167, 127);
+
+	border-bottom: 1.5px solid rgb(0, 0, 0);
+	border-right: 1.5px solid rgb(0, 0, 0);
+}
+
+QDoubleSpinBox::up-button:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QDoubleSpinBox::up-button:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QDoubleSpinBox::down-button{
+    image: url(:/imgs/drop_down_arrow.png);
+	width: 11px;
+
+	background-color: rgb(0, 79, 0);
+	border-top: 1.5px solid rgb(127, 167, 127);
+	border-left: 1.5px solid rgb(127, 167, 127);
+
+	border-bottom: 1.5px solid rgb(0, 0, 0);
+	border-right: 1.5px solid rgb(0, 0, 0);
+}
+
+QDoubleSpinBox::down-button:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QDoubleSpinBox::down-button:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QWidget#centralwidget{
+	background-color: rgb(64, 64, 64);
+}
+
+QWidget{
+	color: rgb(255, 255, 255);
+}
+
+QComboBox{
+	background-color: rgb(77, 77, 77);
+	
+	border-top: 1.5px solid rgb(46, 46, 46);
+	border-left: 1.5px solid rgb(46, 46, 46);
+
+	border-bottom: 1.5px solid rgb(166, 166, 166);
+	border-right: 1.5px solid rgb(166, 166, 166);
+}
+
+
+QComboBox::drop-down{
+	image: url(:/imgs/imgs/drop_down_arrow.png);
+	width: 11px;
+
+	background-color: rgb(0, 79, 0);
+	border-top: 2px solid rgb(127, 167, 127);
+	border-left: 2px solid rgb(127, 167, 127);
+
+	border-bottom: 2px solid rgb(0, 0, 0);
+	border-right: 2px solid rgb(0, 0, 0);
+}
+
+QComboBox::drop-down:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QComboBox::drop-down:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QPushButton{
+	background-color: rgb(0, 79, 0);
+
+	border-top: 1.5px solid rgb(127, 167, 127);
+	border-left: 1.5px solid rgb(127, 167, 127);
+
+	border-bottom: 1.5px solid rgb(0, 0, 0);
+	border-right: 1.5px solid rgb(0, 0, 0);
+
+	
+	font: 12pt &quot;Helvetica&quot;;
+	text-align:center;
+}
+
+QWidget{
+	font: 12pt &quot;Helvetica&quot;;
+}
+
+QPushButton:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QPushButton:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QLineEdit{
+	background-color: rgb(77, 77, 77);
+	border-top: 1.5px solid rgb(46, 46, 46);
+	border-left: 1.5px solid rgb(46, 46, 46);
+
+	border-bottom: 1.5px solid rgb(166, 166, 166);
+	border-right: 1.5px solid rgb(166, 166, 166);
+}
+
+QRadioButton::indicator{
+	border-radius: 6px;
+	border-top: 1.5px solid rgb(0, 0, 0);
+	border-left: 1.5px solid rgb(0, 0, 0);
+
+	border-bottom: 1.5px solid rgb(160, 160, 160);
+	border-right: 1.5px solid rgb(160, 160, 160);
+}
+
+QRadioButton::indicator::checked{
+	background-color: white;
+}
+
+QRadioButton::indicator::unchecked:hover{
+	background-color: #9F9F9F;
+}
+
+QRadioButton::indicator::pressed{
+	border: 1.5px solid #505050
+}
+
+QPushButton#reload_devices{
+	image: url(:/imgs/imgs/reload.png);
+	width: 11px;
+	background-color: rgb(0, 79, 0);
+
+	border-top: 1.5px solid rgb(127, 167, 127);
+	border-left: 1.5px solid rgb(127, 167, 127);
+
+	border-bottom: 1.5px solid rgb(0, 0, 0);
+	border-right: 1.5px solid rgb(0, 0, 0);
+
+	
+	font: 12pt &quot;Helvetica&quot;;
+	text-align:center;
+}
+
+QPushButton#reload_devices:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QPushButton#reload_devices:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QSpinBox{
+	background-color: rgb(77, 77, 77);
+	
+	border-top: 1.5px solid rgb(46, 46, 46);
+	border-left: 1.5px solid rgb(46, 46, 46);
+
+	border-bottom: 1.5px solid rgb(166, 166, 166);
+	border-right: 1.5px solid rgb(166, 166, 166);
+}
+
+QSpinBox::up-button{
+    image: url(:/imgs/imgs/drop_up_arrow.png);
+	width: 11px;
+
+	background-color: rgb(0, 79, 0);
+	border-top: 1.5px solid rgb(127, 167, 127);
+	border-left: 1.5px solid rgb(127, 167, 127);
+
+	border-bottom: 1.5px solid rgb(0, 0, 0);
+	border-right: 1.5px solid rgb(0, 0, 0);
+}
+
+QSpinBox::up-button:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QSpinBox::up-button:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QSpinBox::down-button{
+    image: url(:/imgs/imgs/drop_down_arrow.png);
+	width: 11px;
+
+	background-color: rgb(0, 79, 0);
+	border-top: 1.5px solid rgb(127, 167, 127);
+	border-left: 1.5px solid rgb(127, 167, 127);
+
+	border-bottom: 1.5px solid rgb(0, 0, 0);
+	border-right: 1.5px solid rgb(0, 0, 0);
+}
+
+QSpinBox::down-button:pressed{
+	border: 2px solid rgb(255, 255, 255);
+}
+
+QSpinBox::down-button:hover{
+	background-color: rgb(0, 50, 0);
+}
+
+QTableWidget {
+    background-color: rgb(77, 77, 77);
+    gridline-color: rgb(166, 166, 166);
+    color: white; /* All text white */
+    border: 1px solid rgb(166, 166, 166);
+    font: 11pt &quot;Helvetica&quot;;
+    selection-background-color: rgb(110, 110, 110); 
+    selection-color: white;
+}
+
+QHeaderView::section {
+    background-color: rgb(77, 77, 77);
+    color: white;
+    border: 1px solid rgb(166, 166, 166);
+}
+
+QTableWidget QLineEdit {
+    background-color: rgb(90, 90, 90); 
+    color: white;
+    border: 1px solid rgb(166, 166, 166);
+}
+
+QTableWidget::item {
+    color: white;
+}
+
+QTableWidget::item:selected {
+    background-color: rgb(110, 110, 110);
+    color: white;
+}
+
+QScrollBar:vertical {
+     border: 1px solid rgb(140, 140, 140);
+     background: rgb(140, 140, 140);
+     width: 17px;
+     margin: 17px 0 17px 0;
+ }
+QScrollBar::handle:vertical {
+     background: rgb(0, 79, 0);
+     min-height: 20px;
+ }
+QScrollBar::add-line:vertical {
+	image: url(:/imgs/imgs/drop_down_arrow.png);
+     border: 1px solid rgb(140, 140, 140);
+     background: rgb(0, 79, 0);
+     height: 15px;
+     subcontrol-position: bottom;
+     subcontrol-origin: margin;
+ }
+
+QScrollBar::sub-line:vertical {
+	image: url(:/imgs/imgs/drop_up_arrow.png);
+     border: 1px solid rgb(140, 140, 140);
+     background: rgb(0, 79, 0);
+     height: 15px;
+     subcontrol-position: top;
+     subcontrol-origin: margin;
+ }
+
+QScrollBar::add-line:vertical:pressed {
+    border: 1px solid rgb(255, 255, 255);
+	background: rgb(0, 79, 0)
+ }
+
+QScrollBar::sub-line:vertical:pressed {
+	border: 1px solid rgb(255, 255, 255);
+	background: rgb(0, 79, 0)
+ }
+
+QScrollBar::add-line:vertical:hover {
+     background-color: rgb(0, 50, 0);
+ }
+
+QScrollBar::sub-line:vertical:hover {
+    background-color: rgb(0, 50, 0);
+ }
+
+QScrollBar::handle:vertical:pressed {
+    border: 1px solid rgb(255, 255, 255);
+	background: rgb(0, 79, 0)
+ }
+
+QScrollBar::handle:vertical:hover {
+    background-color: rgb(0, 50, 0);
+ }
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+     background: none;
+ }
+
+QScrollArea{
+	border: none;
+}
+
+QScrollBar:horizontal {
+    border: 1px solid rgb(140, 140, 140);
+    background: rgb(140, 140, 140);
+    height: 17px;
+    margin: 0 17px 0 17px; 
+}
+
+QScrollBar::handle:horizontal {
+    background: rgb(0, 79, 0);
+    min-width: 20px;
+}
+
+QScrollBar::add-line:horizontal {
+    image: url(:/imgs/imgs/drop_right_arrow.png); 
+    border: 1px solid rgb(140, 140, 140);
+    background: rgb(0, 79, 0);
+    width: 15px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal {
+    image: url(:/imgs/imgs/drop_left_arrow.png);
+    border: 1px solid rgb(140, 140, 140);
+    background: rgb(0, 79, 0);
+    width: 15px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:horizontal:pressed, QScrollBar::sub-line:horizontal:pressed, QScrollBar::handle:horizontal:pressed {
+    border: 1px solid rgb(255, 255, 255);
+    background: rgb(0, 79, 0);
+}
+
+QScrollBar::add-line:horizontal:hover, QScrollBar::sub-line:horizontal:hover, QScrollBar::handle:horizontal:hover {
+    background-color: rgb(0, 50, 0);
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="3" column="0">
+    <widget class="QWidget" name="Matrix_B" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="labelB">
+        <property name="text">
+         <string>Matrix B</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tableB"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QWidget" name="Matrix_A" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="labelA">
+        <property name="text">
+         <string>Matrix A</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tableA"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QWidget" name="bottom" native="true">
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="1" column="0" alignment="Qt::AlignmentFlag::AlignHCenter">
+       <widget class="QPushButton" name="select_button">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>SELECT LQR MATRICES</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="Line" name="line_bottom">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QWidget" name="header" native="true">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_states">
+        <property name="text">
+         <string>States (n):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spin_states">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_input">
+        <property name="text">
+         <string>Inputs (m):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QSpinBox" name="spin_inputs">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="Line" name="line_header">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QWidget" name="Matrix_R" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QLabel" name="labelR">
+        <property name="text">
+         <string>Matrix R</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tableR"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QWidget" name="Matrix_Q" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QLabel" name="labelQ">
+        <property name="text">
+         <string>Matrix Q</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tableQ"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="resources_1.qrc"/>
+ </resources>
+ <connections/>
+</ui>

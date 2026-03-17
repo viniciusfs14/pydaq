@@ -19,12 +19,13 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QWidget)
+import resources_1_rc
 
 class Ui_NIDAQ_StepResponse_W(object):
     def setupUi(self, NIDAQ_StepResponse_W):
         if not NIDAQ_StepResponse_W.objectName():
             NIDAQ_StepResponse_W.setObjectName(u"NIDAQ_StepResponse_W")
-        NIDAQ_StepResponse_W.resize(786, 675)
+        NIDAQ_StepResponse_W.resize(786, 671)
         NIDAQ_StepResponse_W.setMinimumSize(QSize(60, 0))
         NIDAQ_StepResponse_W.setStyleSheet(u"QComboBox QAbstractItemView {\n"
 "    background-color: rgb(77, 77, 77);\n"

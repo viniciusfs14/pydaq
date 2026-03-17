@@ -1,0 +1,515 @@
+import os
+import time
+import numpy as np
+
+import serial
+import serial.tools.list_ports
+from pydaq.utils.base import Base
+
+import threading
+import queue
+
+import matplotlib.pyplot as plt
+import warnings
+import nidaqmx
+from nidaqmx.constants import TerminalConfiguration
+from scipy.linalg import solve_discrete_are
+
+
+class LQRControl(Base):
+    """
+     Class developed to construct Graphical User Interface for lqr control using arduino and NIDAQ boards
+
+    :author: Samir Angelo Milani Martins
+          - https://www.samirmartins.com.br
+          - https://www.github.com/samirmartins/
+
+     :params:
+         device: nidaq default device.
+         ao_channel: nidaq default analog output channel
+         ai_channel: nidaq default analog input channel
+         ts: sample period, in seconds.
+         session_duration: session duration, in seconds.
+         A, B and LQR matrices: system and cost matrices for LQR control
+         terminal: 'Diff', 'RSE' or 'NRSE': terminal configuration (differential, referenced single ended or non-referenced single ended)
+         plot: if True, plot data iteractively as they are sent/acquired
+
+    """
+
+    def __init__(
+        self,
+        device="Dev1",
+        ao_channel="ao0",
+        ai_channel="ai0",
+        ts=0.2,
+        session_duration=10.0,
+        step_time=3.0,
+        terminal="Diff",
+        com="COM1",
+        plot_mode="no", # Options: "realtime", "end", "no"
+        save=True,
+    ):
+
+        super().__init__()
+        self.ts = ts
+        self.session_duration = session_duration
+        self.plot_mode = plot_mode
+        self.step_time = step_time
+        self.device = device
+        self.ai_channel = ai_channel
+        self.ao_channel = ao_channel
+        self.save = save
+
+        # Terminal configuration
+        self.terminal = self.term_map[terminal]
+
+        # State-Space Matrices and LQR
+        self.A = None
+        self.B = None
+        self.Q = None
+        self.R = None
+        self.K = None # LQR Gain
+
+        self.time_var = {}
+        self.input_data = {}
+        self.output_data = {}
+
+        # COM ports
+        self.com_ports = [i.description for i in serial.tools.list_ports.comports()]
+        self.com_port = com
+
+        # Plot title
+        self.title = None
+
+        # Defining default path
+        self.path = os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
+
+        # Arduino ADC resolution (in bits)
+        self.arduino_ai_bits = 10
+        self.ard_ao_max, self.ard_ao_min = 5, 0
+        self.ard_vpb = (self.ard_ao_max - self.ard_ao_min) / ((2**self.arduino_ai_bits) - 1)
+
+        # Legends
+        self.legend = ["Output", "Input"]
+
+        # Threading control flags and events
+        self.acquisition_running = False
+        self.plot_closed_by_user = False # See if its will be used after later check
+        self.plot_ready_event = threading.Event()
+
+        self.channels = [ai_channel]        # default single channel
+        self.ao_channels = [ao_channel]     # default single channel
+
+    def _calculate_lqr_gain(self):
+        """Calculate the gain K by solving the Riccati Algebraic Equation (ARE)."""
+        try:
+            A = np.array(self.A)
+            B = np.array(self.B)
+            Q = np.array(self.Q)
+            R = np.array(self.R)
+
+            P = solve_discrete_are(A, B, Q, R)
+
+
+            self.K = np.linalg.solve(
+                self.B.T @ P @ self.B + self.R,
+                self.B.T @ P @ self.A
+            )
+
+            print(f"LQR Gain K calculated: {self.K}")
+        except Exception as e:
+            warnings.warn(f"Failed to calculate LQR gain: {e}")
+            self.K = np.zeros((len(self.ao_channels), len(self.channels)))
+
+    # Handler for plot window closure
+    def _on_plot_close(self, event):
+        """..."""
+        print("Plot window closed by user. Initiating shutdown...")
+        self.acquisition_running = False
+        self.plot_closed_by_user = True
+
+    def _lqr_control_worker_arduino(self, data_queue):
+        self.plot_ready_event.wait()
+
+        n_ai = len(self.channels)
+        n_ao = len(self.ao_channels)
+        
+        num_cycles_performed = 0  # === NEW ===
+        
+        try:
+            self._open_serial()
+            
+            # --- WARM-UP SECTION ---
+            # Send an initial command (b"0") to "wake up" the Arduino.
+            self.ser.write(b"0")
+            self.ser.reset_input_buffer()
+
+            # Perform a "warm-up read". This is the call that will be slow.
+            # We will not use this data, so we assign it to '_' (discard).
+            _ = self.ser.readline()
+            # --- END WARM-UP SECTION ---
+
+            st_worker = time.perf_counter()
+            self.st_worker = st_worker
+
+            for k in range(self.cycles):
+                if not self.acquisition_running:
+                    break
+                try: 
+                    raw = self.ser.readline()
+
+                    values = list(map(int, raw.decode("utf-8").strip().split(",")))
+                    if len(values) != n_ai:
+                        warnings.warn(f"Invalid frame size: {values}")
+                        continue
+
+                    # Assuming that each AI channel is a state
+                    x = np.array([v * self.ard_vpb for v in values[:n_ai]]).reshape(-1, 1)
+
+                    # --- LQR Control Law: u = -Kx ---
+                    u = -self.K @ x
+                    u_val = float(u[0][0])
+                    
+                    # Saturation
+                    duty_cycles = []
+                    u_to_plot = []
+                    for i in range(n_ao):
+                        u_val = np.clip(float(u[i]), 0, 5)
+                        u_to_plot.append(u_val)
+                        duty_cycles.append(int((u_val / 5.0) * 255))
+                    
+                    # CSV Multichannel write
+                    msg = ",".join(map(str, duty_cycles)) + "\n"
+                    self.ser.write(msg.encode())
+                    
+                    time_now = time.perf_counter() - st_worker
+                    
+                    for i, ch in enumerate(self.channels):
+                        # Nota: associamos u[0] ao primeiro canal por padrão
+                        u_ref = u_to_plot[0] if len(u_to_plot) > 0 else 0
+                        data_queue.put((time_now, ch, u_ref, x[i][0]))
+
+                except (ValueError, UnicodeDecodeError):
+                    warnings.warn(f"Invalid multichannel read: {raw}")
+                    continue
+                num_cycles_performed += 1
+
+                wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                else:
+                    warnings.warn(
+                        "Time spent exceeded ts. You CANNOT trust time.dat"
+                    )
+
+        except serial.SerialException as e:
+            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+        finally:
+            # Turn off
+            stop_msg = ",".join(["0"] * n_ao) + "\n"
+            self.ser.write(stop_msg.encode())
+            self.ser.close()
+            data_queue.put(None)
+    
+    def lqr_control_arduino(self):
+
+        """
+        This method performs the LQR control using an Arduino board for given parameters.
+
+        :example:
+            lqr_control_arduino()
+
+        """
+
+        self._check_path()
+
+        self._calculate_lqr_gain()
+        self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
+
+        print("Running lqr control for Arduino...")
+        self.time_var = {ch: [] for ch in self.channels}
+        self.input_h = {ch: [] for ch in self.channels}
+        self.output_h = {ch: [] for ch in self.channels}
+
+        data_queue = queue.Queue()
+        self.acquisition_running = True
+        self.plot_closed_by_user = False
+        self.plot_ready_event.clear()
+
+        self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
+
+        acquisition_thread = threading.Thread(
+            target=self._lqr_control_worker_arduino,
+            args=(data_queue,),
+            daemon=True
+        )
+        acquisition_thread.start()
+
+        if self.plot_mode == 'realtime':
+            self.title = f"PYDAQ - LQR Control (Arduino), Port: {self.com_port}"
+            self._start_updatable_plot(title_str=self.title)
+            self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
+
+            # Add a short delay to allow the plot window to open fully
+            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
+            time.sleep(0.5)
+
+            self.plot_ready_event.set()
+        else:
+            self.plot_ready_event.set()
+
+        # Plot update throttling logic for performance
+        if self.ts >= 0.05:
+            plot_update_interval = 0.05
+        else:
+            plot_update_interval = 0.25
+
+        last_plot_update_time = time.perf_counter()
+
+        while (self.acquisition_running and not self.plot_closed_by_user) or not data_queue.empty():
+            try:
+                item = data_queue.get(timeout=0.01)
+                
+                if item is None:
+                    self.acquisition_running = False
+                    # Drain the queue to ensure all data is processed
+                    while not data_queue.empty():
+                        remaining_item = data_queue.get_nowait()
+                        if remaining_item is not None:
+                            t, ch, u, y = remaining_item
+                            self.time_var[ch].append(t)
+                            self.input_h[ch].append(u)
+                            self.output_h[ch].append(y)
+                    break
+
+                t, ch, u, y = item
+                self.time_var[ch].append(t)
+                self.input_h[ch].append(u)
+                self.output_h[ch].append(y)
+
+                # Throttle plot updates for performance
+                now = time.perf_counter()
+
+                if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
+                    self._update_plot(
+                        self.time_var,
+                        self.output_h,
+                        y2_values=self.input_h,
+                        y1_label="Output",
+                        y2_label="Input"
+                    )
+                    last_plot_update_time = now
+
+            except queue.Empty:
+                # This keeps the loop responsive
+                time.sleep(0.01)
+                if not self.acquisition_running and data_queue.empty():
+                    break
+
+        acquisition_thread.join()
+
+        if self.plot_mode == 'end' and self.time_var:
+            self.title = f"PYDAQ - Final Step Response: Arduino, Port: {self.com_port}"
+            self._start_updatable_plot(title_str=self.title)
+            self._update_plot(
+                self.time_var,
+                self.output_h,
+                y2_values=self.input_h,
+                y1_label="Output",
+                y2_label="Input"
+            )
+            plt.show(block=True)
+
+        if self.save:
+            print("\nSaving data ...")
+            for ch in self.channels:
+                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+                self._save_data(time_formated, f"time_{ch}.dat")
+                self._save_data(self.input_h[ch], f"input_{ch}.dat")
+                self._save_data(self.output_h[ch], f"output_{ch}.dat")
+            print("\nData saved ...")
+
+        if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
+            print("\nPlot remains open. Close window manually to exit.")
+            plt.show(block=True)
+        return
+
+    def _lqr_control_worker_nidaq(self, data_queue):
+        # Wait for plot to be ready to synchronize start time
+        self.plot_ready_event.wait()
+        st_worker = time.perf_counter()
+        task_ao = nidaqmx.Task()
+        task_ai = nidaqmx.Task()
+    
+        try:
+            # === NEW: Multi-channel string construction ===
+            ai_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])
+            ao_str = ",".join([f"{self.device}/{ch}" for ch in self.ao_channels])
+
+            task_ai.ai_channels.add_ai_voltage_chan(ai_str, terminal_config=self.terminal)
+            task_ao.ao_channels.add_ao_voltage_chan(ao_str, min_val=0, max_val=5)
+
+            n_ai = len(self.channels)
+            n_ao = len(self.ao_channels)
+
+            for k in range(self.cycles):
+                if not self.acquisition_running:
+                    break
+
+                # Leitura Multicanal
+                y_raw = task_ai.read()
+                y_list = y_raw if n_ai > 1 else [y_raw]
+                x = np.array(y_list).reshape(-1, 1)
+
+                u = -self.K @ x
+                
+                u_out = [np.clip(float(u[i]), 0, 5) for i in range(n_ao)]
+                task_ao.write(u_out if n_ao > 1 else u_out[0])
+
+                time_now = time.perf_counter() - st_worker
+                
+                # === NEW: queue per channel ===
+                for i, ch in enumerate(self.channels):
+                    data_queue.put((time_now, ch, u_out[0], x[i][0]))
+
+                wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
+                if wait_time > 0: time.sleep(wait_time)
+        
+        finally:
+            # Turn off outputs
+            try:
+                if n_ao == 1:
+                    task_ao.write(0)
+                else:
+                    task_ao.write([0] * n_ao)
+            except:
+                pass
+
+            task_ao.close()
+            task_ai.close()
+            data_queue.put(None)
+
+    def lqr_control_nidaq(self):
+        """
+        This method performs the LQR control using a NIDAQ board for given parameters.
+
+        :example:
+            lqr_control_nidaq()
+
+        """
+
+        self._calculate_lqr_gain()
+        self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
+        self.time_var = {ch: [] for ch in self.channels}
+        self.input_h = {ch: [] for ch in self.channels}
+        self.output_h = {ch: [] for ch in self.channels}
+
+        data_queue = queue.Queue()
+        self.acquisition_running = True
+        self.plot_closed_by_user = False
+        self.plot_ready_event.clear()
+
+        self._check_path()
+
+        acquisition_thread = threading.Thread(
+            target=self._lqr_control_worker_nidaq,
+            args=(data_queue,),
+            daemon=True
+        )
+        acquisition_thread.start()
+
+        if self.plot_mode == 'realtime':
+            self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}, Channels: {self.channels}"
+            self._start_updatable_plot(title_str=self.title)
+            self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
+
+            # Add a short delay to allow the plot window to open fully
+            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
+            time.sleep(0.5)
+
+            self.plot_ready_event.set()
+        else:
+            self.plot_ready_event.set() # Allow acquisition to start immediately
+
+        # Plot update throttling logic for performance
+        if self.ts >= 0.05:
+            plot_update_interval = 0.05
+        else:
+            plot_update_interval = 0.25
+
+        last_plot_update_time = time.perf_counter()
+
+        # Main loop for data consumption and plotting
+        while (self.acquisition_running and not self.plot_closed_by_user) or not data_queue.empty():
+            try:
+                item = data_queue.get(timeout=0.01)
+
+                if item is None:
+                    self.acquisition_running = False
+
+                    # Drain the queue to ensure all data is processed
+                    while not data_queue.empty():
+                        remaining_item = data_queue.get_nowait()
+                        if remaining_item is not None:
+                            t, ch, u, y = item
+                            self.time_var[ch].append(t)
+                            self.input_h[ch].append(u)
+                            self.output_h[ch].append(y)
+                    break
+
+                t, ch, u, y = item
+
+                self.time_var[ch].append(t)
+                self.input_h[ch].append(u)
+                self.output_h[ch].append(y)
+
+                # Throttle plot updates for performance
+                now = time.perf_counter()
+
+                if self.plot_mode == 'realtime' and (
+                    now - last_plot_update_time >= plot_update_interval
+                    or not self.acquisition_running
+                ):
+                    self._update_plot(
+                        self.time_var,
+                        self.output_h,
+                        y2_values=self.input_h,
+                        y1_label="Output",
+                        y2_label="Input"
+                    )
+                    last_plot_update_time = now
+
+            except queue.Empty:
+                # This keeps the loop responsive
+                time.sleep(0.01)
+                if not self.acquisition_running and data_queue.empty():
+                    break
+
+        acquisition_thread.join()
+
+        if self.plot_mode == 'end' and any(self.time_var.values()):
+            self.title = f"PYDAQ - Final Step Response (NIDAQ)"
+            self._start_updatable_plot(title_str=self.title)
+            self._update_plot(
+                self.time_var,
+                self.output_h,
+                y2_values=self.input_h,
+                y1_label="Output",
+                y2_label="Input"
+            )
+            plt.show(block=True)
+
+        if self.save:
+            print("\nSaving data ...")
+            for ch in self.channels:
+                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+                self._save_data(time_formated, f"time_{ch}.dat")
+                self._save_data(self.input_h[ch], f"input_{ch}.dat")
+                self._save_data(self.output_h[ch], f"output_{ch}.dat")
+            print("\nData saved ...")
+
+        if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
+            print("\nPlot remains open. Close window manually to exit.")
+            plt.show(block=True)
+
+        return
