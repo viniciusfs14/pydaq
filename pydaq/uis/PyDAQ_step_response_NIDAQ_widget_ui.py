@@ -406,12 +406,12 @@ class Ui_NIDAQ_StepResponse_W(object):
         self.widget_10.setObjectName(u"widget_10")
         self.gridLayout_2 = QGridLayout(self.widget_10)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.ai_channel_combo = QComboBox(self.widget_10)
-        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
-        self.ai_channel_combo.setMinimumSize(QSize(0, 22))
-        self.ai_channel_combo.setMaximumSize(QSize(16777215, 22))
+        self.ao_channel_combo = QComboBox(self.widget_10)
+        self.ao_channel_combo.setObjectName(u"ao_channel_combo")
+        self.ao_channel_combo.setMinimumSize(QSize(0, 22))
+        self.ao_channel_combo.setMaximumSize(QSize(16777215, 22))
 
-        self.gridLayout_2.addWidget(self.ai_channel_combo, 0, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.ao_channel_combo, 0, 0, 1, 1)
 
 
         self.gridLayout.addWidget(self.widget_10, 2, 2, 1, 1)
@@ -441,12 +441,12 @@ class Ui_NIDAQ_StepResponse_W(object):
         self.widget_3.setObjectName(u"widget_3")
         self.gridLayout_4 = QGridLayout(self.widget_3)
         self.gridLayout_4.setObjectName(u"gridLayout_4")
-        self.ao_channel_combo = QComboBox(self.widget_3)
-        self.ao_channel_combo.setObjectName(u"ao_channel_combo")
-        self.ao_channel_combo.setMinimumSize(QSize(0, 22))
-        self.ao_channel_combo.setMaximumSize(QSize(16777215, 22))
+        self.ai_channel_combo = QComboBox(self.widget_3)
+        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
+        self.ai_channel_combo.setMinimumSize(QSize(0, 22))
+        self.ai_channel_combo.setMaximumSize(QSize(16777215, 22))
 
-        self.gridLayout_4.addWidget(self.ao_channel_combo, 0, 0, 1, 1)
+        self.gridLayout_4.addWidget(self.ai_channel_combo, 0, 0, 1, 1)
 
 
         self.gridLayout.addWidget(self.widget_3, 1, 2, 1, 1)
@@ -656,7 +656,7 @@ class Ui_NIDAQ_StepResponse_W(object):
         self.label_12.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Maximum", None))
         self.label_11.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Minimum", None))
         self.reload_devices.setText("")
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AO channel:", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AI channel (s):", None))
         self.label_5.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Session duration (s):", None))
         self.label_4.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Sample period (s):", None))
         self.path_folder_browse.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u" BROWSE ", None))
@@ -665,7 +665,7 @@ class Ui_NIDAQ_StepResponse_W(object):
         self.label_6.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Plot data?", None))
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"No", None))
-        self.label_9.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AI channel:", None))
+        self.label_9.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AO channel (s):", None))
         self.label_16.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Get PID parameters?", None))
         self.label_3.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Terminal Config.", None))
         self.label_7.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Save data?", None))

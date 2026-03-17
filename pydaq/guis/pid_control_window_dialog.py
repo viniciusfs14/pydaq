@@ -50,10 +50,10 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         self.canvas.setMinimumHeight(350)
 
         self.k = 0
-        self.system_values = []
-        self.errors = []
-        self.setpoints = []
-        self.controls = []
+        self.system_values = {}
+        self.errors = {}
+        self.setpoints = {}
+        self.controls = {}
         self.time_var = []
         self.elapsed_time = 0.0
         
@@ -136,11 +136,15 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.pid.Kp = 0
         if self.doubleSpinBox_KiDialog.isEnabled():
             self.ki = self.doubleSpinBox_KiDialog.value()
-            self.pid.integral = 0
+            # Reseta o integral de todos os canais sem quebrar o dicionário
+            if self.pid:
+                for ch in self.pid.channels:
+                    self.pid.integral[ch] = 0.0
             self.pid.Ki = self.ki
         else:
             self.ki = None
-            self.pid.Ki = 0
+            if self.pid: 
+                self.pid.Ki = 0
         if self.doubleSpinBox_KdDialog.isEnabled():
             self.kd = self.doubleSpinBox_KdDialog.value()
             self.pid.Kd = self.kd
@@ -186,6 +190,12 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
  # Inicializate variables and start controling 
     def start_control(self):
         try:
+            # Initialize dictionaries using channels
+            self.system_values = {ch: [] for ch in self.channels}
+            self.errors = {ch: [] for ch in self.channels}
+            self.setpoints = {ch: [] for ch in self.channels}
+            self.controls = {ch: [] for ch in self.channels}
+
             self.pid = PIDControl(
                 self.kp, self.ki, self.kd, self.setpoint,
                 self.numerator, self.denominator,
@@ -221,17 +231,17 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             if not self.control_running:
                 break
 
-            with self.lock:
-                if self.simulate:
-                    self.output, self.error, self.setpoint, self.control = self.pid.update_simulated_system()
-                elif self.board == 'arduino':
-                    self.output, self.error, self.setpoint, self.control = self.pid.update_plot_arduino()
-                elif self.board == 'nidaq':
-                    self.output, self.error, self.setpoint, self.control = self.pid.update_plot_nidaq()
+            if self.simulate:
+                outputs, errors, setpoints, controls = self.pid.update_simulated_system()
+            elif self.board == 'arduino':
+                outputs, errors, setpoints, controls = self.pid.update_plot_arduino()
+            elif self.board == 'nidaq':
+                outputs, errors, setpoints, controls = self.pid.update_plot_nidaq()
 
             time_now = (time.perf_counter() - self.t0) + self.elapsed_time
-            
-            self.data_queue.put((time_now, self.output, self.error, self.setpoint, self.control))
+
+            with self.lock:
+                self.data_queue.put((time_now, outputs, errors, setpoints, controls))
 
             target_time = st_worker + (self.k + 1) * self.ts
             wait_time = target_time - time.perf_counter()
@@ -243,34 +253,54 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.k += 1
 
     def _update_plot(self):
+
         if len(self.time_var) == 0:
             return
 
-        self.line1.set_data(self.time_var, self.system_values)
-        self.line2.set_data(self.time_var, self.setpoints)
-        self.line3.set_data(self.time_var, self.errors)
+        # --- MULTICHANNEL MOD ---
+        for ch in self.channels:
+
+            self.lines_output[ch].set_data(self.time_var, self.system_values[ch])
+            self.lines_setpoint[ch].set_data(self.time_var, self.setpoints[ch])
+            self.lines_error[ch].set_data(self.time_var, self.errors[ch])
 
         self.ax.set_xlim(0, max(self.time_var))
-        y_min = min(min(self.system_values, default=0), self.setpoint * -1.1)
-        y_max = max(max(self.system_values, default=0), self.setpoint * 1.1)
-        self.ax.set_ylim(y_min, y_max)
-        self.ax2.set_ylim(y_min, y_max)
 
-        self.canvas.draw()
+        # --- MULTICHANNEL MOD ---
+        # Gather all system values from all channels to compute global limits
+        all_values = []
+
+        for ch in self.channels:
+            if self.system_values[ch]:
+                all_values.extend(self.system_values[ch])
+
+        if all_values:
+            y_min = min(min(all_values), self.setpoint * -1.1)
+            y_max = max(max(all_values), self.setpoint * 1.1)
+            self.ax.set_ylim(y_min, y_max)
+            
+            # --- MOD ---
+            # Deixe o ax2 (Erro) autoescalar! Ele vai focar no erro pequeno.
+            self.ax2.relim()
+            self.ax2.autoscale_view()
 
     def check_start(self):
         if self.simulate == True:
+            self.pid.channels = self.channels       # Passa [" "] pro PIDControl
+            self.pid.ao_channels = self.ao_channels # Passa [" "] pro PIDControl
             self.pid.simulate_system()
         elif self.board == 'arduino':
             self.pid.com_port = self.com_port
+            self.pid.ao_channels = self.ao_channels
+            self.pid.channels = self.channels
             self.pid.pid_control_arduino() 
         elif self.board == 'nidaq':
             self.pid.device = self.device
-            self.pid.ao_channel = self.ao_channel
-            self.pid.ai_channel = self.ai_channel
+            self.pid.ao_channels = self.ao_channels
+            self.pid.channels = self.channels
             self.pid.terminal = self.pid.term_map[self.terminal]
             self.pid.pid_control_nidaq() 
-            print(self.pid.terminal, ' = ', self.pid.term_map[self.terminal])
+            #print(self.pid.terminal, ' = ', self.pid.term_map[self.terminal])
 
 # Changing the text of the pid parameters inputs
     def set_text(self):
@@ -286,18 +316,19 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.pushButton_close.setText("CLOSE")
             self.pushButton_close.setMinimumWidth(100)
 
-    def check_board(self, board, device, ao, ai, terminal, simulate):
+    def check_board(self, board, hardware_id, ao, ai, terminal, simulate):
         self.board = board
         self.simulate = simulate
+        self.ao_channels = ao  # Recebe [" "] se for simulação, ou a lista real
+        self.channels = ai
+
         if self.simulate == True:
             print ('Starting simulation ...')
         elif self.board == 'arduino':
-            self.com_port = device
+            self.com_port = hardware_id
             print ('Starting control in arduino ...')
         elif self.board == 'nidaq':
-            self.device = device
-            self.ao_channel = ao
-            self.ai_channel = ai
+            self.device = hardware_id # Recebe o nome do dispositivo, ex: "Dev1"
             self.terminal = terminal
             print ('Starting control in nidaq ...')
 
@@ -311,12 +342,28 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.doubleSpinBox_KdDialog.setValue(0)
 
     def init_plot(self):
-        self.line1, = self.ax.plot([], [], 'x', label='System Output', color='cyan')
-        self.line2, = self.ax.plot([], [], '-', label='Setpoint', color='lime')
-        self.line3, = self.ax2.plot([], [], '--', label='Error', color='red')
 
-        if not hasattr(self, 'ax2'):
-            self.ax2 = self.ax.twinx()
+        
+        # --- MULTICHANNEL MOD ---
+        self.lines_output = {}
+        self.lines_setpoint = {}
+        self.lines_error = {}
+
+        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        reds = plt.cm.Reds(np.linspace(0.5, 0.9, max(2, len(self.channels))))
+
+        for i, ch in enumerate(self.channels):
+            c_out = colors[(i * 3 + 0) % len(colors)]
+            c_set = colors[(i * 3 + 1) % len(colors)]
+            c_err = reds[i % len(reds)] # Red shades for error, to visually differentiate from output and setpoint
+
+            line1, = self.ax.plot([], [], 'x', color=c_out, label=f'System Output {ch}')
+            line2, = self.ax.plot([], [], '-', color=c_set, label=f'Setpoint {ch}')
+            line3, = self.ax2.plot([], [], '--', color=c_err, label=f'Error {ch}')
+
+            self.lines_output[ch] = line1
+            self.lines_setpoint[ch] = line2
+            self.lines_error[ch] = line3
 
         self.ax.set_xlim(0, self.period * 10)
         self.ax.set_ylim(-1.1 * self.setpoint, 1.1 * self.setpoint)
@@ -363,14 +410,30 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
                 item = self.data_queue.get(timeout=0.05)
             except queue.Empty:
                 continue
-            t, y, e, s, u = item
+            t, outputs, errors, setpoints, controls = item
             self.time_var.append(t)
-            self.system_values.append(y)
-            self.errors.append(e)
-            self.setpoints.append(s)
-            self.controls.append(u)
+
+            # --- MULTICHANNEL MOD ---
+            for ch in self.channels:
+                if ch not in self.system_values:
+                    self.system_values[ch] = []
+
+                if ch not in self.errors:
+                    self.errors[ch] = []
+
+                if ch not in self.setpoints:
+                    self.setpoints[ch] = []
+
+                if ch not in self.controls:
+                    self.controls[ch] = []
+
+                self.system_values[ch].append(outputs[ch])
+                self.errors[ch].append(errors[ch])
+                self.setpoints[ch].append(setpoints[ch])
+                self.controls[ch].append(controls[ch])
 
     def _update_plot_gui_safe(self):
         with self.lock:
             self._update_plot()
-            self.canvas.draw()
+            self.canvas.draw_idle()
+        #dont ctrl z more than once, otherwise it will cause a crash when the plot is updating and the data is being saved at the same time.

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_step_response_Arduino_widgetLlBvrt.ui'
+## Form generated from reading UI file 'PyDAQ_step_response_Arduino_widgetvlLoxk.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -449,10 +449,10 @@ class Ui_Arduino_StepResponse_W(object):
         self.widget_4.setObjectName(u"widget_4")
         self.horizontalLayout_2 = QHBoxLayout(self.widget_4)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.ao_channel_combo = QComboBox(self.widget_4)
-        self.ao_channel_combo.setObjectName(u"ao_channel_combo")
+        self.ai_channel_combo = QComboBox(self.widget_4)
+        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
 
-        self.horizontalLayout_2.addWidget(self.ao_channel_combo)
+        self.horizontalLayout_2.addWidget(self.ai_channel_combo)
 
 
         self.gridLayout_2.addWidget(self.widget_4, 1, 2, 1, 1)
@@ -494,10 +494,10 @@ class Ui_Arduino_StepResponse_W(object):
         self.widget_5.setObjectName(u"widget_5")
         self.horizontalLayout_3 = QHBoxLayout(self.widget_5)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.ai_channel_combo = QComboBox(self.widget_5)
-        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
+        self.ao_channel_combo = QComboBox(self.widget_5)
+        self.ao_channel_combo.setObjectName(u"ao_channel_combo")
 
-        self.horizontalLayout_3.addWidget(self.ai_channel_combo)
+        self.horizontalLayout_3.addWidget(self.ao_channel_combo)
 
 
         self.gridLayout_2.addWidget(self.widget_5, 2, 2, 1, 1)
@@ -531,7 +531,7 @@ class Ui_Arduino_StepResponse_W(object):
         self.yes_save_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"No", None))
         self.path_folder_browse.setText(QCoreApplication.translate("Arduino_StepResponse_W", u" BROWSE ", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AO channel:", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AI channel (s):", None))
         self.yes_pid_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Yes", None))
         self.no_pid_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"No", None))
         self.PID_comboBox.setItemText(0, QCoreApplication.translate("Arduino_StepResponse_W", u"P", None))
@@ -557,7 +557,7 @@ class Ui_Arduino_StepResponse_W(object):
         self.label_10.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Session duration (s):", None))
         self.label_9.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Plot data?", None))
         self.label_11.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Save data?", None))
-        self.label_4.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AI channel:", None))
+        self.label_4.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AO channel (s):", None))
         self.start_step_response.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"STEP RESPONSE", None))
     # retranslateUi
 

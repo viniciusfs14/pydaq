@@ -78,8 +78,9 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             s = StepResponse()
 
             # Getting the values from the GUI
-            s.input_channels = self.get_selected_ai()
-            s.output_channels = self.get_selected_ao()
+            s.channels = self.get_selected_ai()
+            s.ao_channels = self.get_selected_ao()
+
             s.com_port = serial.tools.list_ports.comports()[
                 self.com_ports.index(self.device_combo.currentText())
             ].name
@@ -87,7 +88,7 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             s.session_duration = self.sesh_dur_in.value()
             s.step_time = self.step_on_s_in.value()
             if self.yes_rt_plot_radio.isChecked(): 
-                s.plot_mode = 'realtime' 
+                s.plot_mode = 'realtime'
             elif self.yes_ate_plot_radio.isChecked():
                 s.plot_mode = 'end'
             else: # self.No_radio.isChecked()

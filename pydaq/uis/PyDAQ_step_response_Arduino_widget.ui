@@ -336,7 +336,7 @@ QComboBox:disabled {
       <item row="1" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>AO channel:</string>
+         <string>AI channel (s):</string>
         </property>
        </widget>
       </item>
@@ -623,7 +623,7 @@ QComboBox:disabled {
        <widget class="QWidget" name="widget_4" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QComboBox" name="ao_channel_combo"/>
+          <widget class="QComboBox" name="ai_channel_combo"/>
          </item>
         </layout>
        </widget>
@@ -695,7 +695,7 @@ QComboBox:disabled {
       <item row="2" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>AI channel:</string>
+         <string>AO channel (s):</string>
         </property>
        </widget>
       </item>
@@ -703,7 +703,7 @@ QComboBox:disabled {
        <widget class="QWidget" name="widget_5" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QComboBox" name="ai_channel_combo"/>
+          <widget class="QComboBox" name="ao_channel_combo"/>
          </item>
         </layout>
        </widget>
@@ -745,7 +745,7 @@ QComboBox:disabled {
  <connections/>
  <buttongroups>
   <buttongroup name="pid_radio_group"/>
-  <buttongroup name="plot_radio_group"/>
   <buttongroup name="save_radio_group"/>
+  <buttongroup name="plot_radio_group"/>
  </buttongroups>
 </ui>

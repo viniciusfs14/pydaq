@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="imgs">
+    <file>imgs/drop_left_arrow.png</file>
+    <file>imgs/drop_right_arrow.png</file>
     <file>imgs/PID_Flow.png</file>
     <file>imgs/Warning_logo.png</file>
     <file>imgs/inform.png</file>

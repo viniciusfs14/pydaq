@@ -672,7 +672,7 @@ QPushButton#reload_devices:pressed{
       <item row="1" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
-         <string>Channel ai:</string>
+         <string>AI channel (s):</string>
         </property>
        </widget>
       </item>
@@ -845,7 +845,7 @@ QPushButton#reload_devices:pressed{
       <item row="2" column="0">
        <widget class="QLabel" name="label_12">
         <property name="text">
-         <string>Channel ao:</string>
+         <string>AO channel (s):</string>
         </property>
        </widget>
       </item>
@@ -916,7 +916,7 @@ QPushButton#reload_devices:pressed{
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="plot_radio_group"/>
   <buttongroup name="save_radio_group"/>
+  <buttongroup name="plot_radio_group"/>
  </buttongroups>
 </ui>

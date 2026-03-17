@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_data_Arduino_widgetWdpmhO.ui'
+## Form generated from reading UI file 'PyDAQ_get_data_Arduino_widgetrbdnLg.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -492,7 +492,7 @@ class Ui_Arduino_GetData_W(object):
         self.reload_devices.setText("")
         self.label_5.setText(QCoreApplication.translate("Arduino_GetData_W", u"Session duration (s):", None))
         self.label.setText(QCoreApplication.translate("Arduino_GetData_W", u"Device:", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_GetData_W", u"Channel (s):", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_GetData_W", u"AI channel (s):", None))
         self.start_get_data.setText(QCoreApplication.translate("Arduino_GetData_W", u" GET DATA ", None))
     # retranslateUi
 

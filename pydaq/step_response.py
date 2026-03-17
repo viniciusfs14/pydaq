@@ -216,13 +216,14 @@ class StepResponse(Base):
 
         """
 
-        if hasattr(self, "input_channels") and self.input_channels:
-            self.channels = self.input_channels  # use selected input channels
+        #if hasattr(self, "channels") and self.channels:
+        #    self.channels = self.channels  # use selected input channels
 
-        if hasattr(self, "output_channels") and self.output_channels:
-            self.ao_channels = self.output_channels  # use selected output channels
+        #if hasattr(self, "ao_channels") and self.ao_channels:
+        #    self.ao_channels = self.ao_channels  # use selected output channels
 
         # --- Start of placeholder implementation ---
+        
         print("Running step response for Arduino...")
         self.time_var = {ch: [] for ch in self.channels}
         self.input = {ch: [] for ch in self.channels}

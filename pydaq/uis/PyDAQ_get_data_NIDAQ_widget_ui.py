@@ -524,7 +524,7 @@ class Ui_NIDAQ_GetData_W(object):
         self.label_warning.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
         self.yes_ate_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"At the end", None))
         self.no_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Channel (s):", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"AI channel (s):", None))
         self.label_3.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Terminal Config.", None))
         self.label_4.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Sample period (s):", None))
     # retranslateUi

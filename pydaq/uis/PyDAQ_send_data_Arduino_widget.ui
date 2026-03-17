@@ -467,7 +467,7 @@ QPushButton#reload_devices:pressed{
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Channel (s):</string>
+         <string>AO channel (s):</string>
         </property>
        </widget>
       </item>

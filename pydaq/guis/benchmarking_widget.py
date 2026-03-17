@@ -73,10 +73,16 @@ class BenchmarkingWidget(QWidget, Ui_Form):
                     t0 = now
                     try:
                         line = self.ser.readline().decode("utf-8").strip()
-                        if line.isdigit():
-                            value = int(line) * ard_vpb
-                        else:
+                        if not line:
                             continue
+                        
+                        # --- MOD --- Checks if it's a valid CSV frame
+                        values = list(map(int, line.split(",")))
+                        value = values[0] * ard_vpb  # Just grab the first one if you need to use it for something.
+                        
+                    except ValueError:
+                        # If it fails to convert to int (e.g., corrupted message), ignore
+                        continue
                     except Exception as e:
                         print("Serial read error:", e)
                         continue

@@ -20,7 +20,6 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QVBoxLayout, QWidget)
-import resources_1_rc
 
 class Ui_Arduino_GetModel_W(object):
     def setupUi(self, Arduino_GetModel_W):
@@ -653,12 +652,12 @@ class Ui_Arduino_GetModel_W(object):
         self.label_6.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Plot data?", None))
         self.label_7.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Save data?", None))
         self.label_5.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Session duration (s):", None))
-        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Channel ai:", None))
+        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AI channel (s):", None))
         self.system_settings_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" ADVANCED SETTINGS ", None))
         self.reload_devices.setText("")
         self.label_4.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Sample period (s):", None))
         self.config_signal_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" CONFIG SIGNAL ", None))
-        self.label_12.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Channel ao:", None))
+        self.label_12.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AO channel (s):", None))
         self.start_get_model.setText(QCoreApplication.translate("Arduino_GetModel_W", u" GET MODEL ", None))
     # retranslateUi
 

@@ -90,8 +90,8 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
                 raise ValueError("Select at least one AO and one AI channel")
 
             s.device = selected_ao[0].split("/")[0]
+            s.channels = [ch.split("/")[1] for ch in selected_ai]
             s.ao_channels = [ch.split("/")[1] for ch in selected_ao]
-            s.ai_channels = [ch.split("/")[1] for ch in selected_ai]
 
             s.terminal = s.term_map[self.terminal_config_combo.currentText()]
             s.step_max = self.step_range_max_in.value()

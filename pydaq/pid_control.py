@@ -28,6 +28,7 @@ class PIDControl(Base):
         unit='Voltage (V)', 
         period=1 
         ):
+
         super().__init__() #Inicializating the matematical control
         self.Kp = float(Kp)
         self.Ki = float(Ki)
@@ -48,131 +49,233 @@ class PIDControl(Base):
         self.terminal="Diff"
         self.com_port = 'COM1' # To arduino  # Default COM port
         self.a = 0.2 # To simulate
+        
+        self.channels = [self.ai_channel]       # Default single AI channel
+        self.ao_channels = [self.ao_channel]    # Default single AO channel
 
-    def update(self, feedback_value):
-        error = self.setpoint - feedback_value
-        self.integral = self.integral + error * self.period
-        derivative = (error - self.previous_error) / self.period
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        self.previous_error = error
-        self.previous_output = output
-        return output, error
+        # PID internal states per channel
+        self.integral = {ch: 0.0 for ch in self.channels}
+        self.previous_error = {ch: 0.0 for ch in self.channels}
+        self.previous_output = {ch: 0.0 for ch in self.channels}
+        self.error = {ch: 0.0 for ch in self.channels}
+        self.output = {ch: 0.0 for ch in self.channels}
+        self.control_unit = {ch:0 for ch in self.channels}
+
+    def update(self, ch, feedback_value):
+        self.error[ch] = self.setpoint - feedback_value
+        self.integral[ch] = self.integral[ch] + self.error[ch] * self.period
+        derivative = (self.error[ch] - self.previous_error[ch]) / self.period
+        self.output[ch] = self.Kp * self.error[ch] + self.Ki * self.integral[ch] + self.Kd * derivative
+        self.previous_error[ch] = self.error[ch]
+        self.previous_output[ch] = self.output[ch]
+        return self.output[ch], self.error[ch]
 
     def pid_control_arduino(self):
-        self.feedback_value = 0
-        self.feedback_calibrated = 0
-        self.control_voltage = 0
-        self.control_unit = 0
-        self.control = 0
+        self.feedback_value = {ch: 0 for ch in self.channels}
+        self.feedback_calibrated = {ch: 0 for ch in self.channels}
+        self.control_voltage = {ch: 0 for ch in self.channels}
+        self.control_unit = {ch: 0 for ch in self.channels}
+        self.control = {ch: 0 for ch in self.channels}
+        self.error = {ch: 0 for ch in self.channels}
+
+        self.integral = {ch: 0.0 for ch in self.channels}
+        self.previous_error = {ch: 0.0 for ch in self.channels}
+        self.previous_output = {ch: 0.0 for ch in self.channels}
+        self.output = {ch: 0.0 for ch in self.channels}
 
         self.com_ports = [i.description for i in serial.tools.list_ports.comports()] # COM ports
         self._open_serial() # Oppening ports
         self.arduino_ai_bits = 10 # Arduino ADC resolution (in bits)
         self.ard_ao_max, self.ard_ao_min = 5, 0 # Arduino analog input max and min
         self.ard_vpb = (self.ard_ao_max - self.ard_ao_min) / ((2 ** self.arduino_ai_bits)-1) # Value per bit - Arduino
-        self.ser.reset_input_buffer()
-        time.sleep(0.5)  # Wait for Arduino and Serial to start up
+
+        time.sleep(0.5)  # Espera o Arduino reiniciar ao abrir a Serial
+        self.ser.reset_input_buffer() # Limpa o lixo inicial UMA SÓ VEZ
+        try:
+            _ = self.ser.readline() # Leitura de descarte
+        except:
+            pass
+        
         self.title = f"PYDAQ - Step Response (Arduino), Port: {self.com_port}" # Start updatable plot
+
+        # --- MOD ---
+        self.n_channels = len(self.channels)
+
+        print("Worker channels:", self.channels)
+        print("Worker AO channels:", self.ao_channels)
 
 # Updating the Datas to plot
     def update_plot_arduino(self):
         
-        self.ser.reset_input_buffer()
+        #self.ser.reset_input_buffer()
         
         #data = self.ser.read(14).decode("UTF-8") # Get the feedback sensor value
 
-        try: 
-            temp = int(self.ser.read(14).split()[-2].decode("UTF-8")) * self.ard_vpb
-        except:
-            temp = self.feedback_value # Use the last valid value
-        self.feedback_value = temp
-        
-        #try:
-        #    self.feedback_value =  int(data.split()[-2]) * self.ard_vpb
-        #except (IndexError, ValueError):
-        #    self.feedback_value = self.feedback_value # Use the last valid value
+        try:
+            raw = self.ser.readline()
 
-        self.feedback_calibrated = self.calibrationuv(self.feedback_value) #Calibration by U(v)
-        self.control_unit, error = self.update(self.feedback_calibrated) # Get the control value
-        self.control_voltage = self.calibrationvu(self.control_unit) #Calibration by V(u)
-        self.control = self.control_voltage
-        if(self.control <= self.ard_ao_min):
-            self.control = self.ard_ao_min
-        elif (self.control >=self.ard_ao_max):
-            self.control = self.ard_ao_max
-        self.duty_cycle_control = int((self.control/self.ard_ao_max) *255) # Change to a duty cicle
-        self.ser.write(f"{self.duty_cycle_control}\n".encode("utf-8")) # Send data to arduino 
-        self.error = error
+            values = list(map(int, raw.decode("utf-8").strip().split(",")))
+
+            if len(values) < self.n_channels:
+                raise ValueError("Incomplete multichannel frame")
+        except:
+            values = [self.feedback_value[ch] for ch in self.channels]
+
+        outputs = {}
+        errors = {}
+        controls = {}
+
+        duty_cycles = []
+
+        for i, ch in enumerate(self.channels):
+            self.feedback_value[ch] = values[i] * self.ard_vpb
+            self.feedback_calibrated[ch] = self.calibrationuv(self.feedback_value[ch])
+            self.control_unit[ch], error = self.update(ch,self.feedback_calibrated[ch])
+            self.control_voltage[ch] = self.calibrationvu(self.control_unit[ch])
+            self.control[ch] = self.control_voltage[ch]
+            if self.control[ch] <= self.ard_ao_min:
+                self.control[ch] = self.ard_ao_min
+            elif self.control[ch] >= self.ard_ao_max:
+                self.control[ch] = self.ard_ao_max
+
+            duty = int((self.control[ch] / self.ard_ao_max) * 255)
+            duty_cycles.append(duty)
+
+            self.error[ch] = error
+
+            outputs[ch] = self.feedback_calibrated[ch]
+            errors[ch] = error
+            controls[ch] = self.control[ch]
+
+        # --- MOD --- send multichannel control
+        msg = ",".join(map(str, duty_cycles)) + "\n"
+
+        self.ser.write(msg.encode())
+
         #print(f"Control (V)/(U): {self.control:.2f} / {self.control_unit:.2f}; Feedback (V)/(U): {self.feedback_value:.2f} / {self.feedback_calibrated:.2f}; Setpoint(U) {self.setpoint:.2f}; error (U) {self.error}")
-        return self.feedback_calibrated, self.error, self.setpoint, self.control
+        
+        return (outputs,errors,{ch: self.setpoint for ch in self.channels},controls)
 
     def pid_control_nidaq(self): #Inicializating the updating nidaq values
         terminal_config = self.terminal # Terminal configuration
         self._nidaq_info() # Gathering nidaq info
         self.task_ai = nidaqmx.Task()
         self.task_ao = nidaqmx.Task()   
-        self.task_ai.ai_channels.add_ai_voltage_chan(
-            self.device + "/" + self.ai_channel, terminal_config=terminal_config
-        )
-        self.task_ao.ao_channels.add_ao_voltage_chan(
-            self.device + "/" + self.ao_channel,
-            min_val=0.0,  # Max value to usb 6009
-            max_val=5.0   # Max value to usb 6009
-        )
 
-        self.feedback_value = 0
-        self.control = 0
-        self.control_unit = 0
-        self.feedback_calibrated = 0
+        # --- MULTICHANNEL MOD ---
+        for ch in self.channels:
+
+            self.task_ai.ai_channels.add_ai_voltage_chan(
+                self.device + "/" + ch, terminal_config=terminal_config
+            )
+        
+        for ch in self.ao_channels:
+
+            self.task_ao.ao_channels.add_ao_voltage_chan(
+                self.device + "/" + ch,
+                min_val=0.0,
+                max_val=5.0
+            )
+
+        self.feedback_value = {ch: 0 for ch in self.channels}
+        self.feedback_calibrated = {ch: 0 for ch in self.channels}
+        self.control_voltage = {ch: 0 for ch in self.channels}
+        self.control = {ch: 0 for ch in self.channels}
+
+        self.control_unit = {ch: 0.0 for ch in self.channels}
+        self.error = {ch: 0.0 for ch in self.channels}
+        self.integral = {ch: 0.0 for ch in self.channels}
+        self.previous_error = {ch: 0.0 for ch in self.channels}
+        self.previous_output = {ch: 0.0 for ch in self.channels}
+        self.output = {ch: 0.0 for ch in self.channels}
 
     def update_plot_nidaq(self):
-        self.feedback_value = self.task_ai.read()
-        self.feedback_calibrated = self.calibrationuv(self.feedback_value)
-        self.control_voltage = self.calibrationvu(self.control_unit)
-        self.control = self.control_voltage
 
-        self.control = self.setpoint
-        if(self.control <= 0):
-            self.control = 0
-        elif (self.control >= 5):
-            self.control = 5
-        self.task_ao.write(self.control)
-        self.error = self.setpoint - self.feedback_calibrated
+        values = self.task_ai.read()
 
+        if len(self.channels) == 1:
+            values = [values]
+
+        # --- MOD --- guarantee dictionaries exist
+        if not hasattr(self, "error"):
+            self.error = {ch: 0 for ch in self.channels}
+
+        if not hasattr(self, "control_unit"):
+            self.control_unit = {ch: 0 for ch in self.channels}
+
+        # --- MULTICHANNEL MOD ---
+        for i, ch in enumerate(self.channels):
+            
+            self.feedback_value[ch] = values[i]
+            self.feedback_calibrated[ch] = self.calibrationuv(self.feedback_value[ch])
+            self.control_unit[ch], error = self.update(ch, self.feedback_calibrated[ch])
+            self.control_voltage[ch] = self.calibrationvu(self.control_unit[ch])
+            self.control[ch] = self.control_voltage[ch]
+
+            if(self.control[ch] <= 0):
+                self.control[ch] = 0
+            elif (self.control[ch] >= 5):
+                self.control[ch] = 5
+
+            self.error[ch] = error
+            
+        self.task_ao.write([self.control[ch] for ch in self.channels])
+
+        #self.error = self.setpoint - self.feedback_calibrated[ch]
         #print(f"Control (V)/(U): {self.control:.2f} / {self.control_unit:.2f}; Feedback (V)/(U): {self.feedback_value:.2f} / {self.feedback_calibrated:.2f}; Setpoint(U) {self.setpoint:.2f}; error (U) {self.error}")
-        return self.feedback_calibrated, self.error, self.setpoint, self.control
+        
+        return (
+            self.feedback_calibrated,
+            self.error,
+            {ch:self.setpoint for ch in self.channels},
+            self.control
+        )
 
     def simulate_system(self):
-        self.feedback_voltages = []
-        self.controls_voltages = []
-        self.error = 0
-        self.feedback_value = 0
-        self.control = 0
-        self.control_voltage = 0
-        self.feedback_calibrated = 0
+
+        ch = self.channels[0]
+
+        self.feedback_voltages = {ch: []}
+        self.controls_voltages = {ch: []}
+        
+        self.feedback_value = {ch: 0}
+        self.control = {ch: 0}
+        self.control_voltage = {ch: 0}
+        self.feedback_calibrated = {ch: 0}
+
+        self.integral = {ch: 0.0}
+        self.previous_error = {ch: 0.0}
+        self.previous_output = {ch: 0.0}
+        self.error = {ch: 0.0}
+        self.output = {ch: 0.0}
+        self.control_unit = {ch: 0.0}
+
         numerator_cont = self.parse_polynomial(self.numerator)
         denominator_cont = self.parse_polynomial(self.denominator)
+
         self.system_cont = signal.TransferFunction(numerator_cont, denominator_cont)
 
     def update_simulated_system(self):
-        ordem = max(len(self.feedback_voltages), len(self.controls_voltages))  # Estimate the ordem
-        while len(self.feedback_voltages) < ordem:
-            self.feedback_voltages.insert(0, 0.0)  # Fill '0' 
-        while len(self.controls_voltages) < ordem:
-            self.controls_voltages.insert(0, 0.0)
-        self.control_unit, error = self.update(self.feedback_calibrated) 
-        self.control_unit = self.control_unit - self.disturbe
-        self.control_voltage = self.calibrationvu(self.control_unit)
-        self.control = self.control_voltage
+        
+        ch = self.channels[0]
 
-        self.feedback_calibrated = self.calibrationuv(self.feedback_value)
-        self.controls_voltages.append(self.control_voltage)
-        self.feedback_voltages.append(self.feedback_value) # This one goes to re-update the system and is in 'voltage'
+        self.control_unit[ch], error = self.update(ch, self.feedback_calibrated[ch])
+        self.control_unit[ch] = self.control_unit[ch] - self.disturbe
+        self.control_voltage[ch] = self.calibrationvu(self.control_unit[ch])
+        self.control[ch] = self.control_voltage[ch]
+        self.feedback_calibrated[ch] = self.calibrationuv(self.feedback_value[ch])
+        self.controls_voltages[ch].append(self.control_voltage[ch])
+        self.feedback_voltages[ch].append(self.feedback_value[ch])
+        _, val = self.get_value_simulate_system(self.system_cont,self.period,self.control[ch],self.feedback_value[ch],)
+        self.feedback_value[ch] = val
+        self.error[ch] = error
 
-        _, self.feedback_value = self.get_value_simulate_system(self.system_cont, self.period, self.control, self.feedback_value)  # Get the system response value by euler descritization of system
-        self.error = error
+        outputs = {ch: self.feedback_calibrated[ch]}
+        errors = {ch: error}
+        controls = {ch: self.control[ch]}
 
-        return self.feedback_calibrated, self.error, self.setpoint, self.control
+        # --- MOD --- return dictionaries
+        return (outputs, errors, {ch: self.setpoint},controls)
 
     def calibrationvu(self, output):
         if not self.calibration_equation_vu or not self.calibration_equation_vu.strip():

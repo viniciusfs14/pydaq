@@ -230,6 +230,9 @@ class GetModel(Base):
         self.inp_read = {ch: [] for ch in self.channels}
         self.time_var = {ch: [] for ch in self.channels}
 
+        self.input_channels = []
+        self.output_channels = []
+
         # Thread controls
         self.acquisition_running = False
         self.plot_closed_by_user = False

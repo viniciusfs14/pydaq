@@ -401,7 +401,7 @@ class Ui_Arduino_SendData_W(object):
         self.label_8.setText(QCoreApplication.translate("Arduino_SendData_W", u"Path:", None))
         self.label_6.setText(QCoreApplication.translate("Arduino_SendData_W", u"Plot data?", None))
         self.path_folder_browse.setText(QCoreApplication.translate("Arduino_SendData_W", u" BROWSE ", None))
-        self.label_2.setText(QCoreApplication.translate("Arduino_SendData_W", u"Channel (s):", None))
+        self.label_2.setText(QCoreApplication.translate("Arduino_SendData_W", u"AO channel (s):", None))
         self.start_send_data.setText(QCoreApplication.translate("Arduino_SendData_W", u"SEND DATA", None))
     # retranslateUi
 

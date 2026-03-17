@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QVBoxLayout, QWidget)
-import resources_1_rc
 
 class Ui_Arduino_GetModel_W(object):
     def setupUi(self, Arduino_GetModel_W):
@@ -623,9 +622,9 @@ class Ui_Arduino_GetModel_W(object):
         self.label_warning.setText(QCoreApplication.translate("Arduino_GetModel_W", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
         self.label_2.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Input signal:", None))
         self.system_settings_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" ADVANCED SETTINGS ", None))
-        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Channel ai:", None))
+        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AI channel (s):", None))
         self.label_9.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Start saving data (s):", None))
-        self.label_11.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Channel ao:", None))
+        self.label_11.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AO channel (s):", None))
         self.yes_save_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"No", None))
         self.label_4.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Sample period (s):", None))

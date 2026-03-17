@@ -6,7 +6,7 @@ import matplotlib.animation as animation
 from PySide6.QtGui import QIcon
 
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton
+from PySide6.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton, QMenu
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
@@ -37,8 +37,15 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         # Setting the starting values for some widgets
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
-        )
-       
+        )   
+
+        # Available channels (Arduino logic)
+        self.available_ai_channels = [f"A{i}" for i in range(8)]
+        self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
+
+        self._setup_ai_selector()
+        self._setup_ao_selector()
+
     def update_com_ports(self):  # Updating com ports
         self.com_ports = [i.description for i in serial.tools.list_ports.comports()]
         selected = self.comboBox_arduino.currentText()
@@ -82,12 +89,24 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             self.widget_polynomial.hide()
             self.label_system_equation.hide()
             self.label_i_polinomial.hide()
+            self.ai_channel_combo.show()
+            self.ao_channel_combo.show()
+            self.label_ai_channel.show()
+            self.label_ao_channel.show()
+            self.widget_ai_channel.show()
+            self.widget_ao_channel.show()
         elif self.simulate is True: #Simulate = True
             self.widget_arduino.hide()
             self.label_arduino.hide()
             self.widget_polynomial.show()
             self.label_system_equation.show()
             self.label_i_polinomial.show()
+            self.ai_channel_combo.hide()
+            self.ao_channel_combo.hide()
+            self.label_ai_channel.hide()
+            self.label_ao_channel.hide()
+            self.widget_ai_channel.hide()
+            self.widget_ao_channel.hide()
 
 # Enable the pid parameters inputs 
     def on_type_combo_changed(self, index):
@@ -150,21 +169,25 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             widget_to_remove = self.image_layout.itemAt(i).widget()
             self.image_layout.removeWidget(widget_to_remove)
             widget_to_remove.setParent(None)
-        self.image_layout.addWidget(canvas)
+        self.image_layout.addWidget(canvas)        
 
 # Create the pid control window
     def show_graph_window(self):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
         self.numerator = self.lineEdit_numerator.text()
         self.denominator = self.lineEdit_denominator.text()
-        print('Simulated? ', self.simulate)
-        if self.simulate == False:
+        #print('Simulated? ', self.simulate)
+        if self.simulate:
+            self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
+            self.ao_channels = [" "]
+            self.com_port = None
+        else:
+            self.channels = self.get_selected_ai()
+            self.ao_channels = self.get_selected_ao()
             self.com_port = serial.tools.list_ports.comports()[
                     self.com_ports.index(self.comboBox_arduino.currentText())
                 ].name
-            print ('Com port1 ', self.com_port)
-        else:    
-            self.com_port = ' '
+
         self.setpoint = self.doubleSpinBox_setpoint.value()
         self.getunit()
         self.equationvu = self.lineEdit_equationvu.text()
@@ -175,8 +198,9 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         self.save = True if self.save_radio_group.checkedId() == -2 else False
         print('Save? ', self.save)
         self.board = 'arduino'
+
         plot_window = PID_Control_Window_Dialog()
-        plot_window.check_board(self.board, self.com_port, None, None, None, self.simulate)
+        plot_window.check_board(self.board, self.com_port, self.ao_channels, self.channels, None, self.simulate)
         plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
         plot_window.send_values.connect(self.update_values)
         plot_window.exec()
@@ -203,3 +227,73 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             self.unit = self.comboBox_setpoint.currentText()
         else:
             self.unit = self.lineEdit_unit.text()
+
+    def _setup_ai_selector(self):
+        self.ai_channel_combo.setEditable(True)
+        self.ai_channel_combo.lineEdit().setReadOnly(True)
+        self.ai_channel_combo.lineEdit().setPlaceholderText("Select input channels...")
+        self.ai_menu = QMenu(self)
+        self.ai_actions = []
+        for ch in self.available_ai_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ai_text)
+            self.ai_menu.addAction(action)
+            self.ai_actions.append(action)
+
+        self.ai_channel_combo.showPopup = self._show_ai_menu
+
+    def _show_ai_menu(self):
+        self.ai_menu.exec(
+            self.ai_channel_combo.mapToGlobal(
+                self.ai_channel_combo.rect().bottomLeft()
+            )
+        )
+
+    def _update_ai_text(self):
+        selected = self.get_selected_ai()
+
+        if not any(a.isChecked() for a in self.ai_actions):
+            self.ai_actions[0].setChecked(True)
+            selected = [self.ai_actions[0].text()]
+
+        self.ai_channel_combo.lineEdit().setText(", ".join(selected))
+
+    def get_selected_ai(self):
+        selected = [a.text() for a in self.ai_actions if a.isChecked()]
+        return selected if selected else [self.available_ai_channels[0]]
+    
+    def _setup_ao_selector(self):
+        self.ao_channel_combo.setEditable(True)
+        self.ao_channel_combo.lineEdit().setReadOnly(True)
+        self.ao_channel_combo.lineEdit().setPlaceholderText("Select output channels...")
+        self.ao_menu = QMenu(self)
+        self.ao_actions = []
+        for ch in self.available_ao_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_ao_text)
+            self.ao_menu.addAction(action)
+            self.ao_actions.append(action)
+
+        self.ao_channel_combo.showPopup = self._show_ao_menu
+
+    def _show_ao_menu(self):
+        self.ao_menu.exec(
+            self.ao_channel_combo.mapToGlobal(
+                self.ao_channel_combo.rect().bottomLeft()
+            )
+        )
+
+    def _update_ao_text(self):
+        selected = self.get_selected_ao()
+
+        if not any(a.isChecked() for a in self.ao_actions):
+            self.ao_actions[0].setChecked(True)
+            selected = [self.ao_actions[0].text()]
+
+        self.ao_channel_combo.lineEdit().setText(", ".join(selected))
+
+    def get_selected_ao(self):
+        selected = [a.text() for a in self.ao_actions if a.isChecked()]
+        return selected if selected else [self.available_ao_channels[0]]

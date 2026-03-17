@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>588</width>
+    <width>575</width>
     <height>1031</height>
    </rect>
   </property>
@@ -822,7 +822,7 @@ QDoubleSpinBox::down-button:hover{
       <item row="4" column="0">
        <widget class="QLabel" name="label_ai_channel">
         <property name="text">
-         <string>AI channel:</string>
+         <string>AI channel (s):</string>
         </property>
        </widget>
       </item>
@@ -945,7 +945,7 @@ QDoubleSpinBox::down-button:hover{
       <item row="5" column="0">
        <widget class="QLabel" name="label_ao_channel">
         <property name="text">
-         <string>AO channel:</string>
+         <string>AO channel (s):</string>
         </property>
        </widget>
       </item>
