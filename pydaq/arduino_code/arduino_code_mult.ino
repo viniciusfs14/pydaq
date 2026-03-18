@@ -20,8 +20,8 @@ Compatible with:
 
 */
 
-const int digitalOutputPorts[] = {8, 9, 10};   // Digital outputs (must match Python channels)
-const int analogInputPorts[]   = {A0, A1, A2}; // Analog inputs
+const int digitalOutputPorts[] = {8, 10, 11};   // Digital outputs (must match Python channels)
+const int analogInputPorts[]   = {A0, A2, A3}; // Analog inputs
 
 const int nOutputs  = sizeof(digitalOutputPorts) / sizeof(digitalOutputPorts[0]);
 const int nChannels = sizeof(analogInputPorts)  / sizeof(analogInputPorts[0]);

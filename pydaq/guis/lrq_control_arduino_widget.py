@@ -14,7 +14,6 @@ from .error_window_gui import Error_window
 
 from ..lqr_control import LQRControl
 
-
 class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
     def __init__(self, *args):
         super(LQRControl_Arduino_Widget, self).__init__()

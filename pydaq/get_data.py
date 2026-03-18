@@ -253,7 +253,8 @@ class GetData(Base):
                         self.data,
                         y2_values=self.data_filtered if self.data_filtered else None,
                         y1_label="Original Data", 
-                        y2_label="Filtered Data"
+                        y2_label="Filtered Data",
+                        channel_names=self.channels
                     )
                     last_plot_update_time = now
 
@@ -290,7 +291,8 @@ class GetData(Base):
                 self.data,
                 y2_values=self.data_filtered if self.data_filtered else None,
                 y1_label="Original Data", 
-                y2_label="Filtered Data"
+                y2_label="Filtered Data",
+                channel_names=self.channels
             )
             plt.show(block=True) # Keeps the final plot open
 
@@ -480,7 +482,8 @@ class GetData(Base):
                         self.data,
                         y2_values=self.data_filtered if self.data_filtered else None,
                         y1_label="Original Data", 
-                        y2_label="Filtered Data"
+                        y2_label="Filtered Data",
+                        channel_names=self.channels
                     )
                     last_plot_update_time = now
 
@@ -516,7 +519,8 @@ class GetData(Base):
                 self.data,
                 y2_values=self.data_filtered if self.data_filtered else None,
                 y1_label="Original Data", 
-                y2_label="Filtered Data"
+                y2_label="Filtered Data",
+                channel_names=self.channels
             )
             plt.show(block=True) # Keeps the final plot open
 

@@ -87,7 +87,7 @@ class Base:
         # Show non-blocking
         plt.show(block=False)
 
-    def _update_plot(self, x_values, y1_values, y2_values=None, y1_label="Original Data", y2_label="Filtered Data"):
+    def _update_plot(self, x_values, y1_values, y2_values=None, y1_label="Original Data", y2_label="Filtered Data", channel_names=None, y2_channel_names=None):
         """
         Method to update plot by clearing and redrawing all points up to current moment.
 
@@ -101,6 +101,8 @@ class Base:
             x_values: dict[channel] -> list
             y1_values: dict[channel] -> list
             y2_values: dict[channel] -> list (optional)
+            channel_names: list of strings with custom names for y1 legend (optional)
+            y2_channel_names: list of strings with custom names for y2 legend (optional)
         """
 
         if self.fig is None or self.ax is None:
@@ -114,17 +116,33 @@ class Base:
         self.ax.set_xlabel("Time (s)") # Ensure labels are set again after clear
         self.ax.set_ylabel("Amplitude") # Ensure labels are set again after clear
         self.ax.grid(True)
-        
 
         # ==========================
         # MULTI-CHANNEL MODE
         # ==========================
         if isinstance(x_values, dict):
 
+            keys = list(x_values.keys())
+            # Map for y1 (Output / Sensors)
+            if isinstance(channel_names, list):
+                ch_map_y1 = {keys[i]: channel_names[i] for i in range(min(len(keys), len(channel_names)))}
+            else:
+                ch_map_y1 = {}
+
+            # Map for y2 (Input / Actuators)
+            if isinstance(y2_channel_names, list):
+                ch_map_y2 = {keys[i]: y2_channel_names[i] for i in range(min(len(keys), len(y2_channel_names)))}
+            else:
+                ch_map_y2 = ch_map_y1 # Fallback to y1 names if y2 names are not provided
+
             for idx, ch in enumerate(x_values.keys()):
                 if len(x_values[ch]) == 0:
                     continue
-                    
+                
+                # Determine display name
+                disp_y1 = ch_map_y1.get(ch, str(ch))
+                disp_y2 = ch_map_y2.get(ch, str(ch))
+
                 # --- FIRST CHANNEL: legacy colors ---
                 if idx == 0:
                     raw_color = "blue"
@@ -141,7 +159,7 @@ class Base:
                     marker='o',
                     linestyle='-',
                     color=raw_color,
-                    label=f"{y1_label} - Channel {ch}"  # modified: now uses generic label
+                    label=f"{y1_label} - ({disp_y1})"  # modified: now uses generic label
                 )
 
                 if y2_values is not None and ch in y2_values and len(y2_values[ch]) > 0:
@@ -151,7 +169,7 @@ class Base:
                         marker='o',
                         linestyle='-',
                         color=filt_color,
-                        label=f"{y2_label} - Channel {ch}"  # modified: now uses generic label
+                        label=f"{y2_label} - ({disp_y2})"  # modified: now uses generic label
                         )
 
         # ==========================
@@ -223,3 +241,91 @@ class Base:
                 if string[i - 1] == " ":
                     oupt += string[i]
             return oupt.upper()
+
+    def _start_updatable_plot_lqr(self, title_str="PYDAQ - LQR Control"):
+        """
+        Initializes a matplotlib figure with 2 subplots (vertically stacked)
+        specifically for LQR/Control visualization.
+        ax1: System Response (y)
+        ax2: Control Effort (u)
+        """
+        plt.ion()
+        # sharex=True faz com que o zoom no eixo do tempo seja igual para os dois gráficos
+        self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+        
+        self.title = title_str
+        self.fig.suptitle(self.title, fontsize=14)
+
+        self.ax1.set_ylabel("Amplitude (Output)")
+        self.ax1.grid(True)
+
+        self.ax2.set_xlabel("Time (s)")
+        self.ax2.set_ylabel("Amplitude (Input)")
+        self.ax2.grid(True)
+
+        self.fig.tight_layout()
+        plt.show(block=False)
+
+    def _update_plot_lqr(self, x_values, y_values, u_values, y_label="System Response", u_label="Control Effort", y_channel_names=None, u_channel_names=None):
+        """
+        Updates the LQR subplots.
+        ax1 plots x_values vs y_values (Output)
+        ax2 plots x_values vs u_values (Input/Control Effort)
+        """
+        if self.fig is None or not hasattr(self, 'ax1') or not hasattr(self, 'ax2'):
+            warnings.warn("LQR Plot not initialized. Call _start_updatable_plot_lqr first.")
+            return
+
+        # Limpa ambos os eixos
+        self.ax1.clear()
+        self.ax2.clear()
+
+        # Configura novamente (pois o clear() apaga as configurações)
+        self.ax1.set_ylabel("Amplitude (Output)")
+        self.ax1.grid(True)
+        self.ax2.set_xlabel("Time (s)")
+        self.ax2.set_ylabel("Amplitude (Input)")
+        self.ax2.grid(True)
+
+        if isinstance(x_values, dict):
+            keys = list(x_values.keys())
+
+            # Mapeamento para as legendas
+            ch_map_y = {keys[i]: y_channel_names[i] for i in range(min(len(keys), len(y_channel_names)))} if isinstance(y_channel_names, list) else {}
+            ch_map_u = {keys[i]: u_channel_names[i] for i in range(min(len(keys), len(u_channel_names)))} if isinstance(u_channel_names, list) else ch_map_y
+
+            for idx, ch in enumerate(keys):
+                if len(x_values[ch]) == 0:
+                    continue
+
+                disp_y = ch_map_y.get(ch, str(ch))
+                disp_u = ch_map_u.get(ch, str(ch))
+
+                # Garante que a mesma cor seja usada no gráfico de cima e de baixo para o mesmo canal
+                color = plt.cm.tab10(idx % 10) 
+
+                # Gráfico Superior: System Response (y)
+                self.ax1.plot(
+                    x_values[ch], y_values[ch],
+                    marker='o', linestyle='-', color=color,
+                    label=f"{y_label} ({disp_y})"
+                )
+
+                # Gráfico Inferior: Control Effort (u)
+                if u_values is not None and ch in u_values and len(u_values[ch]) > 0:
+                    self.ax2.plot(
+                        x_values[ch], u_values[ch],
+                        marker='o', linestyle='-', color=color,
+                        label=f"{u_label} ({disp_u})"
+                    )
+
+        self.ax1.relim()
+        self.ax1.autoscale_view()
+        self.ax1.legend(loc="upper right")
+
+        self.ax2.relim()
+        self.ax2.autoscale_view()
+        self.ax2.legend(loc="upper right")
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()

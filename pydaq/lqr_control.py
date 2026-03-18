@@ -247,7 +247,7 @@ class LQRControl(Base):
 
         if self.plot_mode == 'realtime':
             self.title = f"PYDAQ - LQR Control (Arduino), Port: {self.com_port}"
-            self._start_updatable_plot(title_str=self.title)
+            self._start_updatable_plot_lqr(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
             # Add a short delay to allow the plot window to open fully
@@ -291,12 +291,14 @@ class LQRControl(Base):
                 now = time.perf_counter()
 
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
-                    self._update_plot(
-                        self.time_var,
-                        self.output_h,
-                        y2_values=self.input_h,
-                        y1_label="Output",
-                        y2_label="Input"
+                    self._update_plot_lqr(
+                        x_values=self.time_var,
+                        y_values=self.output_h,
+                        u_values=self.input_h,
+                        y_label="System Response / AI",
+                        u_label="Control Effort / AO",
+                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
+                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
                     )
                     last_plot_update_time = now
 
@@ -310,14 +312,16 @@ class LQRControl(Base):
 
         if self.plot_mode == 'end' and self.time_var:
             self.title = f"PYDAQ - Final Step Response: Arduino, Port: {self.com_port}"
-            self._start_updatable_plot(title_str=self.title)
-            self._update_plot(
-                self.time_var,
-                self.output_h,
-                y2_values=self.input_h,
-                y1_label="Output",
-                y2_label="Input"
-            )
+            self._start_updatable_plot_lqr(title_str=self.title)
+            self._update_plot_lqr(
+                        x_values=self.time_var,
+                        y_values=self.output_h,
+                        u_values=self.input_h,
+                        y_label="System Response / AI",
+                        u_label="Control Effort / AO",
+                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
+                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
+                    )
             plt.show(block=True)
 
         if self.save:
@@ -420,7 +424,7 @@ class LQRControl(Base):
 
         if self.plot_mode == 'realtime':
             self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}, Channels: {self.channels}"
-            self._start_updatable_plot(title_str=self.title)
+            self._start_updatable_plot_lqr(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
             # Add a short delay to allow the plot window to open fully
@@ -470,12 +474,14 @@ class LQRControl(Base):
                     now - last_plot_update_time >= plot_update_interval
                     or not self.acquisition_running
                 ):
-                    self._update_plot(
-                        self.time_var,
-                        self.output_h,
-                        y2_values=self.input_h,
-                        y1_label="Output",
-                        y2_label="Input"
+                    self._update_plot_lqr(
+                        x_values=self.time_var,
+                        y_values=self.output_h,
+                        u_values=self.input_h,
+                        y_label="System Response / AI",
+                        u_label="Control Effort / AO",
+                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
+                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
                     )
                     last_plot_update_time = now
 
@@ -489,14 +495,16 @@ class LQRControl(Base):
 
         if self.plot_mode == 'end' and any(self.time_var.values()):
             self.title = f"PYDAQ - Final Step Response (NIDAQ)"
-            self._start_updatable_plot(title_str=self.title)
-            self._update_plot(
-                self.time_var,
-                self.output_h,
-                y2_values=self.input_h,
-                y1_label="Output",
-                y2_label="Input"
-            )
+            self._start_updatable_plot_lqr(title_str=self.title)
+            self._update_plot_lqr(
+                        x_values=self.time_var,
+                        y_values=self.output_h,
+                        u_values=self.input_h,
+                        y_label="System Response / AI",
+                        u_label="Control Effort / AO",
+                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
+                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
+                    )
             plt.show(block=True)
 
         if self.save:

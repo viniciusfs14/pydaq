@@ -296,7 +296,9 @@ class StepResponse(Base):
                         self.output,
                         y2_values=self.input,
                         y1_label="Output",
-                        y2_label="Input"
+                        y2_label="Input",
+                        channel_names=self.channels,        # Ex: ["A0", "A1"]
+                        y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
                     )
                     last_plot_update_time = now
 
@@ -372,7 +374,9 @@ class StepResponse(Base):
                 self.output,
                 y2_values=self.input,
                 y1_label="Output",
-                y2_label="Input"
+                y2_label="Input",
+                channel_names=self.channels,        # Ex: ["A0", "A1"]
+                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
             )
             plt.show(block=True)
 
@@ -552,7 +556,9 @@ class StepResponse(Base):
                         self.output,
                         y2_values=self.input,
                         y1_label="Output",
-                        y2_label="Input"
+                        y2_label="Input",
+                        channel_names=self.channels,        # Ex: ["A0", "A1"]
+                        y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
                     )
                     last_plot_update_time = now
 
@@ -606,7 +612,9 @@ class StepResponse(Base):
                 self.output,
                 y2_values=self.input,
                 y1_label="Output",
-                y2_label="Input"
+                y2_label="Input",
+                channel_names=self.channels,        # Ex: ["A0", "A1"]
+                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
             )
             plt.show(block=True)
 

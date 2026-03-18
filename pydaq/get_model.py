@@ -452,7 +452,9 @@ class GetModel(Base):
                             aligned_out,
                             y2_values=aligned_in,
                             y1_label="Output",
-                            y2_label="Input"
+                            y2_label="Input",
+                            channel_names=self.channels,        # Ex: ["A0", "A1"]
+                            y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
                         )
                     else:
                         for ch in self.channels:  # >>> CHANGE
@@ -465,7 +467,9 @@ class GetModel(Base):
                             aligned_out,
                             y2_values=aligned_in,
                             y1_label="Output",
-                            y2_label="Input"
+                            y2_label="Input",
+                            channel_names=self.channels,        # Ex: ["A0", "A1"]
+                            y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
                         )
                     last_plot_update_time = now
             except queue.Empty:
@@ -521,7 +525,9 @@ class GetModel(Base):
                 aligned_out,
                 y2_values=aligned_in,
                 y1_label="Output",
-                y2_label="Input"
+                y2_label="Input",
+                channel_names=self.channels,        # Ex: ["A0", "A1"]
+                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
             )
             
             plt.show(block=True)
@@ -685,7 +691,9 @@ class GetModel(Base):
                 aligned_out,
                 y2_values=aligned_in,
                 y1_label="Output",
-                y2_label="Input"
+                y2_label="Input",
+                channel_names=self.channels,        # Ex: ["A0", "A1"]
+                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
             )
             plt.show(block=True)
 
@@ -739,7 +747,7 @@ class GetModel(Base):
             model.fit(X=x_train, y=y_train)
             yhat = model.predict(X=x_valid, y=y_valid)
             rrse = root_relative_squared_error(y_valid, yhat)
-            print(f"Root relative squared error: {rrse}")
+            print(f"Channel {ch}: Root relative squared error: {rrse}")
 
             results_data = results(
                 model.final_model,

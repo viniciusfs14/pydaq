@@ -241,7 +241,12 @@ class SendData(Base):
                 # Improved plot condition to ensure the final frame is drawn
                 if self.plot_mode == 'realtime' and (now - last_plot_time >= plot_update_interval or not self.sending_running):
                     # Plot using the dictionaries, matching get_data style
-                    self._update_plot(self.time_var, self.sent_data_history)
+                    self._update_plot(
+                        self.time_var, 
+                        self.sent_data_history,
+                        y1_label="Sent Data",
+                        channel_names=self.channels
+                        )
                     last_plot_time = now
             
             except queue.Empty:
@@ -255,7 +260,12 @@ class SendData(Base):
         if self.plot_mode == 'end' and any(self.time_var.values()):
             self.title = f"PYDAQ - Final Sent Data (NIDAQ)"
             self._start_updatable_plot(title_str=self.title)
-            self._update_plot(self.time_var, self.sent_data_history)
+            self._update_plot(
+                self.time_var, 
+                self.sent_data_history,
+                y1_label="Sent Data",
+                channel_names=self.channels
+                )
             plt.show(block=True)
             
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
@@ -408,7 +418,12 @@ class SendData(Base):
 
                 now = time.perf_counter()
                 if self.plot_mode == 'realtime' and (now - last_plot_time >= plot_update_interval or not self.sending_running):
-                    self._update_plot(self.time_var, self.sent_data_history)
+                    self._update_plot(
+                        self.time_var, 
+                        self.sent_data_history,
+                        y1_label="Sent Data",
+                        channel_names=self.channels
+                        )
                     last_plot_time = now
             
             except queue.Empty:
@@ -421,7 +436,12 @@ class SendData(Base):
         if self.plot_mode == 'end' and any(self.time_var.values()):
             self.title = f"PYDAQ - Final Sent Data (Arduino)"
             self._start_updatable_plot(title_str=self.title)
-            self._update_plot(self.time_var, self.sent_data_history)
+            self._update_plot(
+                self.time_var, 
+                self.sent_data_history,
+                y1_label="Sent Data",
+                channel_names=self.channels
+                )
             plt.show(block=True)
         
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
