@@ -413,30 +413,42 @@ QTableWidget::item:selected {
 </string>
   </property>
   <layout class="QGridLayout" name="gridLayout_12">
-   <item row="2" column="0" alignment="Qt::AlignmentFlag::AlignHCenter">
-    <widget class="QPushButton" name="start_lqr_control">
-     <property name="minimumSize">
-      <size>
-       <width>130</width>
-       <height>30</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>130</width>
-       <height>30</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>LQR CONTROL</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="Line" name="line_3">
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
-     </property>
+   <item row="2" column="0">
+    <widget class="QWidget" name="widget_12" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QPushButton" name="start_lqr_control">
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>130</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>LQR CONTROL</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="simulate_button">
+        <property name="maximumSize">
+         <size>
+          <width>110</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>SIMULATION</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item row="0" column="0">
@@ -966,6 +978,13 @@ QTableWidget::item:selected {
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="Line" name="line_3">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
     </widget>
    </item>
   </layout>

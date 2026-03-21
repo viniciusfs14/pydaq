@@ -61,6 +61,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
         self.plot_radio_group.buttonToggled.connect(self._update_warning_label)
         self.reload_devices.released.connect(self.reload_devices_handler)
         self.insert_matrices.released.connect(self.openMatricesWindow)
+        self.simulate_button.released.connect(self.run_pure_simulation)
         self.signals = GuiSignals()
 
         # LQR matrices
@@ -188,6 +189,8 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
 
         if self.ao_actions:
             self.ao_actions[0].setChecked(True)
+        else:
+            self.ao_channel_combo.lineEdit().clear()
 
         # Recreate AI menu
         self.ai_menu.clear()
@@ -202,6 +205,8 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
 
         if self.ai_actions:
             self.ai_actions[0].setChecked(True)
+        else:
+            self.ai_channel_combo.lineEdit().clear()
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
@@ -220,7 +225,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
     def _setup_ao_selector(self):
         self.ao_channel_combo.setEditable(True)
         self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("Select AO channels...")
+        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.ao_menu = QMenu(self)
         self.ao_actions = []
@@ -233,6 +238,11 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             self.ao_actions.append(action)
 
         self.ao_channel_combo.showPopup = self._show_ao_menu
+
+        if self.ao_actions:
+            self.ao_actions[0].setChecked(True)
+        else:
+            self.ao_channel_combo.lineEdit().clear()
 
 
     def _show_ao_menu(self):
@@ -260,7 +270,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
     def _setup_ai_selector(self):
         self.ai_channel_combo.setEditable(True)
         self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("Select AI channels...")
+        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.ai_menu = QMenu(self)
         self.ai_actions = []
@@ -273,6 +283,11 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             self.ai_actions.append(action)
 
         self.ai_channel_combo.showPopup = self._show_ai_menu
+
+        if self.ai_actions:
+            self.ai_actions[0].setChecked(True)
+        else:
+            self.ai_channel_combo.lineEdit().clear()
 
 
     def _show_ai_menu(self):
@@ -330,3 +345,23 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
 
         self.Matrices.dataEntered.connect(self.update_values)
         self.Matrices.show()
+
+    def run_pure_simulation(self):
+        try:
+            if self.A is None or self.B is None or self.Q is None or self.R is None:
+                print("Insira as matrizes antes de simular.")
+                return
+
+            # Instancia apenas para simular
+            l = LQRControl()
+            l.A = self.A
+            l.B = self.B
+            l.Q = self.Q
+            l.R = self.R
+            l.ts = self.Ts_in.value()
+            l.session_duration = self.sesh_dur_in.value()
+
+            l.simulate_lqr()
+
+        except BaseException as e:
+            print(f"Erro na simulação: {e}")

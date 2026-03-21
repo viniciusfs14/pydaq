@@ -130,18 +130,16 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
+
         # Changing availables channels if device changes
+        dev_name = self.device_names[
+            self.device_type.index(self.device_combo.currentText())
+        ]
 
-        # Discovering new ao channels
-        new_ao_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ao_physical_chans.channel_names
-
-        # Default channel
         try:
-            default_channel = new_ao_channels[0]
-        except:
-            default_channel = "There is no analog output in this board"
+            new_ao_channels = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+        except BaseException:
+            new_ao_channels = []
 
         self.available_channels = new_ao_channels
         # Recreate the channel menu
@@ -162,6 +160,8 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
         # Select the first channel by default if available
         if self.channel_actions:
             self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
         
         self._update_channel_text()
 
@@ -227,7 +227,7 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
         self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("Select channels...")
+        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.channel_menu = QMenu(self)
         self.channel_actions = []
@@ -240,6 +240,11 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             self.channel_actions.append(action)
 
         self.channel_combo.showPopup = self._show_channel_menu
+
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
 
     def _show_channel_menu(self):
         self.channel_menu.exec(

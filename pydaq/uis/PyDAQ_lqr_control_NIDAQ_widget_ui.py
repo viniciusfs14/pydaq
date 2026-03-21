@@ -427,19 +427,25 @@ class Ui_NIDAQ_LQR_Control(object):
 "")
         self.gridLayout_12 = QGridLayout(NIDAQ_LQR_Control)
         self.gridLayout_12.setObjectName(u"gridLayout_12")
-        self.start_lqr_control = QPushButton(NIDAQ_LQR_Control)
+        self.widget_12 = QWidget(NIDAQ_LQR_Control)
+        self.widget_12.setObjectName(u"widget_12")
+        self.horizontalLayout_4 = QHBoxLayout(self.widget_12)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.start_lqr_control = QPushButton(self.widget_12)
         self.start_lqr_control.setObjectName(u"start_lqr_control")
         self.start_lqr_control.setMinimumSize(QSize(130, 30))
         self.start_lqr_control.setMaximumSize(QSize(130, 30))
 
-        self.gridLayout_12.addWidget(self.start_lqr_control, 2, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter)
+        self.horizontalLayout_4.addWidget(self.start_lqr_control)
 
-        self.line_3 = QFrame(NIDAQ_LQR_Control)
-        self.line_3.setObjectName(u"line_3")
-        self.line_3.setFrameShape(QFrame.Shape.HLine)
-        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
+        self.simulate_button = QPushButton(self.widget_12)
+        self.simulate_button.setObjectName(u"simulate_button")
+        self.simulate_button.setMaximumSize(QSize(110, 30))
 
-        self.gridLayout_12.addWidget(self.line_3, 1, 0, 1, 1)
+        self.horizontalLayout_4.addWidget(self.simulate_button)
+
+
+        self.gridLayout_12.addWidget(self.widget_12, 2, 0, 1, 1)
 
         self.widget = QWidget(NIDAQ_LQR_Control)
         self.widget.setObjectName(u"widget")
@@ -721,6 +727,13 @@ class Ui_NIDAQ_LQR_Control(object):
 
         self.gridLayout_12.addWidget(self.widget, 0, 0, 1, 1)
 
+        self.line_3 = QFrame(NIDAQ_LQR_Control)
+        self.line_3.setObjectName(u"line_3")
+        self.line_3.setFrameShape(QFrame.Shape.HLine)
+        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_12.addWidget(self.line_3, 1, 0, 1, 1)
+
 
         self.retranslateUi(NIDAQ_LQR_Control)
 
@@ -730,6 +743,7 @@ class Ui_NIDAQ_LQR_Control(object):
     def retranslateUi(self, NIDAQ_LQR_Control):
         NIDAQ_LQR_Control.setWindowTitle(QCoreApplication.translate("NIDAQ_LQR_Control", u"Form", None))
         self.start_lqr_control.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"LQR CONTROL", None))
+        self.simulate_button.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"SIMULATION", None))
         self.insert_matrices.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"INSERT MATRICES", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Real Time", None))
 #if QT_CONFIG(tooltip)

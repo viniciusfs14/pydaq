@@ -66,6 +66,8 @@ class LQRControl(Base):
         # State-Space Matrices and LQR
         self.A = None
         self.B = None
+        self.C = None
+        self.D = None
         self.Q = None
         self.R = None
         self.K = None # LQR Gain
@@ -159,10 +161,10 @@ class LQRControl(Base):
                     raw = self.ser.readline()
 
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
-                    if len(values) != n_ai:
-                        warnings.warn(f"Invalid frame size: {values}")
-                        continue
 
+                    if len(values) < n_ai:
+                        raise ValueError("Incomplete multichannel frame")
+                    
                     # Assuming that each AI channel is a state
                     x = np.array([v * self.ard_vpb for v in values[:n_ai]]).reshape(-1, 1)
 
@@ -192,6 +194,7 @@ class LQRControl(Base):
                 except (ValueError, UnicodeDecodeError):
                     warnings.warn(f"Invalid multichannel read: {raw}")
                     continue
+                
                 num_cycles_performed += 1
 
                 wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
@@ -521,3 +524,83 @@ class LQRControl(Base):
             plt.show(block=True)
 
         return
+
+    def simulate_lqr(self):
+        """
+        Executes a pure mathematical simulation of the discrete LQR 
+        (without connecting to the hardware) and displays the outputs (y) and control effort (u).
+        """
+        if self.A is None or self.B is None or self.Q is None or self.R is None:
+            warnings.warn("A, B, Q, R matrices are not defined. Cannot simulate.")
+            return
+
+        self._calculate_lqr_gain()
+        
+        A_mat = np.array(self.A)
+        B_mat = np.array(self.B)
+        
+        n_states = A_mat.shape[0]
+        n_inputs = B_mat.shape[1]
+
+        # Define C and D matrices. If they don't exist, assume C = Identity and D = Zeros
+        if hasattr(self, 'C') and self.C is not None:
+            C_mat = np.array(self.C)
+        else:
+            C_mat = np.eye(n_states)
+
+        if hasattr(self, 'D') and self.D is not None:
+            D_mat = np.array(self.D)
+        else:
+            n_outputs = C_mat.shape[0]
+            D_mat = np.zeros((n_outputs, n_inputs))
+
+        # Define initial condition (e.g., all states start at 1.0)
+        x = np.ones((n_states, 1))
+
+        # Calculate number of iterations based on session duration and sample time
+        steps = int(np.floor(self.session_duration / self.ts)) + 1
+        
+        history_y = []
+        history_u = []
+        time_arr = []
+
+        print("Running pure LQR simulation...")
+        for k in range(steps):
+            # Control law
+            u = -self.K @ x
+            
+            # Output equation (What the AI sensors would read)
+            y = C_mat @ x + D_mat @ u
+
+            # Store data
+            history_y.append(y.flatten())
+            history_u.append(u.flatten())
+            time_arr.append(k * self.ts)
+
+            # Update the state for the next step: x(k+1) = Ax(k) + Bu(k)
+            x = A_mat @ x + B_mat @ u
+
+        history_y = np.array(history_y)
+        history_u = np.array(history_u)
+
+        # Generate Static Plot
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+        fig.suptitle("LQR Pure Simulation (No Hardware)", fontsize=14)
+
+        # Output Plot (System Response - y)
+        for i in range(history_y.shape[1]):
+            ax1.plot(time_arr, history_y[:, i], label=f"Output y{i+1}", linewidth=2)
+        ax1.set_ylabel("Amplitude")
+        ax1.grid(True)
+        ax1.legend(loc="upper right")
+
+        # Control Effort Plot (Input - u)
+        for i in range(history_u.shape[1]):
+            ax2.plot(time_arr, history_u[:, i], label=f"Control Effort u{i+1}", linewidth=2)
+        ax2.set_xlabel("Time (s)")
+        ax2.set_ylabel("Amplitude")
+        ax2.grid(True)
+        ax2.legend(loc="upper right")
+
+        plt.tight_layout()
+        plt.show(block=True)

@@ -65,7 +65,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
         self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("Select channels...")
+        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.channel_menu = QMenu(self)
         self.channel_actions = []
@@ -78,7 +78,12 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.channel_actions.append(action)
 
         self.channel_combo.showPopup = self._show_channel_menu
-        
+
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
+                
     def _show_channel_menu(self):
         self.channel_menu.exec(
             self.channel_combo.mapToGlobal(
@@ -276,12 +281,18 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        dev_name = self.device_names[self.device_type.index(self.device_combo.currentText())]
-        new_ai_channels = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+        dev_name = self.device_names[
+            self.device_type.index(self.device_combo.currentText())
+        ]
+
+        try:
+            new_ai_channels = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+        except BaseException:
+            new_ai_channels = []
 
         self.available_channels = new_ai_channels
 
-        # Recria o menu de canais
+        # Recreate the channel menu
         self.channel_menu.clear()
         self.channel_actions = []
 
@@ -292,9 +303,11 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.channel_menu.addAction(action)
             self.channel_actions.append(action)
 
-        # Marca o primeiro canal por padrão
+        # Select the first channel by default if available
         if self.channel_actions:
             self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""

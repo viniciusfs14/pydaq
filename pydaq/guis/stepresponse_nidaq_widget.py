@@ -151,8 +151,14 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
             self.device_type.index(self.device_combo.currentText())
         ]
 
-        new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
-        new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+        try:
+            new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+        except BaseException:
+            new_ao = []
+        try:
+            new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+        except BaseException:
+            new_ai = []
 
         self.available_ao_channels = new_ao
         self.available_ai_channels = new_ai
@@ -170,6 +176,8 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
 
         if self.ao_actions:
             self.ao_actions[0].setChecked(True)
+        else:
+            self.ao_channel_combo.lineEdit().clear()
 
         # Recreate AI menu
         self.ai_menu.clear()
@@ -184,6 +192,8 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
 
         if self.ai_actions:
             self.ai_actions[0].setChecked(True)
+        else:
+            self.ai_channel_combo.lineEdit().clear()
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
@@ -215,7 +225,7 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
     def _setup_ao_selector(self):
         self.ao_channel_combo.setEditable(True)
         self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("Select AO channels...")
+        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.ao_menu = QMenu(self)
         self.ao_actions = []
@@ -229,6 +239,10 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
 
         self.ao_channel_combo.showPopup = self._show_ao_menu
 
+        if self.ao_actions:
+            self.ao_actions[0].setChecked(True)
+        else:
+            self.ao_channel_combo.lineEdit().clear()
 
     def _show_ao_menu(self):
         self.ao_menu.exec(
@@ -255,7 +269,7 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
     def _setup_ai_selector(self):
         self.ai_channel_combo.setEditable(True)
         self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("Select AI channels...")
+        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.ai_menu = QMenu(self)
         self.ai_actions = []
@@ -269,6 +283,10 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
 
         self.ai_channel_combo.showPopup = self._show_ai_menu
 
+        if self.ai_actions:
+            self.ai_actions[0].setChecked(True)
+        else:
+            self.ai_channel_combo.lineEdit().clear()
 
     def _show_ai_menu(self):
         self.ai_menu.exec(

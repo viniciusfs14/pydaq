@@ -425,6 +425,33 @@ class Ui_Arduino_LQR_Control(object):
 "")
         self.gridLayout_3 = QGridLayout(Arduino_LQR_Control)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.line_3 = QFrame(Arduino_LQR_Control)
+        self.line_3.setObjectName(u"line_3")
+        self.line_3.setFrameShape(QFrame.Shape.HLine)
+        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_3.addWidget(self.line_3, 1, 0, 1, 1)
+
+        self.widget_6 = QWidget(Arduino_LQR_Control)
+        self.widget_6.setObjectName(u"widget_6")
+        self.horizontalLayout = QHBoxLayout(self.widget_6)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.start_lqr_control = QPushButton(self.widget_6)
+        self.start_lqr_control.setObjectName(u"start_lqr_control")
+        self.start_lqr_control.setMinimumSize(QSize(130, 30))
+        self.start_lqr_control.setMaximumSize(QSize(130, 30))
+
+        self.horizontalLayout.addWidget(self.start_lqr_control)
+
+        self.simulate_button = QPushButton(self.widget_6)
+        self.simulate_button.setObjectName(u"simulate_button")
+        self.simulate_button.setMaximumSize(QSize(110, 30))
+
+        self.horizontalLayout.addWidget(self.simulate_button)
+
+
+        self.gridLayout_3.addWidget(self.widget_6, 2, 0, 1, 1)
+
         self.widget = QWidget(Arduino_LQR_Control)
         self.widget.setObjectName(u"widget")
         self.gridLayout_2 = QGridLayout(self.widget)
@@ -669,20 +696,6 @@ class Ui_Arduino_LQR_Control(object):
 
         self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 1)
 
-        self.line_3 = QFrame(Arduino_LQR_Control)
-        self.line_3.setObjectName(u"line_3")
-        self.line_3.setFrameShape(QFrame.Shape.HLine)
-        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout_3.addWidget(self.line_3, 1, 0, 1, 1)
-
-        self.start_lqr_control = QPushButton(Arduino_LQR_Control)
-        self.start_lqr_control.setObjectName(u"start_lqr_control")
-        self.start_lqr_control.setMinimumSize(QSize(130, 30))
-        self.start_lqr_control.setMaximumSize(QSize(130, 30))
-
-        self.gridLayout_3.addWidget(self.start_lqr_control, 2, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter)
-
 
         self.retranslateUi(Arduino_LQR_Control)
 
@@ -691,6 +704,8 @@ class Ui_Arduino_LQR_Control(object):
 
     def retranslateUi(self, Arduino_LQR_Control):
         Arduino_LQR_Control.setWindowTitle(QCoreApplication.translate("Arduino_LQR_Control", u"Form", None))
+        self.start_lqr_control.setText(QCoreApplication.translate("Arduino_LQR_Control", u"LQR CONTROL", None))
+        self.simulate_button.setText(QCoreApplication.translate("Arduino_LQR_Control", u"SIMULATION", None))
         self.label_4.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AO channel (s):", None))
         self.label_9.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Plot data?", None))
         self.insert_matrices.setText(QCoreApplication.translate("Arduino_LQR_Control", u"INSERT MATRICES", None))
@@ -715,6 +730,5 @@ class Ui_Arduino_LQR_Control(object):
         self.label_2.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Device:", None))
         self.label_11.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Save data?", None))
         self.label_10.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Session duration (s):", None))
-        self.start_lqr_control.setText(QCoreApplication.translate("Arduino_LQR_Control", u"LQR CONTROL", None))
     # retranslateUi
 

@@ -26,6 +26,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         self.label_warning.hide()
         self.plot_radio_group.buttonToggled.connect(self._update_warning_label)
         self.insert_matrices.released.connect(self.openMatricesWindow)
+        self.simulate_button.released.connect(self.run_pure_simulation)
         self.signals = GuiSignals()
 
         # Setting the starting values for some widgets
@@ -144,7 +145,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
     def _setup_ai_selector(self):
         self.ai_channel_combo.setEditable(True)
         self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("Select input channels...")
+        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
         self.ai_menu = QMenu(self)
         self.ai_actions = []
         for ch in self.available_ai_channels:
@@ -155,6 +156,11 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             self.ai_actions.append(action)
 
         self.ai_channel_combo.showPopup = self._show_ai_menu
+
+        if self.ai_actions:
+            self.ai_actions[0].setChecked(True)
+        else:
+            self.ai_channel_combo.lineEdit().clear()
 
     def _show_ai_menu(self):
         self.ai_menu.exec(
@@ -179,7 +185,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
     def _setup_ao_selector(self):
         self.ao_channel_combo.setEditable(True)
         self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("Select output channels...")
+        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
         self.ao_menu = QMenu(self)
         self.ao_actions = []
         for ch in self.available_ao_channels:
@@ -190,6 +196,11 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             self.ao_actions.append(action)
 
         self.ao_channel_combo.showPopup = self._show_ao_menu
+
+        if self.ao_actions:
+            self.ao_actions[0].setChecked(True)
+        else:
+            self.ao_channel_combo.lineEdit().clear()
 
     def _show_ao_menu(self):
         self.ao_menu.exec(
@@ -222,3 +233,23 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         self.n_inputs = data["m"]
 
         print("LQR matrices updated")
+
+    def run_pure_simulation(self):
+        try:
+            if self.A is None or self.B is None or self.Q is None or self.R is None:
+                print("Insira as matrizes antes de simular.")
+                return
+
+            # Instancia apenas para simular
+            l = LQRControl()
+            l.A = self.A
+            l.B = self.B
+            l.Q = self.Q
+            l.R = self.R
+            l.ts = self.Ts_in.value()
+            l.session_duration = self.sesh_dur_in.value()
+
+            l.simulate_lqr()
+
+        except BaseException as e:
+            print(f"Erro na simulação: {e}")

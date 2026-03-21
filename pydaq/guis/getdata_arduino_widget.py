@@ -326,7 +326,7 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
         self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("Select channels...")
+        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
 
         self.channel_menu = QMenu(self)
         self.channel_actions = []
@@ -339,6 +339,11 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             self.channel_actions.append(action)
 
         self.channel_combo.showPopup = self._show_channel_menu
+
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
 
     def _show_channel_menu(self):
         self.channel_menu.exec(
