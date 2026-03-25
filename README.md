@@ -79,15 +79,15 @@ PYDAQ requires:
 - numpy (>=1.22.3) to process data
 - PySide6 (>=6.7.1), PySide6_Addons, PySide6_Essentials and shiboken6 as a Graphical User Interface framework
 - pyserial (>=3.5) to manage data to/from Arduino
-- sysidentpy (==0.3.4) and bitarray (>=3.0.0) for model acquisition/signal generation
+- sysidentpy (>=0.4.1) and bitarray (>=3.0.0) for model acquisition/signal generation
 - packaging (>=24.1)
 - scipy (>=1.16.1) for digital filters and PID Control.
 
-**NOTE 1:** In this version of pydaq (0.0.6), [(NI-DAQmx drivers)](https://www.ni.com/en/support/downloads/drivers/download.ni-daq-mx.html#494676) must be installed, even if 
+**NOTE 1:** In this version of pydaq (0.0.6.1), [(NI-DAQmx drivers)](https://www.ni.com/en/support/downloads/drivers/download.ni-daq-mx.html#494676) must be installed, even if 
 the user is only using Arduino Boards. This issue will be addressed in future versions, allowing
 Arduino users to use PYDAQ without having to install NI-DAQmx drivers.
 
-**NOTE 2:** PYDAQ is fully tested up to Python 3.11. It may run on versions above this, but without guarantees. 
+**NOTE 2:** PYDAQ is fully tested up to Python 3.14. It may run on versions above this, but without guarantees. 
 
 
 ---
