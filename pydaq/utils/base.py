@@ -194,8 +194,6 @@ class Base:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-
-        
     def _save_data(self, data, name):
         """Method to save data in self.path with name"""
 

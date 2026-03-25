@@ -128,6 +128,7 @@ class GetData(Base):
 
                 temp = task.read()
                 time_now = time.perf_counter() - st_worker
+                
                 if n_channels == 1:
                     temp = [temp]
 
