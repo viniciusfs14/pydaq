@@ -116,15 +116,10 @@ class StepResponse(Base):
     def _step_response_worker_arduino(self, data_queue):
 
         channels = self.channels  # === NEW ===
-        print("Worker channels:", channels)
-        print("Worker AO channels:", self.ao_channels)
         n_channels = len(channels)  # === NEW ===
-
-        print("n_channels in worker:", n_channels)
-        
         self.plot_ready_event.wait()
         num_cycles_performed = 0  # === NEW ===
-        
+
         try:
             self._open_serial()
             
@@ -152,11 +147,13 @@ class StepResponse(Base):
                     digital_val = 0
 
                 # === MODIFIED: multi-channel digital send ===
-                if n_channels > 1:
-                    msg = ",".join([str(digital_val)] * n_channels) + "\n"
-                    self.ser.write(msg.encode())
-                else:
-                    self.ser.write(b"1" if digital_val == 1 else b"0")
+                msg_parts = []
+                for ch in self.ao_channels:
+                    pin_num = ch.replace("D", "")
+                    msg_parts.append(f"{pin_num}:{digital_val}")
+                
+                msg = ",".join(msg_parts) + "\n"
+                self.ser.write(msg.encode())
                 
                 try:
                     self.ser.reset_input_buffer()
@@ -165,18 +162,16 @@ class StepResponse(Base):
                     raw = self.ser.readline()
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                    if len(values) < n_channels:
-                        raise ValueError("Incomplete multichannel frame")
+                    if len(values) < 6:
+                        raise ValueError("Incomplete universal frame")
 
                     time_now = time.perf_counter() - st_worker
 
                     # === NEW: distribute per channel like get_data ===
-                    for i, ch in enumerate(channels):
-                        value = values[i] * self.ard_vpb
+                    for ch in channels:
+                        idx = int(ch.replace("A", ""))
+                        value = values[idx] * self.ard_vpb
                         data_queue.put((time_now, ch, digital_val * 5.0, value))
-                    
-                    #scaled_values = [v * self.ard_vpb for v in values[:n_channels]]
-                    #data_queue.put((time_now, channels, digital_val * 5.0, scaled_values))
 
                     num_cycles_performed += 1
 
@@ -206,11 +201,21 @@ class StepResponse(Base):
                 self.ser.close()
                 print(f"Serial port {self.com_port} closed.")
 
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )              
+            else:
+                print("\nThread finished. No data cycles acquired.")
+
             data_queue.put(None)
     
     def step_response_arduino(self):
-        print("Saving channels:", self.channels)
-
         """
         This method performs the step response using an Arduino board for given parameters.
 
@@ -227,7 +232,6 @@ class StepResponse(Base):
 
         # --- Start of placeholder implementation ---
         
-        print("Running step response for Arduino...")
         self.time_var = {ch: [] for ch in self.channels}
         self.input = {ch: [] for ch in self.channels}
         self.output = {ch: [] for ch in self.channels}
@@ -412,6 +416,8 @@ class StepResponse(Base):
         task_ai = nidaqmx.Task()
     
         try:
+            num_cycles_performed = 0
+            
             # === NEW: Multi-channel string construction ===
             ao_channel_str = ",".join([f"{self.device}/{ch}" for ch in self.ao_channels])
             ai_channel_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])
@@ -456,7 +462,8 @@ class StepResponse(Base):
                     temp = [temp]
 
                 time_now = time.perf_counter() - st_worker
-                
+
+                num_cycles_performed += 1
                 # === NEW: queue per channel ===
                 for i, ch in enumerate(self.channels):
                     data_queue.put((time_now, ch, input_vals[i], temp[i]))
@@ -464,6 +471,10 @@ class StepResponse(Base):
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    warnings.warn(
+                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
+                    )
         
         finally:
             # Turn off outputs
@@ -478,6 +489,19 @@ class StepResponse(Base):
             task_ao.close()
             task_ai.close()
             data_queue.put(None)
+
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )               
+            else:
+                print("\nThread finished. No data cycles acquired.")
+
 
     def step_response_nidaq(self):
         """

@@ -64,6 +64,8 @@ class Ui_PydaqGlobal(object):
         self.actionArduino_3.setObjectName(u"actionArduino_3")
         self.actionNIDAQ_3 = QAction(PydaqGlobal)
         self.actionNIDAQ_3.setObjectName(u"actionNIDAQ_3")
+        self.actionArduino_4 = QAction(PydaqGlobal)
+        self.actionArduino_4.setObjectName(u"actionArduino_4")
         self.centralwidget = QWidget(PydaqGlobal)
         self.centralwidget.setObjectName(u"centralwidget")
         self.centralwidget.setStyleSheet(u"QWidget{\n"
@@ -798,16 +800,20 @@ class Ui_PydaqGlobal(object):
         self.menuBeenchmarking.setObjectName(u"menuBeenchmarking")
         self.menuAbout = QMenu(self.menubar)
         self.menuAbout.setObjectName(u"menuAbout")
+        self.menuFirmware = QMenu(self.menubar)
+        self.menuFirmware.setObjectName(u"menuFirmware")
         PydaqGlobal.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(PydaqGlobal)
         self.statusbar.setObjectName(u"statusbar")
         PydaqGlobal.setStatusBar(self.statusbar)
 
         self.menubar.addAction(self.menuBeenchmarking.menuAction())
+        self.menubar.addAction(self.menuFirmware.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
         self.menuBeenchmarking.addAction(self.actionArduino_3)
         self.menuBeenchmarking.addAction(self.actionNIDAQ_3)
         self.menuAbout.addAction(self.actionDocumentation)
+        self.menuFirmware.addAction(self.actionArduino_4)
 
         self.retranslateUi(PydaqGlobal)
         self.radioButton.toggled.connect(self.arduino_tabs.show)
@@ -833,6 +839,7 @@ class Ui_PydaqGlobal(object):
         self.actionDocumentation.setText(QCoreApplication.translate("PydaqGlobal", u"Documentation", None))
         self.actionArduino_3.setText(QCoreApplication.translate("PydaqGlobal", u"Arduino", None))
         self.actionNIDAQ_3.setText(QCoreApplication.translate("PydaqGlobal", u"NIDAQ", None))
+        self.actionArduino_4.setText(QCoreApplication.translate("PydaqGlobal", u"Arduino", None))
 #if QT_CONFIG(tooltip)
         self.logo.setToolTip(QCoreApplication.translate("PydaqGlobal", u"Go to PYDAQ Documentation", None))
 #endif // QT_CONFIG(tooltip)
@@ -853,5 +860,6 @@ class Ui_PydaqGlobal(object):
         self.arduino_tabs.setTabText(self.arduino_tabs.indexOf(self.LQR_control_arduino_tab), QCoreApplication.translate("PydaqGlobal", u"LQR Control", None))
         self.menuBeenchmarking.setTitle(QCoreApplication.translate("PydaqGlobal", u"Benchmarking", None))
         self.menuAbout.setTitle(QCoreApplication.translate("PydaqGlobal", u"About", None))
+        self.menuFirmware.setTitle(QCoreApplication.translate("PydaqGlobal", u"Upload Firmware", None))
     # retranslateUi
 

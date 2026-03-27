@@ -41,7 +41,7 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
         self.yes_radio.clicked.connect(self.openFilterWindow)
 
         # Channel selection
-        self.available_channels = [f"A{i}" for i in range(8)]
+        self.available_channels = [f"A{i}" for i in range(6)]
         self._setup_channel_selector()
 
     def _update_warning_label(self):

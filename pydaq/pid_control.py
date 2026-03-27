@@ -101,9 +101,6 @@ class PIDControl(Base):
         # --- MOD ---
         self.n_channels = len(self.channels)
 
-        print("Worker channels:", self.channels)
-        print("Worker AO channels:", self.ao_channels)
-
 # Updating the Datas to plot
     def update_plot_arduino(self):
         
@@ -116,47 +113,61 @@ class PIDControl(Base):
             self.ser.readline()
             
             raw = self.ser.readline()
-
             values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-            if len(values) < self.n_channels:
-                raise ValueError("Incomplete multichannel frame")
+            if len(values) < 6:
+                raise ValueError("Incomplete universal frame") 
         except:
-            values = [self.feedback_value[ch] for ch in self.channels]
+            values = None
 
         outputs = {}
         errors = {}
         controls = {}
 
-        duty_cycles = []
+        msg_parts = []
 
         for i, ch in enumerate(self.channels):
-            self.feedback_value[ch] = values[i] * self.ard_vpb
+
+            if values is not None:
+                # Extracts the channel number (e.g., 'A2' -> 2)
+                idx = int(ch.replace("A", ""))
+                self.feedback_value[ch] = values[idx] * self.ard_vpb
+
+            # --- PID Calculations ---
             self.feedback_calibrated[ch] = self.calibrationuv(self.feedback_value[ch])
             self.control_unit[ch], error = self.update(ch,self.feedback_calibrated[ch])
             self.control_voltage[ch] = self.calibrationvu(self.control_unit[ch])
             self.control[ch] = self.control_voltage[ch]
+            # Control Saturation (0 to 5V)
             if self.control[ch] <= self.ard_ao_min:
                 self.control[ch] = self.ard_ao_min
             elif self.control[ch] >= self.ard_ao_max:
                 self.control[ch] = self.ard_ao_max
 
+            # Duty cycle calculation (0 - 255)
             duty = int((self.control[ch] / self.ard_ao_max) * 255)
-            duty_cycles.append(duty)
+
+            # --- UNIVERSAL PROTOCOL WRITE ---
+            # Match the calculated duty cycle to its corresponding AO channel
+            if hasattr(self, 'ao_channels') and i < len(self.ao_channels):
+                ao_ch = self.ao_channels[i]
+            else:
+                ao_ch = self.ao_channels[0] # Fallback
+
+            # Extracts the pin number (e.g., 'D8' -> '8') and formats it
+            pin_num = ao_ch.replace("D", "")
+            msg_parts.append(f"{pin_num}:{duty}")
 
             self.error[ch] = error
-
             outputs[ch] = self.feedback_calibrated[ch]
             errors[ch] = error
             controls[ch] = self.control[ch]
 
         # --- MOD --- send multichannel control
-        msg = ",".join(map(str, duty_cycles)) + "\n"
-
+        # Joins all commands with a comma (e.g., "8:255,9:128\n")
+        msg = ",".join(msg_parts) + "\n"
         self.ser.write(msg.encode())
 
-        #print(f"Control (V)/(U): {self.control:.2f} / {self.control_unit:.2f}; Feedback (V)/(U): {self.feedback_value:.2f} / {self.feedback_calibrated:.2f}; Setpoint(U) {self.setpoint:.2f}; error (U) {self.error}")
-        
         return (outputs,errors,{ch: self.setpoint for ch in self.channels},controls)
 
     def pid_control_nidaq(self): #Inicializating the updating nidaq values
@@ -224,9 +235,6 @@ class PIDControl(Base):
             
         self.task_ao.write([self.control[ch] for ch in self.channels])
 
-        #self.error = self.setpoint - self.feedback_calibrated[ch]
-        #print(f"Control (V)/(U): {self.control:.2f} / {self.control_unit:.2f}; Feedback (V)/(U): {self.feedback_value:.2f} / {self.feedback_calibrated:.2f}; Setpoint(U) {self.setpoint:.2f}; error (U) {self.error}")
-        
         return (
             self.feedback_calibrated,
             self.error,

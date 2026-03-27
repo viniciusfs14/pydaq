@@ -135,8 +135,7 @@ class LQRControl(Base):
 
         n_ai = len(self.channels)
         n_ao = len(self.ao_channels)
-        
-        num_cycles_performed = 0  # === NEW ===
+    
         
         try:
             self._open_serial()
@@ -151,6 +150,7 @@ class LQRControl(Base):
             _ = self.ser.readline()
             # --- END WARM-UP SECTION ---
 
+            num_cycles_performed = 0
             st_worker = time.perf_counter()
             self.st_worker = st_worker
 
@@ -165,30 +165,38 @@ class LQRControl(Base):
 
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                    if len(values) < n_ai:
-                        raise ValueError("Incomplete multichannel frame")
-                    
-                    # Assuming that each AI channel is a state
-                    x = np.array([v * self.ard_vpb for v in values[:n_ai]]).reshape(-1, 1)
+                    if len(values) < 6:
+                        warnings.warn("Incomplete universal frame")
+                        continue
+
+                    time_now = time.perf_counter() - st_worker
+
+                    x_list = [] # Take only what interests you!
+                    for ch in self.channels:  # Ex: self.channels = ['A0', 'A2']
+                        idx = int(ch.replace("A", ""))  # Extracts the channel number (e.g., 'A2' becomes the integer 2)
+                        x_list.append(values[idx] * self.ard_vpb) # Take the value at the exact index
+
+                    x = np.array(x_list).reshape(-1, 1) # Create state vector
 
                     # --- LQR Control Law: u = -Kx ---
                     u = -self.K @ x
-                    u_val = float(u[0][0])
-                    
-                    # Saturation
-                    duty_cycles = []
+
+                    # Saturation & Universal Write
                     u_to_plot = []
-                    for i in range(n_ao):
+                    msg_parts = []
+
+                    for i, ch in enumerate(self.ao_channels):
                         u_val = np.clip(float(u[i]), 0, 5)
                         u_to_plot.append(u_val)
-                        duty_cycles.append(int((u_val / 5.0) * 255))
-                    
+
+                        duty = int((u_val / 5.0) * 255)
+                        pin_num = ch.replace("D", "")
+                        msg_parts.append(f"{pin_num}:{duty}")
+
                     # CSV Multichannel write
-                    msg = ",".join(map(str, duty_cycles)) + "\n"
+                    msg = ",".join(msg_parts) + "\n"
                     self.ser.write(msg.encode())
-                    
-                    time_now = time.perf_counter() - st_worker
-                    
+
                     for i, ch in enumerate(self.channels):
                         # Nota: associamos u[0] ao primeiro canal por padrão
                         u_ref = u_to_plot[0] if len(u_to_plot) > 0 else 0
@@ -216,6 +224,19 @@ class LQRControl(Base):
             self.ser.write(stop_msg.encode())
             self.ser.close()
             data_queue.put(None)
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )         
+            else:
+                print("\nThread finished. No data cycles acquired.")
+
+
     
     def lqr_control_arduino(self):
 
@@ -232,7 +253,7 @@ class LQRControl(Base):
         self._calculate_lqr_gain()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
-        print("Running lqr control for Arduino...")
+        print("Running LQR control for Arduino...")
         self.time_var = {ch: [] for ch in self.channels}
         self.input_h = {ch: [] for ch in self.channels}
         self.output_h = {ch: [] for ch in self.channels}
@@ -352,6 +373,7 @@ class LQRControl(Base):
         task_ai = nidaqmx.Task()
     
         try:
+            num_cycles_performed = 0
             # === NEW: Multi-channel string construction ===
             ai_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])
             ao_str = ",".join([f"{self.device}/{ch}" for ch in self.ao_channels])
@@ -382,8 +404,14 @@ class LQRControl(Base):
                 for i, ch in enumerate(self.channels):
                     data_queue.put((time_now, ch, u_out[0], x[i][0]))
 
+                num_cycles_performed += 1
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
-                if wait_time > 0: time.sleep(wait_time)
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                else:
+                    warnings.warn(
+                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
+                    )
         
         finally:
             # Turn off outputs
@@ -399,6 +427,18 @@ class LQRControl(Base):
             task_ai.close()
             data_queue.put(None)
 
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )           
+            else:
+                print("\nThread finished. No data cycles acquired.")
+
     def lqr_control_nidaq(self):
         """
         This method performs the LQR control using a NIDAQ board for given parameters.
@@ -408,6 +448,7 @@ class LQRControl(Base):
 
         """
 
+        print("Running LQR control for NIDAQ...")
         self._calculate_lqr_gain()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
         self.time_var = {ch: [] for ch in self.channels}

@@ -55,8 +55,8 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
         )
 
         # Available channels (Arduino logic)
-        self.available_ai_channels = [f"A{i}" for i in range(8)]
-        self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
+        self.available_ai_channels = [f"A{i}" for i in range(6)]
+        self.available_ao_channels = [f"D{i}" for i in range(2, 14)]
 
         self._setup_ai_selector()
         self._setup_ao_selector()

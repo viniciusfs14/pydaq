@@ -124,7 +124,8 @@ class SendData(Base):
             # Number of samples (rows in data)
             n_channels = len(self.channels)
             cycles = self.data.shape[0] # Number of samples (rows)
-            
+
+            num_cycles_performed = 0
             st_worker = time.perf_counter()
 
             for k in range(cycles):
@@ -152,10 +153,15 @@ class SendData(Base):
                 
                 # Put progress on the queue: (timestamp, [val_ch0, val_ch1...])
                 progress_queue.put((time_now, val_to_queue))
-
+                
+                num_cycles_performed += 1
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    warnings.warn(
+                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
+                    )
         finally:
             try:
                 if len(self.channels) == 1:
@@ -166,6 +172,17 @@ class SendData(Base):
                 pass
             task.close()
             progress_queue.put(None) # Signal end of sending
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )         
+            else:
+                print("\nThread finished. No data cycles acquired.")
 
     def send_data_nidaq(self):
         """
@@ -284,6 +301,8 @@ class SendData(Base):
         n_channels = len(self.channels)
         cycles = self.data.shape[0]
         
+        num_cycles_performed = 0
+
         # This logic is specific to sending digital signals based on a voltage threshold
         #data_to_send = [b"1" if i > 2.5 else b"0" for i in self.data]
 
@@ -311,17 +330,19 @@ class SendData(Base):
                 # Digital logic: High/Low based on 2.5V threshold
                 digital_vals = [1 if x > 2.5 else 0 for x in current_vals]
 
-                if n_channels > 1:
-                    # Create CSV string: "1,0,1\n"
-                    msg = ",".join(map(str, digital_vals)) + "\n"
-                    self.ser.write(msg.encode())
-                else:
-                    # Single channel legacy mode (send byte '0' or '1')
-                    if digital_vals[0] == 1:
-                        self.ser.write(b'1') 
-                    else:
-                        self.ser.write(b'0')
+                msg_parts = []
+                for i, ch in enumerate(self.channels): # e.g., self.channels = ["D8", "D9"]
+                    pin_num = ch.replace("D", "")      # Extracts "8"
+                    msg_parts.append(f"{pin_num}:{digital_vals[i]}") # Formats "8:1"
                 
+                msg = ",".join(msg_parts) + "\n"       # Creates "8:1,9:0\n"
+
+                self.ser.reset_input_buffer()
+
+                self.ser.write(msg.encode())
+                
+                num_cycles_performed += 1
+
                 time_now = time.perf_counter() - st_worker
 
                 plot_vals = [5 if x == 1 else 0 for x in digital_vals]
@@ -330,9 +351,14 @@ class SendData(Base):
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
-        
+                else:
+                    warnings.warn(
+                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
+                    )
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"Failed to open serial port {self.com_port}: {e}")
+            print(f"ERROR: Failed to open serial port {self.com_port}: {e}")
+            self.acquisition_running = False
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 # Try to reset to 0
@@ -344,6 +370,18 @@ class SendData(Base):
                 except:
                     pass
                 self.ser.close()
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg_acquisition_time_per_cycle = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg_acquisition_time_per_cycle:.5f}s"
+                ) 
+            else:
+                print("\nThread finished. No data cycles acquired.")
+
             progress_queue.put(None)
 
     def send_data_arduino(self):

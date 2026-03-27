@@ -99,12 +99,20 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         if self.simulate == True:
             print('Closing')
         elif self.board == 'arduino': #stop the event and close the dialog
-            self.pid.ser.write(b"0") # Turning off the output at the end
+            try:
+                self.pid.ser.write(b"0\n") # Turning off all outputs
+            except:
+                pass
             self.pid.ser.close() # Closing port
         elif self.board == 'nidaq':
             try:
                 if self.pid.task_ao:
-                    self.pid.task_ao.write(0)
+                    # Check how many AO channels we have
+                    n_ao = len(self.ao_channels)
+                    if n_ao == 1:
+                        self.pid.task_ao.write(0.0)
+                    else:
+                        self.pid.task_ao.write([0.0] * n_ao)
                     self.pid.task_ao.close()
                 if self.pid.task_ai:
                     self.pid.task_ai.close()
@@ -248,7 +256,9 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             if wait_time > 0:
                 time.sleep(wait_time)
             else:
-                warnings.warn("Loop overran the period. You CANNOT trust time precision for this sample.")
+                warnings.warn(
+                    "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
+                )
 
             self.k += 1
 
@@ -436,4 +446,5 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         with self.lock:
             self._update_plot()
             self.canvas.draw_idle()
+
         #dont ctrl z more than once, otherwise it will cause a crash when the plot is updating and the data is being saved at the same time.

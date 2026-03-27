@@ -151,13 +151,13 @@ class GetData(Base):
             if num_cycles_performed > 0:
                 avg = total_acquisition_duration / num_cycles_performed
                 print(
-                    f"\nAcquisition Thread finished. "
+                    f"\nThread finished. "
                     f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles: {num_cycles_performed} | "
+                    f"Cycles processed: {num_cycles_performed} | "
                     f"Avg per cycle: {avg:.5f}s"
-                )           
+                )       
             else:
-                print("\nAcquisition Thread finished. No data cycles acquired.")
+                print("\nThread finished. No data cycles acquired.")
         
 
     # Handler for plot window closure
@@ -169,7 +169,7 @@ class GetData(Base):
         print("Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False # Signal acquisition to stop
         self.plot_closed_by_user = True # Signal that plot was closed manually
-        
+
     def get_data_nidaq(self, filter_coefs=None):
         """
         Data acquisition method using NI-DAQ and threading.
@@ -319,7 +319,6 @@ class GetData(Base):
         """
 
         channels = self.channels
-        n_channels = len(channels)
 
         # Wait for plot to be ready before starting acquisition to synchronize time_now to ~0
         self.plot_ready_event.wait()
@@ -327,7 +326,7 @@ class GetData(Base):
 
         try:
             self._open_serial()
-            
+
             # --- WARM-UP SECTION ---
             # Send an initial command (b"0") to "wake up" the Arduino.
             time.sleep(0.05)
@@ -340,28 +339,33 @@ class GetData(Base):
 
             st_worker = time.perf_counter()
             self.st_worker = st_worker
-            
+
             for k in range(self.cycles):
 
                 if not self.acquisition_running:
                     break
-                
+
                 self.ser.reset_input_buffer()
                 self.ser.readline()
-                
+
                 raw = self.ser.readline()
 
                 try:
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                    if len(values) < n_channels:
-                        raise ValueError("Incomplete multichannel frame")
+                    if len(values) < 6:
+                        warnings.warn("Incomplete universal frame")
+                        continue
 
                     time_now = time.perf_counter() - st_worker
 
-                    # Distribui os valores por canal
-                    for i, ch in enumerate(channels):
-                        value = values[i] * self.ard_vpb
+                    # Take only what interests you!
+                    for ch in self.channels: # Ex: self.channels = ['A0', 'A2']
+
+                        # Extracts the channel number (e.g., 'A2' becomes the integer 2)
+                        idx = int(ch.replace("A", "")) 
+                        # Take the value at the exact index
+                        value = values[idx] * self.ard_vpb 
                         data_queue.put((time_now, ch, value))
 
                     #scaled_values = [v * self.ard_vpb for v in values[:n_channels]]
@@ -387,19 +391,18 @@ class GetData(Base):
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 self.ser.close()
-                print(f"Serial port {self.com_port} closed.")
             data_queue.put(None)
             total_acquisition_duration = time.perf_counter() - st_worker
             if num_cycles_performed > 0:
                 avg_acquisition_time_per_cycle = total_acquisition_duration / num_cycles_performed
                 print(
-                    f"\nAcquisition Thread finished. "
+                    f"\nThread finished. "
                     f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles acquired: {num_cycles_performed} | "
-                    f"Average time per cycle: {avg_acquisition_time_per_cycle:.5f}s"
-                )
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg_acquisition_time_per_cycle:.5f}s"
+                )  
             else:
-                print("\nAcquisition Thread finished. No data cycles acquired.")
+                print("\nThread finished. No data cycles acquired.")
 
     def get_data_arduino(self, filter_coefs=None):
         """

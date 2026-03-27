@@ -40,8 +40,8 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         )   
 
         # Available channels (Arduino logic)
-        self.available_ai_channels = [f"A{i}" for i in range(8)]
-        self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
+        self.available_ai_channels = [f"A{i}" for i in range(6)]
+        self.available_ao_channels = [f"D{i}" for i in range(2, 14)]
 
         self._setup_ai_selector()
         self._setup_ao_selector()
@@ -176,7 +176,6 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
         self.numerator = self.lineEdit_numerator.text()
         self.denominator = self.lineEdit_denominator.text()
-        #print('Simulated? ', self.simulate)
         if self.simulate:
             self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
             self.ao_channels = [" "]

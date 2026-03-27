@@ -276,10 +276,6 @@ class GetModel(Base):
         channels = self.channels
         n_channels = len(channels)
 
-        print("Worker channels:", self.channels)
-        print("Worker AO channels:", self.ao_channels)
-        print("n_channels in worker:", n_channels)
-
         try:
             self._open_serial()
 
@@ -298,7 +294,14 @@ class GetModel(Base):
                     break
 
                 # Send signal
-                self.ser.write(sent_data_bytes[k])
+                val_to_send = 1 if signal_to_send[k] == self.ao_max else 0
+                msg_parts = []
+                for ch in self.ao_channels: 
+                    pin_num = ch.replace("D", "")
+                    msg_parts.append(f"{pin_num}:{val_to_send}")
+                
+                msg = ",".join(msg_parts) + "\n"
+                self.ser.write(msg.encode())
 
                 self.ser.reset_input_buffer()
                 self.ser.readline()
@@ -307,15 +310,15 @@ class GetModel(Base):
                     raw = self.ser.readline()
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                    if len(values) < n_channels:
-                        raise ValueError("Incomplete multichannel frame")
+                    if len(values) < 6:
+                        raise ValueError("Incomplete universal frame")
 
                     time_now = time.perf_counter() - st_worker
-                    
                     sent_value = signal_to_send[k]
 
-                    for i, ch in enumerate(channels):
-                        value = values[i] * self.ard_vpb
+                    for ch in channels:
+                        idx = int(ch.replace("A", "")) 
+                        value = values[idx] * self.ard_vpb
                         data_queue.put((time_now, ch, sent_value, value))
                 
                     num_cycles_performed += 1
@@ -339,6 +342,17 @@ class GetModel(Base):
                 self.ser.write(b"0")
                 self.ser.close()
             data_queue.put(None)
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )       
+            else:
+                print("\nThread finished. No data cycles acquired.")
 
     def _acquisition_worker_nidaq(self, data_queue, signal_to_send):
         """Worker to send signal and acquire data with NI-DAQ."""
@@ -348,6 +362,7 @@ class GetModel(Base):
         task_ai = nidaqmx.Task()
         
         try:
+            num_cycles_performed = 0
             # === MODIFIED === multi-channel configuration
             ao_str = ",".join([f"{self.device}/{ch}" for ch in self.ao_channels])  # === MODIFIED ===
             ai_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])  # === MODIFIED ===
@@ -379,11 +394,16 @@ class GetModel(Base):
                 for i, ch in enumerate(self.channels):  # === NEW ===
                     data_queue.put((time_now, ch, sent_value, read_values[i]))  # === NEW ===
 
+                num_cycles_performed += 1
                 # Wait to maintain the sampling period
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
 
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    warnings.warn(
+                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
+                    )
         finally:
             # Ensure tasks are safely closed
             task_ao.write([self.ao_min] * len(self.ao_channels))
@@ -392,14 +412,24 @@ class GetModel(Base):
 
             data_queue.put(None) # Signal the end of acquisition
 
+            total_acquisition_duration = time.perf_counter() - st_worker
+            if num_cycles_performed > 0:
+                avg = total_acquisition_duration / num_cycles_performed
+                print(
+                    f"\nThread finished. "
+                    f"Total time: {total_acquisition_duration:.5f}s | "
+                    f"Cycles processed: {num_cycles_performed} | "
+                    f"Avg per cycle: {avg:.5f}s"
+                )          
+            else:
+                print("\nThread finished. No data cycles acquired.")
+
     def _orchestrate_acquisition(self, worker_target, worker_args):
         """General-purpose orchestrator for data acquisition and plotting."""
         # === MODIFIED === reset dict storage
         self.time_var = {ch: [] for ch in self.channels}  # === MODIFIED ===
         self.inp_read = {ch: [] for ch in self.channels}  # === MODIFIED ===
         self.out_read = {ch: [] for ch in self.channels}  # === MODIFIED ===
-
-        print("Saving channels:", self.channels)
 
         data_queue = queue.Queue()
         self.acquisition_running = True
@@ -485,7 +515,7 @@ class GetModel(Base):
 
     def _on_plot_close(self, event):
         """Event handler for Matplotlib figure closure."""
-        print("Plot window closed by user. Initiating graceful shutdown...")
+        print("Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False
         self.plot_closed_by_user = True
 
@@ -496,9 +526,6 @@ class GetModel(Base):
 
         if self.output_channels:
             self.ao_channels = self.output_channels
-
-        print("Channels:", self.channels)
-        print("AO Channels:", self.ao_channels)
 
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
@@ -671,10 +698,6 @@ class GetModel(Base):
 
         if self.output_channels:
             self.ao_channels = self.output_channels
-
-        print("Channels:", self.channels)
-        print("AO Channels:", self.ao_channels)
-        print("input_channels from GUI:", self.input_channels)
 
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1

@@ -910,7 +910,14 @@ QTableWidget::item:selected {
     </property>
     <addaction name="actionDocumentation"/>
    </widget>
+   <widget class="QMenu" name="menuFirmware">
+    <property name="title">
+     <string>Upload Firmware</string>
+    </property>
+    <addaction name="actionArduino_4"/>
+   </widget>
    <addaction name="menuBeenchmarking"/>
+   <addaction name="menuFirmware"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -957,6 +964,11 @@ QTableWidget::item:selected {
   <action name="actionNIDAQ_3">
    <property name="text">
     <string>NIDAQ</string>
+   </property>
+  </action>
+  <action name="actionArduino_4">
+   <property name="text">
+    <string>Arduino</string>
    </property>
   </action>
  </widget>

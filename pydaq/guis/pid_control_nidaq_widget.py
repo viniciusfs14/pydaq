@@ -165,7 +165,6 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
         self.numerator = self.lineEdit_numerator.text()
         self.denominator = self.lineEdit_denominator.text()
-        print('Simulated? ', self.simulate)
         if self.simulate:
             self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
             self.ao_channels = [" "]
