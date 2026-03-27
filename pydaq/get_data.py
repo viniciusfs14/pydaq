@@ -346,6 +346,9 @@ class GetData(Base):
                 if not self.acquisition_running:
                     break
                 
+                self.ser.reset_input_buffer()
+                self.ser.readline()
+                
                 raw = self.ser.readline()
 
                 try:

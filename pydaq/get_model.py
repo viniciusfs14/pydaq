@@ -294,11 +294,13 @@ class GetModel(Base):
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
-                
-                # Send signal
 
+                # Send signal
                 self.ser.write(sent_data_bytes[k])
 
+                self.ser.reset_input_buffer()
+                self.ser.readline()
+                
                 try:
                     raw = self.ser.readline()
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))

@@ -158,6 +158,9 @@ class LQRControl(Base):
                 if not self.acquisition_running:
                     break
                 try: 
+                    self.ser.reset_input_buffer()
+                    self.ser.readline()
+                    
                     raw = self.ser.readline()
 
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))

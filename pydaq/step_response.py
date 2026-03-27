@@ -144,7 +144,7 @@ class StepResponse(Base):
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
-                
+
                 # Update step value
                 if k * self.ts >= float(self.step_time):
                     digital_val = 1
@@ -159,6 +159,9 @@ class StepResponse(Base):
                     self.ser.write(b"1" if digital_val == 1 else b"0")
                 
                 try:
+                    self.ser.reset_input_buffer()
+                    self.ser.readline()
+                    
                     raw = self.ser.readline()
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
@@ -315,10 +318,14 @@ class StepResponse(Base):
             # === NEW: dict to store pid per channel ===
             self.pid_parameters = {}
 
+            ch = self.channels[0]  # default to first channel for error messages if needed
+
             for ch in self.channels:   # === NEW: loop per channel ===
 
                 if len(self.time_var[ch]) < 3:
                     continue  # safety
+
+                channel_name=ch  
 
                 Kp, Ki, Kd, tangent_plot = self.get_parameters(
                     self.time_var[ch][0:-1],     # === MODIFIED ===
@@ -326,7 +333,8 @@ class StepResponse(Base):
                     self.step_time,
                     self.sintony_type,
                     self.ard_ao_min,
-                    self.ard_ao_max
+                    self.ard_ao_max,
+                    channel_name     # === NEW: pass channel name for better error messages ===
                 )
 
                 # === NEW: store per channel ===
@@ -579,13 +587,16 @@ class StepResponse(Base):
                 if len(self.time_var[ch]) < 3:
                     continue
 
+                channel_name  = ch  # === NEW: for better error messages ===
+
                 Kp, Ki, Kd, tangent_plot = self.get_parameters(
                     self.time_var[ch][0:-1],
                     self.output[ch][1:],
                     self.step_time,
                     self.sintony_type,
                     self.step_min,
-                    self.step_max
+                    self.step_max,
+                    channel_name              # === NEW: pass channel name for better error messages ===
                 )
 
                 self.pid_parameters[ch] = [Kp, Ki, Kd]
@@ -633,7 +644,7 @@ class StepResponse(Base):
 
         return
 
-    def get_parameters(self, time, system_value, step_time, type_sintony, min_val, max_val):
+    def get_parameters(self, time, system_value, step_time, type_sintony, min_val, max_val, channel_name):
 
         time = np.array(time)
         system_value = np.array(system_value)
@@ -711,7 +722,7 @@ class StepResponse(Base):
             Kd = Kp * Td
 
         if L_adjusted <= 0 or T <= 0 or Kp <= 0 or Ki < 0 or Kd < 0 or n < 3 or slope <= 0:
-            print("Invalid sample values. Sintony cannot be calculated correctly.")
+            print(f"Invalid sample values for channel {channel_name}. Sintony cannot be calculated correctly.")
             return 0, 0, 0, tangent_line_real  # Retorna PID=0
         
         print(f"Gains: Kp={Kp:.4f}, Ki={Ki:.4f}, Kd={Kd:.4f}")

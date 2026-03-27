@@ -57,8 +57,6 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
         self._setup_ao_selector()
         self._setup_ai_selector()
 
-        # Setting the starting values for some widgets
-        self.device_combo.addItems(self.device_type)
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )

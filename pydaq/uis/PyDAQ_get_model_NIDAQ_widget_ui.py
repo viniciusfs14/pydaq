@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_get_model_NIDAQ_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.10.1
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QButtonGroup, QCo
     QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QRadioButton,
     QSizePolicy, QVBoxLayout, QWidget)
+import resources_1_rc
 
 class Ui_Arduino_GetModel_W(object):
     def setupUi(self, Arduino_GetModel_W):

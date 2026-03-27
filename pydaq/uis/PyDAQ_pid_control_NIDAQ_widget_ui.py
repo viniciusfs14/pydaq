@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_pid_control_NIDAQ_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.10.1
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QComboBox, QDoubleSpi
     QFrame, QGridLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QRadioButton, QSizePolicy,
     QSpacerItem, QVBoxLayout, QWidget)
+import resources_1_rc
 
 class Ui_NIDAQ_PID_Control(object):
     def setupUi(self, NIDAQ_PID_Control):

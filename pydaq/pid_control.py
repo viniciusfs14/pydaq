@@ -112,6 +112,9 @@ class PIDControl(Base):
         #data = self.ser.read(14).decode("UTF-8") # Get the feedback sensor value
 
         try:
+            self.ser.reset_input_buffer()
+            self.ser.readline()
+            
             raw = self.ser.readline()
 
             values = list(map(int, raw.decode("utf-8").strip().split(",")))
