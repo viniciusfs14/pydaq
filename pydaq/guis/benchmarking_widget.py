@@ -72,6 +72,7 @@ class BenchmarkingWidget(QWidget, Ui_Form):
                 if now >= next_sample_time:
                     t0 = now
                     try:
+                        self.ser.reset_input_buffer()
                         line = self.ser.readline().decode("utf-8").strip()
                         if not line:
                             continue

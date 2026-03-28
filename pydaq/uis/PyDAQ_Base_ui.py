@@ -821,8 +821,8 @@ class Ui_PydaqGlobal(object):
         self.radioButton_2.toggled.connect(self.arduino_tabs.hide)
         self.radioButton_2.toggled.connect(self.nidaq_tabs.show)
 
-        self.nidaq_tabs.setCurrentIndex(5)
-        self.arduino_tabs.setCurrentIndex(5)
+        self.nidaq_tabs.setCurrentIndex(0)
+        self.arduino_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(PydaqGlobal)

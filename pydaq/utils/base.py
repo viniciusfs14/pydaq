@@ -327,3 +327,35 @@ class Base:
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+
+    def _verify_arduino_firmware(self):
+        """
+        Reads a sample from the Serial port to confirm that the PyDAQ firmware is running.
+        Returns True if correct, or False if incorrect.
+        """
+        try:
+            self.ser.reset_input_buffer() # Clear old junk
+
+            # Save the original timeout and set a quick one just for the test (1 second)
+            original_timeout = self.ser.timeout
+            self.ser.timeout = 1.0 
+
+            # Try reading the Arduino's "machine gun"
+            line = self.ser.readline().decode('utf-8').strip()
+            self.ser.timeout = original_timeout # Restore the timeout
+
+            if not line:
+                return False # Didn't receive anything (Arduino silent)
+
+            # Check if the line has the expected format by splitting by commas
+            parts = line.split(',')
+
+            # If we managed to split and the first item is a number, it's the PyDAQ!
+            if len(parts) >= 1: 
+                int(parts[0]) # Will raise an error if it's not a number
+                return True
+
+            return False
+        except Exception:
+            return False

@@ -279,6 +279,16 @@ class GetModel(Base):
         try:
             self._open_serial()
 
+            if not self._verify_arduino_firmware():
+                self.ser.close()
+                warnings.warn(
+                    "⚠️ PyDAQ Firmware not detected on this board!\n"
+                    "Please go to the top menu and click on 'Arduino Firmware' to upload the correct code."
+                )
+                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
+                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
+
+                return 
             # --- WARM-UP SECTION ---
             self.ser.write(b"0")
             self.ser.reset_input_buffer()

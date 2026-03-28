@@ -503,7 +503,7 @@ QTableWidget::item:selected {
           <enum>QTabWidget::TabPosition::North</enum>
          </property>
          <property name="currentIndex">
-          <number>5</number>
+          <number>0</number>
          </property>
          <property name="documentMode">
           <bool>false</bool>
@@ -702,7 +702,7 @@ QTableWidget::item:selected {
           <enum>QTabWidget::TabShape::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>5</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::TextElideMode::ElideNone</enum>

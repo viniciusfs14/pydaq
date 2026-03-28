@@ -111,6 +111,12 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
 
     def start_upload(self):
         """Starts the background thread to upload the firmware"""
+
+        # If the text is "Finished", close the window and interrupt the function.
+        if self.upload_button.text() == "Finished":
+            self.close()
+            return
+        
         if self.device_combo.currentIndex() == -1:
             QMessageBox.warning(self, "Warning", "Please select a valid COM port.")
             return

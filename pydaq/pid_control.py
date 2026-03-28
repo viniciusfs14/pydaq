@@ -85,6 +85,16 @@ class PIDControl(Base):
 
         self.com_ports = [i.description for i in serial.tools.list_ports.comports()] # COM ports
         self._open_serial() # Oppening ports
+        if not self._verify_arduino_firmware():
+                self.ser.close()
+                warnings.warn(
+                    "⚠️ PyDAQ Firmware not detected on this board!\n"
+                    "Please go to the top menu and click on 'Arduino Firmware' to upload the correct code."
+                )
+                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
+                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
+
+                return
         self.arduino_ai_bits = 10 # Arduino ADC resolution (in bits)
         self.ard_ao_max, self.ard_ao_min = 5, 0 # Arduino analog input max and min
         self.ard_vpb = (self.ard_ao_max - self.ard_ao_min) / ((2 ** self.arduino_ai_bits)-1) # Value per bit - Arduino
