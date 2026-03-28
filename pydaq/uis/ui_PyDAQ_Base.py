@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_BasedWAvXO.ui'
+## Form generated from reading UI file 'PyDAQ_BasePvkyuX.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -63,6 +63,8 @@ class Ui_PydaqGlobal(object):
         self.actionArduino_3.setObjectName(u"actionArduino_3")
         self.actionNIDAQ_3 = QAction(PydaqGlobal)
         self.actionNIDAQ_3.setObjectName(u"actionNIDAQ_3")
+        self.actionArduino_4 = QAction(PydaqGlobal)
+        self.actionArduino_4.setObjectName(u"actionArduino_4")
         self.centralwidget = QWidget(PydaqGlobal)
         self.centralwidget.setObjectName(u"centralwidget")
         self.centralwidget.setStyleSheet(u"QWidget{\n"
@@ -520,7 +522,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_2.setWidgetResizable(True)
         self.scrollAreaWidgetContents_4 = QWidget()
         self.scrollAreaWidgetContents_4.setObjectName(u"scrollAreaWidgetContents_4")
-        self.scrollAreaWidgetContents_4.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_4.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_8 = QGridLayout(self.scrollAreaWidgetContents_4)
         self.gridLayout_8.setObjectName(u"gridLayout_8")
         self.get_nidaq_placeholder = GetData_NIDAQ_Widget(self.scrollAreaWidgetContents_4)
@@ -542,7 +544,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_3.setWidgetResizable(True)
         self.scrollAreaWidgetContents_5 = QWidget()
         self.scrollAreaWidgetContents_5.setObjectName(u"scrollAreaWidgetContents_5")
-        self.scrollAreaWidgetContents_5.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_5.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_10 = QGridLayout(self.scrollAreaWidgetContents_5)
         self.gridLayout_10.setObjectName(u"gridLayout_10")
         self.send_nidaq_placeholder = SendData_NIDAQ_Widget(self.scrollAreaWidgetContents_5)
@@ -564,7 +566,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents_3 = QWidget()
         self.scrollAreaWidgetContents_3.setObjectName(u"scrollAreaWidgetContents_3")
-        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_3.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_9 = QGridLayout(self.scrollAreaWidgetContents_3)
         self.gridLayout_9.setObjectName(u"gridLayout_9")
         self.step_nidaq_placeholder = StepResponse_NIDAQ_Widget(self.scrollAreaWidgetContents_3)
@@ -586,7 +588,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_7.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_15 = QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout_15.setObjectName(u"gridLayout_15")
         self.getm_nidaq_placeholder = GetModel_Nidaq_Widget(self.scrollAreaWidgetContents)
@@ -608,7 +610,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_10.setWidgetResizable(True)
         self.scrollAreaWidgetContents_9 = QWidget()
         self.scrollAreaWidgetContents_9.setObjectName(u"scrollAreaWidgetContents_9")
-        self.scrollAreaWidgetContents_9.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_9.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_21 = QGridLayout(self.scrollAreaWidgetContents_9)
         self.gridLayout_21.setObjectName(u"gridLayout_21")
         self.widget_4 = PID_Control_NIDAQ_Widget(self.scrollAreaWidgetContents_9)
@@ -682,7 +684,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_5.setWidgetResizable(True)
         self.scrollAreaWidgetContents_7 = QWidget()
         self.scrollAreaWidgetContents_7.setObjectName(u"scrollAreaWidgetContents_7")
-        self.scrollAreaWidgetContents_7.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_7.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_12 = QGridLayout(self.scrollAreaWidgetContents_7)
         self.gridLayout_12.setObjectName(u"gridLayout_12")
         self.send_ino_placeholder = SendData_Arduino_Widget(self.scrollAreaWidgetContents_7)
@@ -704,7 +706,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_6.setWidgetResizable(True)
         self.scrollAreaWidgetContents_11 = QWidget()
         self.scrollAreaWidgetContents_11.setObjectName(u"scrollAreaWidgetContents_11")
-        self.scrollAreaWidgetContents_11.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_11.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_14 = QGridLayout(self.scrollAreaWidgetContents_11)
         self.gridLayout_14.setObjectName(u"gridLayout_14")
         self.step_ino_placeholder = StepResponse_Arduino_Widget(self.scrollAreaWidgetContents_11)
@@ -748,7 +750,7 @@ class Ui_PydaqGlobal(object):
         self.scrollArea_9.setWidgetResizable(True)
         self.scrollAreaWidgetContents_8 = QWidget()
         self.scrollAreaWidgetContents_8.setObjectName(u"scrollAreaWidgetContents_8")
-        self.scrollAreaWidgetContents_8.setGeometry(QRect(0, 0, 65, 28))
+        self.scrollAreaWidgetContents_8.setGeometry(QRect(0, 0, 650, 363))
         self.gridLayout_19 = QGridLayout(self.scrollAreaWidgetContents_8)
         self.gridLayout_19.setObjectName(u"gridLayout_19")
         self.widget_3 = PID_Control_Arduino_Widget(self.scrollAreaWidgetContents_8)
@@ -797,16 +799,20 @@ class Ui_PydaqGlobal(object):
         self.menuBeenchmarking.setObjectName(u"menuBeenchmarking")
         self.menuAbout = QMenu(self.menubar)
         self.menuAbout.setObjectName(u"menuAbout")
+        self.menuFirmware = QMenu(self.menubar)
+        self.menuFirmware.setObjectName(u"menuFirmware")
         PydaqGlobal.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(PydaqGlobal)
         self.statusbar.setObjectName(u"statusbar")
         PydaqGlobal.setStatusBar(self.statusbar)
 
         self.menubar.addAction(self.menuBeenchmarking.menuAction())
+        self.menubar.addAction(self.menuFirmware.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
         self.menuBeenchmarking.addAction(self.actionArduino_3)
         self.menuBeenchmarking.addAction(self.actionNIDAQ_3)
         self.menuAbout.addAction(self.actionDocumentation)
+        self.menuFirmware.addAction(self.actionArduino_4)
 
         self.retranslateUi(PydaqGlobal)
         self.radioButton.toggled.connect(self.arduino_tabs.show)
@@ -815,7 +821,7 @@ class Ui_PydaqGlobal(object):
         self.radioButton_2.toggled.connect(self.nidaq_tabs.show)
 
         self.nidaq_tabs.setCurrentIndex(5)
-        self.arduino_tabs.setCurrentIndex(0)
+        self.arduino_tabs.setCurrentIndex(5)
 
 
         QMetaObject.connectSlotsByName(PydaqGlobal)
@@ -832,6 +838,7 @@ class Ui_PydaqGlobal(object):
         self.actionDocumentation.setText(QCoreApplication.translate("PydaqGlobal", u"Documentation", None))
         self.actionArduino_3.setText(QCoreApplication.translate("PydaqGlobal", u"Arduino", None))
         self.actionNIDAQ_3.setText(QCoreApplication.translate("PydaqGlobal", u"NIDAQ", None))
+        self.actionArduino_4.setText(QCoreApplication.translate("PydaqGlobal", u"Arduino", None))
 #if QT_CONFIG(tooltip)
         self.logo.setToolTip(QCoreApplication.translate("PydaqGlobal", u"Go to PYDAQ Documentation", None))
 #endif // QT_CONFIG(tooltip)
@@ -852,5 +859,6 @@ class Ui_PydaqGlobal(object):
         self.arduino_tabs.setTabText(self.arduino_tabs.indexOf(self.LQR_control_arduino_tab), QCoreApplication.translate("PydaqGlobal", u"LQR Control", None))
         self.menuBeenchmarking.setTitle(QCoreApplication.translate("PydaqGlobal", u"Benchmarking", None))
         self.menuAbout.setTitle(QCoreApplication.translate("PydaqGlobal", u"About", None))
+        self.menuFirmware.setTitle(QCoreApplication.translate("PydaqGlobal", u"Upload Firmware", None))
     # retranslateUi
 
