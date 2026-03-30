@@ -570,16 +570,18 @@ class GetModel(Base):
                 channel_names=self.channels,        # Ex: ["A0", "A1"]
                 y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
             )
-            
             plt.show(block=True)
 
         if self.save:  # Adjusting data, since no last data is acquired by arduino
             print("\nSaving data ...")
             # Saving time_var and data
-            for ch in self.channels:
-                self._save_data(self.time_var[ch][:-1], f"time_{ch}.dat")
-                self._save_data(self.inp_read[ch][:-1], f"input_{ch}.dat")
-                self._save_data(self.out_read[ch][1:], f"output_{ch}.dat")
+            sliced_time_var = {ch: self.time_var[ch][:-1] for ch in self.channels}
+            sliced_input = {ch: self.inp_read[ch][:-1] for ch in self.channels}
+            sliced_output = {ch: self.out_read[ch][1:] for ch in self.channels}
+
+            self._save_data(sliced_time_var, f"time.dat")
+            self._save_data(sliced_input, f"input.dat")
+            self._save_data(sliced_output, f"output.dat")
             print("\nData saved ...")
 
         self.acquired_model = {}
@@ -591,9 +593,8 @@ class GetModel(Base):
         time_save = int(self.start_save_time / self.ts)
 
         for ch in self.channels:
-                
-            print(f"\nIdentifying model for channel: {ch}")
 
+            print(f"\nIdentifying model for channel: {ch}")
             data_x = np.array(self.inp_read[ch][:-1])   # input (discard last)
             data_y = np.array(self.out_read[ch][1:])    # output (discard first)
             
@@ -744,10 +745,9 @@ class GetModel(Base):
         if self.save:
             print("\nSaving data ...")
             # Saving time_var and data
-            for ch in self.channels:  # >>> CHANGE
-                self._save_data(self.time_var[ch], f"time_{ch}.dat")
-                self._save_data(self.inp_read[ch], f"input_{ch}.dat")
-                self._save_data(self.out_read[ch], f"output_{ch}.dat")
+            self._save_data(self.time_var, f"time.dat")
+            self._save_data(self.inp_read, f"input.dat")
+            self._save_data(self.out_read, f"output.dat")
             print("\nData saved ...")
 
         self.acquired_model = {}

@@ -402,11 +402,10 @@ class StepResponse(Base):
 
         if self.save:
             print("\nSaving data ...")
-            for ch in self.channels:
-                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-                self._save_data(time_formated, f"time_{ch}.dat")
-                self._save_data(self.input[ch], f"input_{ch}.dat")
-                self._save_data(self.output[ch], f"output_{ch}.dat")
+            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+            self._save_data(time_formated, f"time.dat")
+            self._save_data(self.input, f"input.dat")
+            self._save_data(self.output, f"output.dat")
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
@@ -663,11 +662,10 @@ class StepResponse(Base):
 
         if self.save:
             print("\nSaving data ...")
-            for ch in self.channels:
-                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-                self._save_data(time_formated, f"time_{ch}.dat")
-                self._save_data(self.input[ch], f"input_{ch}.dat")
-                self._save_data(self.output[ch], f"output_{ch}.dat")
+            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+            self._save_data(time_formated, f"time.dat")
+            self._save_data(self.input, f"input.dat")
+            self._save_data(self.output, f"output.dat")
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:

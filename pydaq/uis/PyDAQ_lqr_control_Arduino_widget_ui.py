@@ -25,7 +25,7 @@ class Ui_Arduino_LQR_Control(object):
     def setupUi(self, Arduino_LQR_Control):
         if not Arduino_LQR_Control.objectName():
             Arduino_LQR_Control.setObjectName(u"Arduino_LQR_Control")
-        Arduino_LQR_Control.resize(506, 504)
+        Arduino_LQR_Control.resize(506, 522)
         Arduino_LQR_Control.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -706,14 +706,14 @@ class Ui_Arduino_LQR_Control(object):
         Arduino_LQR_Control.setWindowTitle(QCoreApplication.translate("Arduino_LQR_Control", u"Form", None))
         self.start_lqr_control.setText(QCoreApplication.translate("Arduino_LQR_Control", u"LQR CONTROL", None))
         self.simulate_button.setText(QCoreApplication.translate("Arduino_LQR_Control", u"SIMULATION", None))
-        self.label_4.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AO channel (s):", None))
+        self.label_4.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AO channels:", None))
         self.label_9.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Plot data?", None))
         self.insert_matrices.setText(QCoreApplication.translate("Arduino_LQR_Control", u"INSERT MATRICES", None))
         self.path_folder_browse.setText(QCoreApplication.translate("Arduino_LQR_Control", u" BROWSE ", None))
         self.label_14.setText(QCoreApplication.translate("Arduino_LQR_Control", u"A,B and LQR matriz:", None))
         self.label_15.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Sample period (s):", None))
         self.label_12.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Path:", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AI channel (s):", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AI channels:", None))
         self.yes_save_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"No", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Real Time", None))

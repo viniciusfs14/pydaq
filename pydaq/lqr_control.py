@@ -258,6 +258,9 @@ class LQRControl(Base):
 
         """
 
+        if not self._check_lqr_dimensions():
+            return
+        
         self._check_path()
 
         self._calculate_lqr_gain()
@@ -363,11 +366,10 @@ class LQRControl(Base):
 
         if self.save:
             print("\nSaving data ...")
-            for ch in self.channels:
-                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-                self._save_data(time_formated, f"time_{ch}.dat")
-                self._save_data(self.input_h[ch], f"input_{ch}.dat")
-                self._save_data(self.output_h[ch], f"output_{ch}.dat")
+            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+            self._save_data(time_formated, f"time.dat")
+            self._save_data(self.input_h, f"input.dat")
+            self._save_data(self.output_h, f"output.dat")
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
@@ -458,7 +460,13 @@ class LQRControl(Base):
 
         """
 
+        
         print("Running LQR control for NIDAQ...")
+
+        # --- LQR SAFETY LOCK ---
+        if not self._check_lqr_dimensions():
+            return
+        
         self._calculate_lqr_gain()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
         self.time_var = {ch: [] for ch in self.channels}
@@ -566,11 +574,10 @@ class LQRControl(Base):
 
         if self.save:
             print("\nSaving data ...")
-            for ch in self.channels:
-                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-                self._save_data(time_formated, f"time_{ch}.dat")
-                self._save_data(self.input_h[ch], f"input_{ch}.dat")
-                self._save_data(self.output_h[ch], f"output_{ch}.dat")
+            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+            self._save_data(time_formated, f"time.dat")
+            self._save_data(self.input_h, f"input.dat")
+            self._save_data(self.output_h, f"output.dat")
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
@@ -584,8 +591,12 @@ class LQRControl(Base):
         Executes a pure mathematical simulation of the discrete LQR 
         (without connecting to the hardware) and displays the outputs (y) and control effort (u).
         """
+
         if self.A is None or self.B is None or self.Q is None or self.R is None:
             warnings.warn("A, B, Q, R matrices are not defined. Cannot simulate.")
+            return
+        
+        if not self._check_lqr_dimensions():
             return
 
         self._calculate_lqr_gain()
@@ -658,3 +669,30 @@ class LQRControl(Base):
 
         plt.tight_layout()
         plt.show(block=True)
+
+    def _check_lqr_dimensions(self):
+        """
+        Verifies if the dimensions of matrices A and B match the selected AI and AO channels.
+        Returns True if correct, False otherwise.
+        """
+        if self.A is None or self.B is None:
+            self._dim_error("Matrices A and B must be defined before running LQR!")
+            return False
+
+        A = np.array(self.A)
+        B = np.array(self.B)
+
+        n_states = len(self.channels)      # Number of AI channels
+        n_inputs = len(self.ao_channels)   # Number of AO channels
+
+        # Check matrix A: must be square and match the number of AI channels
+        if A.ndim != 2 or A.shape[0] != A.shape[1] or A.shape[0] != n_states:
+            self._dim_error(f"Matrix A must be {n_states}x{n_states} to match AI channels!")
+            return False
+
+        # Check matrix B: rows must match AI channels, cols must match AO channels
+        if B.ndim != 2 or B.shape[0] != n_states or B.shape[1] != n_inputs:
+            self._dim_error(f"Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
+            return False
+
+        return True

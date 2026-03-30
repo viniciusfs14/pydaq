@@ -336,7 +336,7 @@ QComboBox:disabled {
       <item row="1" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>AI channel (s):</string>
+         <string>AI channels:</string>
         </property>
        </widget>
       </item>
@@ -695,7 +695,7 @@ QComboBox:disabled {
       <item row="2" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>AO channel (s):</string>
+         <string>AO channels:</string>
         </property>
        </widget>
       </item>
@@ -744,8 +744,8 @@ QComboBox:disabled {
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="save_radio_group"/>
   <buttongroup name="plot_radio_group"/>
+  <buttongroup name="save_radio_group"/>
   <buttongroup name="pid_radio_group"/>
  </buttongroups>
 </ui>

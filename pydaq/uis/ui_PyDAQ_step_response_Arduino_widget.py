@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_step_response_Arduino_widgetvlLoxk.ui'
+## Form generated from reading UI file 'PyDAQ_step_response_Arduino_widgetzyzudj.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -531,7 +531,7 @@ class Ui_Arduino_StepResponse_W(object):
         self.yes_save_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"No", None))
         self.path_folder_browse.setText(QCoreApplication.translate("Arduino_StepResponse_W", u" BROWSE ", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AI channel (s):", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AI channels:", None))
         self.yes_pid_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Yes", None))
         self.no_pid_radio.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"No", None))
         self.PID_comboBox.setItemText(0, QCoreApplication.translate("Arduino_StepResponse_W", u"P", None))
@@ -557,7 +557,7 @@ class Ui_Arduino_StepResponse_W(object):
         self.label_10.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Session duration (s):", None))
         self.label_9.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Plot data?", None))
         self.label_11.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"Save data?", None))
-        self.label_4.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AO channel (s):", None))
+        self.label_4.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"AO channels:", None))
         self.start_step_response.setText(QCoreApplication.translate("Arduino_StepResponse_W", u"STEP RESPONSE", None))
     # retranslateUi
 

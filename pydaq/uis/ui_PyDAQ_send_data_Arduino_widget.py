@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_send_data_Arduino_widgetWAbsrW.ui'
+## Form generated from reading UI file 'PyDAQ_send_data_Arduino_widgetxqEceO.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -24,7 +24,7 @@ class Ui_Arduino_SendData_W(object):
     def setupUi(self, Arduino_SendData_W):
         if not Arduino_SendData_W.objectName():
             Arduino_SendData_W.setObjectName(u"Arduino_SendData_W")
-        Arduino_SendData_W.resize(475, 345)
+        Arduino_SendData_W.resize(475, 335)
         Arduino_SendData_W.setStyleSheet(u"QComboBox QAbstractItemView {\n"
 "    background-color: rgb(77, 77, 77);\n"
 "}\n"
@@ -401,7 +401,7 @@ class Ui_Arduino_SendData_W(object):
         self.label_8.setText(QCoreApplication.translate("Arduino_SendData_W", u"Path:", None))
         self.label_6.setText(QCoreApplication.translate("Arduino_SendData_W", u"Plot data?", None))
         self.path_folder_browse.setText(QCoreApplication.translate("Arduino_SendData_W", u" BROWSE ", None))
-        self.label_2.setText(QCoreApplication.translate("Arduino_SendData_W", u"AO channel (s):", None))
+        self.label_2.setText(QCoreApplication.translate("Arduino_SendData_W", u"AO channels:", None))
         self.start_send_data.setText(QCoreApplication.translate("Arduino_SendData_W", u"SEND DATA", None))
     # retranslateUi
 

@@ -297,12 +297,11 @@ class GetData(Base):
             )
             plt.show(block=True) # Keeps the final plot open
 
-        for ch in self.channels:
             time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-            self._save_data(time_formated, f"time_{ch}.dat")
-            self._save_data(self.data[ch], f"data_{ch}.dat")
+            self._save_data(time_formated, f"time.dat")
+            self._save_data(self.data, f"data.dat")
             if self.data_filtered[ch]:
-                self._save_data(self.data_filtered[ch], f"data_filtered_{ch}.dat")
+                self._save_data(self.data_filtered, f"data_filtered.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")
@@ -544,16 +543,13 @@ class GetData(Base):
 
         if self.save:
             print("\nSaving data ...")
-            for ch in self.channels:
-                time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-                self._save_data(time_formated, f"time_{ch}.dat")
-                self._save_data(self.data[ch], f"data_{ch}.dat")
-                if self.data_filtered[ch]:
-                    self._save_data(self.data_filtered[ch], f"data_filtered_{ch}.dat")
-
+            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
+            self._save_data(time_formated, f"time.dat")
+            self._save_data(self.data, f"data.dat")
+            if self.data_filtered[ch]:
+                self._save_data(self.data_filtered, f"data_filtered.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
-
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and self.plot_closed_by_user:

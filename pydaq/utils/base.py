@@ -195,18 +195,36 @@ class Base:
         self.fig.canvas.flush_events()
 
     def _save_data(self, data, name):
-        """Method to save data in self.path with name"""
-
+        """
+        Method to save data in self.path with name.
+        Handles multi-channel dicts (saves as matrices) and lists (saves as 1D arrays).
+        Outputs a space-separated .dat file containing only numerical values.
+        """
         try:
-
             os.makedirs(self.path, exist_ok=True)
-
-            # Safely join the path components for cross-platform compatibility
             full_path = os.path.join(self.path, name)
             
             with open(full_path, "w") as file:
-                for d in data:
-                    file.write(str(d) + "\n")        
+                # Handle dictionaries (Matrices: multiple columns separated by space)
+                if isinstance(data, dict):
+                    channels = list(data.keys())
+                    if not channels:
+                        return
+                    
+                    ref_ch = channels[0]
+                    n_samples = len(data[ref_ch])
+                    
+                    for i in range(n_samples):
+                        row_vals = []
+                        for ch in channels:
+                            val = data[ch][i] if i < len(data[ch]) else 0.0
+                            row_vals.append(f"{val:.6f}")
+                        file.write(" ".join(row_vals) + "\n")
+                        
+                # Handle lists (1D Arrays: single column)
+                elif isinstance(data, list):
+                    for d in data:
+                        file.write(str(d) + "\n")
 
         except OSError as e:
             warnings.warn(f"Error saving data to {full_path}: {e}")
@@ -274,11 +292,11 @@ class Base:
             warnings.warn("LQR Plot not initialized. Call _start_updatable_plot_lqr first.")
             return
 
-        # Limpa ambos os eixos
+        # Cleans both axes
         self.ax1.clear()
         self.ax2.clear()
 
-        # Configura novamente (pois o clear() apaga as configurações)
+        # Configure it again (because clear() erases the settings).
         self.ax1.set_ylabel("Amplitude (Output)")
         self.ax1.grid(True)
         self.ax2.set_xlabel("Time (s)")
@@ -288,7 +306,7 @@ class Base:
         if isinstance(x_values, dict):
             keys = list(x_values.keys())
 
-            # Mapeamento para as legendas
+            # Mapping for the legends
             ch_map_y = {keys[i]: y_channel_names[i] for i in range(min(len(keys), len(y_channel_names)))} if isinstance(y_channel_names, list) else {}
             ch_map_u = {keys[i]: u_channel_names[i] for i in range(min(len(keys), len(u_channel_names)))} if isinstance(u_channel_names, list) else ch_map_y
 
@@ -299,17 +317,17 @@ class Base:
                 disp_y = ch_map_y.get(ch, str(ch))
                 disp_u = ch_map_u.get(ch, str(ch))
 
-                # Garante que a mesma cor seja usada no gráfico de cima e de baixo para o mesmo canal
+                # Ensures that the same color is used in the top and bottom charts for the same channel.
                 color = plt.cm.tab10(idx % 10) 
 
-                # Gráfico Superior: System Response (y)
+                # Top Chart: System Response (y)
                 self.ax1.plot(
                     x_values[ch], y_values[ch],
                     marker='o', linestyle='-', color=color,
                     label=f"{y_label} ({disp_y})"
                 )
 
-                # Gráfico Inferior: Control Effort (u)
+                # Lower Chart: Control Effort (u)
                 if u_values is not None and ch in u_values and len(u_values[ch]) > 0:
                     self.ax2.plot(
                         x_values[ch], u_values[ch],
@@ -359,3 +377,11 @@ class Base:
             return False
         except Exception:
             return False
+
+    # NEW: Added method to trigger the dimension error window
+    def _dim_error(self, message="Dimension mismatch error!"):
+        """Generic dimension error window"""
+
+        error_w = Error_window()
+        error_w.ui.confirm.setText(message)
+        error_w.exec()

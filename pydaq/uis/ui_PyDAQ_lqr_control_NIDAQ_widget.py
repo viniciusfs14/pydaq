@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_lqr_control_NIDAQ_widgetnWpogG.ui'
+## Form generated from reading UI file 'PyDAQ_lqr_control_NIDAQ_widgetfDcAVl.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -758,12 +758,12 @@ class Ui_NIDAQ_LQR_Control(object):
         self.label_10.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"A,B and LQR matriz:", None))
         self.reload_devices.setText("")
         self.label_4.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Sample period (s):", None))
-        self.label_9.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"AO channel (s):", None))
+        self.label_9.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"AO channels:", None))
         self.label_8.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Path:", None))
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"No", None))
         self.label_6.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Plot data?", None))
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"AI channel (s):", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"AI channels:", None))
         self.label_7.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Save data?", None))
         self.path_folder_browse.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u" BROWSE ", None))
     # retranslateUi

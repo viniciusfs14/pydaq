@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_step_response_NIDAQ_widgetkLPuVm.ui'
+## Form generated from reading UI file 'PyDAQ_step_response_NIDAQ_widgetgIhJnn.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -24,7 +24,7 @@ class Ui_NIDAQ_StepResponse_W(object):
     def setupUi(self, NIDAQ_StepResponse_W):
         if not NIDAQ_StepResponse_W.objectName():
             NIDAQ_StepResponse_W.setObjectName(u"NIDAQ_StepResponse_W")
-        NIDAQ_StepResponse_W.resize(786, 675)
+        NIDAQ_StepResponse_W.resize(786, 671)
         NIDAQ_StepResponse_W.setMinimumSize(QSize(60, 0))
         NIDAQ_StepResponse_W.setStyleSheet(u"QComboBox QAbstractItemView {\n"
 "    background-color: rgb(77, 77, 77);\n"
@@ -656,7 +656,7 @@ class Ui_NIDAQ_StepResponse_W(object):
         self.label_12.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Maximum", None))
         self.label_11.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Minimum", None))
         self.reload_devices.setText("")
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AI channel (s):", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AI channels:", None))
         self.label_5.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Session duration (s):", None))
         self.label_4.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Sample period (s):", None))
         self.path_folder_browse.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u" BROWSE ", None))
@@ -665,7 +665,7 @@ class Ui_NIDAQ_StepResponse_W(object):
         self.label_6.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Plot data?", None))
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"No", None))
-        self.label_9.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AO channel (s):", None))
+        self.label_9.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"AO channels:", None))
         self.label_16.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Get PID parameters?", None))
         self.label_3.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Terminal Config.", None))
         self.label_7.setText(QCoreApplication.translate("NIDAQ_StepResponse_W", u"Save data?", None))

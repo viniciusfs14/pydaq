@@ -241,10 +241,8 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
                 fft_data = np.fft.fft(y2)
                 freqs = np.fft.fftfreq(len(y2), dt)
 
-                
                 fft_data_filtered = np.fft.fft(y)
 
-                
                 positive_freqs = freqs[:len(freqs) // 2]
                 fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
                 fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])

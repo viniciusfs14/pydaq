@@ -34,7 +34,7 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
         
         # Channel selection
         # Assuming digital pins 2-13 for Arduino
-        self.available_channels = [f"D{i}" for i in range(2, 14)] 
+        self.available_channels = [f"D{i}" for i in range(0, 14)] 
         self._setup_channel_selector()
 
     def _update_warning_label(self):

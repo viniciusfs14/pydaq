@@ -634,7 +634,7 @@ QComboBox:disabled {
          </size>
         </property>
         <property name="text">
-         <string>AI channel (s):</string>
+         <string>AI channels:</string>
         </property>
        </widget>
       </item>
@@ -831,7 +831,7 @@ QComboBox:disabled {
          </size>
         </property>
         <property name="text">
-         <string>AO channel (s):</string>
+         <string>AO channels:</string>
         </property>
        </widget>
       </item>
@@ -1001,8 +1001,8 @@ QComboBox:disabled {
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="save_radio_group"/>
   <buttongroup name="plot_radio_group"/>
+  <buttongroup name="save_radio_group"/>
   <buttongroup name="pid_radio_group"/>
  </buttongroups>
 </ui>

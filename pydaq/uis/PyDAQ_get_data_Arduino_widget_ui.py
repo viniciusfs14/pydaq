@@ -493,7 +493,7 @@ class Ui_Arduino_GetData_W(object):
         self.reload_devices.setText("")
         self.label_5.setText(QCoreApplication.translate("Arduino_GetData_W", u"Session duration (s):", None))
         self.label.setText(QCoreApplication.translate("Arduino_GetData_W", u"Device:", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_GetData_W", u"AI channel (s):", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_GetData_W", u"AI channels:", None))
         self.start_get_data.setText(QCoreApplication.translate("Arduino_GetData_W", u" GET DATA ", None))
     # retranslateUi
 

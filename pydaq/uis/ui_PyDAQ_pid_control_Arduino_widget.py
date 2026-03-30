@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_pid_control_Arduino_widgetiWcijs.ui'
+## Form generated from reading UI file 'PyDAQ_pid_control_Arduino_widgetRmXdbD.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -819,7 +819,7 @@ class Ui_Arduino_PID_Control(object):
         self.label_system_equation.setText(QCoreApplication.translate("Arduino_PID_Control", u"System equation:", None))
         self.yes_simulate_radio.setText(QCoreApplication.translate("Arduino_PID_Control", u"Yes", None))
         self.no_simulate_radio.setText(QCoreApplication.translate("Arduino_PID_Control", u"No", None))
-        self.label_ai_channel.setText(QCoreApplication.translate("Arduino_PID_Control", u"AI channel (s):", None))
+        self.label_ai_channel.setText(QCoreApplication.translate("Arduino_PID_Control", u"AI channels:", None))
         self.comboBox_setpoint.setItemText(0, QCoreApplication.translate("Arduino_PID_Control", u"Voltage (V)", None))
         self.comboBox_setpoint.setItemText(1, QCoreApplication.translate("Arduino_PID_Control", u"Temperature (C\u00b0)", None))
         self.comboBox_setpoint.setItemText(2, QCoreApplication.translate("Arduino_PID_Control", u"Other", None))
@@ -875,7 +875,7 @@ class Ui_Arduino_PID_Control(object):
         self.label_equation.setText(QCoreApplication.translate("Arduino_PID_Control", u"<html><head/><body><p>Equation: </p></body></html>", None))
         self.label_ki.setText(QCoreApplication.translate("Arduino_PID_Control", u"Ki:", None))
         self.reload_devices.setText("")
-        self.label_ao_channel.setText(QCoreApplication.translate("Arduino_PID_Control", u"AO channel (s):", None))
+        self.label_ao_channel.setText(QCoreApplication.translate("Arduino_PID_Control", u"AO channels:", None))
         self.pushButton_start.setText(QCoreApplication.translate("Arduino_PID_Control", u"PID CONTROL", None))
     # retranslateUi
 

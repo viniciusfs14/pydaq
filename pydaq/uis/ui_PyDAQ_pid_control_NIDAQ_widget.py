@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_pid_control_NIDAQ_widgetIdySOG.ui'
+## Form generated from reading UI file 'PyDAQ_pid_control_NIDAQ_widgettpehUs.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -854,7 +854,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"No", None))
         self.label_path.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Path:", None))
-        self.label_ai_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AI channel (s):", None))
+        self.label_ai_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AI channels:", None))
         self.comboBox_setpoint.setItemText(0, QCoreApplication.translate("NIDAQ_PID_Control", u"Voltage (V)", None))
         self.comboBox_setpoint.setItemText(1, QCoreApplication.translate("NIDAQ_PID_Control", u"Temperature (C\u00b0)", None))
         self.comboBox_setpoint.setItemText(2, QCoreApplication.translate("NIDAQ_PID_Control", u"Other", None))
@@ -865,7 +865,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.label_equation.setToolTip(QCoreApplication.translate("NIDAQ_PID_Control", u"<html><head/><body><p><span style=\" font-size:14pt;\">The equation should be written in the form: Ax\u00b2+Bx+C</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.label_equation.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Equation:", None))
-        self.label_ao_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AO channel (s):", None))
+        self.label_ao_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AO channels:", None))
         self.label_kp.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Kp:", None))
         self.label_vunit.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"V(Unit)", None))
         self.lineEdit_equationvu.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"1*x", None))

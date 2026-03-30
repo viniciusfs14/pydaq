@@ -197,6 +197,14 @@ class SendData(Base):
             return
 
         self.data = np.array(self.data)
+        
+        # Determine the number of columns in the loaded data
+        n_cols = self.data.shape[1] if self.data.ndim == 2 else 1
+        
+        # Abort ONLY if it's not a single column AND doesn't match the channel count
+        if n_cols != 1 and n_cols != len(self.channels):
+            self._dim_error("Data columns do not match the number of selected channels!")
+            return
 
         # Initialize storage dicts
         self.time_var = {ch: [] for ch in self.channels}
@@ -325,7 +333,7 @@ class SendData(Base):
             for k in range(cycles):
                 if not self.sending_running:
                     break
-                
+
                 # Logic to get values for this step
                 if n_channels == 1:
                      if self.data.ndim == 1:
@@ -344,13 +352,13 @@ class SendData(Base):
                 for i, ch in enumerate(self.channels): # e.g., self.channels = ["D8", "D9"]
                     pin_num = ch.replace("D", "")      # Extracts "8"
                     msg_parts.append(f"{pin_num}:{digital_vals[i]}") # Formats "8:1"
-                
+
                 msg = ",".join(msg_parts) + "\n"       # Creates "8:1,9:0\n"
 
                 self.ser.reset_input_buffer()
 
                 self.ser.write(msg.encode())
-                
+
                 num_cycles_performed += 1
 
                 time_now = time.perf_counter() - st_worker
@@ -409,6 +417,14 @@ class SendData(Base):
         
         self.data = np.array(self.data)
 
+        # Determine the number of columns in the loaded data
+        n_cols = self.data.shape[1] if self.data.ndim == 2 else 1
+        
+        # Abort ONLY if it's not a single column AND doesn't match the channel count
+        if n_cols != 1 and n_cols != len(self.channels):
+            self._dim_error("Data columns do not match the number of selected channels!")
+            return
+        
         # Initialize storage dicts
         self.time_var = {ch: [] for ch in self.channels}
         self.sent_data_history = {ch: [] for ch in self.channels}
@@ -491,9 +507,9 @@ class SendData(Base):
                 channel_names=self.channels
                 )
             plt.show(block=True)
-        
+
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
             print("\nPlot remains open. Close window manually to exit.")
             plt.show(block=True)
-            
+
         return
