@@ -47,7 +47,7 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         self.canvas = FigureCanvas(self.figure)
         self.image_layout.addWidget(self.canvas)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.canvas.setMinimumHeight(350)
+        self.canvas.setMinimumHeight(400)
 
         self.k = 0
         self.system_values = {}
@@ -271,37 +271,64 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         if len(self.time_var) == 0:
             return
 
-        # --- MULTICHANNEL MOD ---
+        # =========================
+        # UPDATE LINES
+        # =========================
         for ch in self.channels:
-
             self.lines_output[ch].set_data(self.time_var, self.system_values[ch])
             self.lines_setpoint[ch].set_data(self.time_var, self.setpoints[ch])
             self.lines_error[ch].set_data(self.time_var, self.errors[ch])
 
-        self.ax.set_xlim(0, max(self.time_var))
+        # X axis
+        self.ax1.set_xlim(0, max(self.time_var))
 
-        # --- MULTICHANNEL MOD ---
-        # Gather all system values from all channels to compute global limits
-        all_values = []
+        # =========================
+        # Y SCALE (OUTPUT + SETPOINT)
+        # =========================
+        all_outputs = []
+        all_setpoints = []
 
         for ch in self.channels:
             if self.system_values[ch]:
-                all_values.extend(self.system_values[ch])
+                all_outputs.extend(self.system_values[ch])
+            if self.setpoints[ch]:
+                all_setpoints.extend(self.setpoints[ch])
 
-        if all_values:
-            y_min = min(min(all_values), self.setpoint * -1.1)
-            y_max = max(max(all_values), self.setpoint * 1.1)
-            self.ax.set_ylim(y_min, y_max)
-            
-            # --- MOD ---
-            # Deixe o ax2 (Erro) autoescalar! Ele vai focar no erro pequeno.
-            self.ax2.relim()
-            self.ax2.autoscale_view()
+        if all_outputs:
+            y_min = min(all_outputs + all_setpoints)
+            y_max = max(all_outputs + all_setpoints)
+
+            y_range = y_max - y_min
+            if y_range == 0:
+                y_range = 1e-6
+
+            margin = 0.1 * y_range
+            self.ax1.set_ylim(y_min - margin, y_max + margin)
+
+        # =========================
+        # Y SCALE (ERROR)
+        # =========================
+        all_errors = []
+
+        for ch in self.channels:
+            if self.errors[ch]:
+                all_errors.extend(self.errors[ch])
+
+        if all_errors:
+            e_min = min(all_errors)
+            e_max = max(all_errors)
+
+            e_range = e_max - e_min
+            if e_range == 0:
+                e_range = 1e-6
+
+            margin = 0.1 * e_range
+            self.ax2.set_ylim(e_min - margin, e_max + margin)
 
     def check_start(self):
         if self.simulate == True:
-            self.pid.channels = self.channels       # Passa [" "] pro PIDControl
-            self.pid.ao_channels = self.ao_channels # Passa [" "] pro PIDControl
+            self.pid.channels = self.channels       
+            self.pid.ao_channels = self.ao_channels 
             self.pid.simulate_system()
         elif self.board == 'arduino':
             self.pid.com_port = self.com_port
@@ -357,62 +384,110 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
 
     def init_plot(self):
 
-        
-        # --- MULTICHANNEL MOD ---
+        # Clear and create subplots
+        self.figure.clear()
+        self.ax1 = self.figure.add_subplot(211)
+        self.ax2 = self.figure.add_subplot(212, sharex=self.ax1)
+
+        # =========================
+        # DARK THEME
+        # =========================
+        self.figure.patch.set_facecolor('#404040')
+        self.ax1.set_facecolor('#505050')
+        self.ax2.set_facecolor('#505050')
+
+        for ax in [self.ax1, self.ax2]:
+            ax.tick_params(axis='x', colors='white')
+            ax.tick_params(axis='y', colors='white')
+            ax.xaxis.label.set_color('white')
+            ax.yaxis.label.set_color('white')
+
+            for spine in ax.spines.values():
+                spine.set_color('white')
+
+        # =========================
+        # LINES (MULTICHANNEL)
+        # =========================
         self.lines_output = {}
         self.lines_setpoint = {}
         self.lines_error = {}
 
-        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        reds = plt.cm.Reds(np.linspace(0.5, 0.9, max(2, len(self.channels))))
+        colors = plt.cm.Set1.colors  # good contrast
 
         for i, ch in enumerate(self.channels):
-            c_out = colors[(i * 3 + 0) % len(colors)]
-            c_set = colors[(i * 3 + 1) % len(colors)]
-            c_err = reds[i % len(reds)] # Red shades for error, to visually differentiate from output and setpoint
+            color = colors[i % len(colors)]
 
-            line1, = self.ax.plot([], [], 'x', color=c_out, label=f'System Output {ch}')
-            line2, = self.ax.plot([], [], '-', color=c_set, label=f'Setpoint {ch}')
-            line3, = self.ax2.plot([], [], '--', color=c_err, label=f'Error {ch}')
+            # Output (o-)
+            line_out, = self.ax1.plot(
+                [], [],
+                color=color,
+                marker='o',
+                linestyle='-',
+                markersize=4,
+                linewidth=1.5,
+                label=f'Output ({ch})'
+            )
 
-            self.lines_output[ch] = line1
-            self.lines_setpoint[ch] = line2
-            self.lines_error[ch] = line3
+            # Setpoint (--)
+            line_sp, = self.ax1.plot(
+                [], [],
+                linestyle='--',
+                color=color,
+                linewidth=1.8,
+                label=f'Setpoint ({ch})'
+            )
 
-        self.ax.set_xlim(0, self.period * 10)
-        self.ax.set_ylim(-1.1 * self.setpoint, 1.1 * self.setpoint)
-        self.ax2.set_ylim(-1.1 * self.setpoint, 1.1 * self.setpoint)
+            # Error (:) com mais destaque
+            line_err, = self.ax2.plot(
+                [], [],
+                color=color,
+                marker='o',
+                linestyle='-',
+                markersize=4,
+                linewidth=1.5,
+                label=f'Error ({ch})'
+            )
 
-        self.ax.set_xlabel('Sample (s)')
-        self.ax.set_ylabel(self.unit)
+            self.lines_output[ch] = line_out
+            self.lines_setpoint[ch] = line_sp
+            self.lines_error[ch] = line_err
+
+        # =========================
+        # LABELS & GRID
+        # =========================
+        self.ax1.set_ylabel(self.unit)
         self.ax2.set_ylabel('Error')
+        self.ax2.set_xlabel('Time (s)')
 
-        # Force label color
-        self.ax.xaxis.label.set_color('white')      # Sample (s)
-        self.ax.yaxis.label.set_color('white')      # Voltage (V)
-        self.ax2.yaxis.label.set_color('white')     # Error
+        self.ax1.grid(True, linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
+        self.ax2.grid(True, linestyle='--', linewidth=0.6, color='white', alpha=0.25)
 
-        # Force tick and border color
-        for spine in ['bottom', 'top', 'left', 'right']:
-            self.ax.spines[spine].set_color('white')
-            self.ax2.spines[spine].set_color('white')
+        # =========================
+        # LEGENDS OUTSIDE
+        # =========================
+        self.ax1.legend(
+            loc='upper left',
+            bbox_to_anchor=(1.02, 1),
+            borderaxespad=0,
+            fontsize=8
+        )
 
-        self.ax.tick_params(axis='x', colors='white')
-        self.ax.tick_params(axis='y', colors='white')
-        self.ax2.tick_params(axis='y', colors='white')
+        self.ax2.legend(
+            loc='upper left',
+            bbox_to_anchor=(1.02, 1),
+            borderaxespad=0,
+            fontsize=8
+        )
 
-        self.ax.title.set_color('white')
-        self.ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
-        self.ax.legend(loc='upper left')
-        self.ax2.legend(loc='upper right')
+        # =========================
+        # LAYOUT FIX
+        # =========================
+        self.figure.subplots_adjust(right=0.78, bottom=0.15, hspace=0.3)
 
-        self.figure.subplots_adjust(bottom=0.25)
+
 
     def update_plot_task(self):
-        if self.ts >= 0.25:
-            plot_update_interval = 0.25
-        else:
-            plot_update_interval = 0.5
+        plot_update_interval = max(self.ts * 0.9, 0.05)
 
         while self.plot_running:
             self.update_plot_signal.emit()

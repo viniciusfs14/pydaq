@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_pid_control_window_dialogEpMper.ui'
+## Form generated from reading UI file 'PyDAQ_pid_control_window_dialogyPnPPZ.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -24,7 +24,7 @@ class Ui_Dialog_Plot_PID_Window(object):
     def setupUi(self, Dialog_Plot_PID_Window):
         if not Dialog_Plot_PID_Window.objectName():
             Dialog_Plot_PID_Window.setObjectName(u"Dialog_Plot_PID_Window")
-        Dialog_Plot_PID_Window.resize(620, 633)
+        Dialog_Plot_PID_Window.resize(837, 833)
         Dialog_Plot_PID_Window.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -455,7 +455,7 @@ class Ui_Dialog_Plot_PID_Window(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 606, 769))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 802, 944))
         self.gridLayout_2 = QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.widget = QWidget(self.scrollAreaWidgetContents)
@@ -637,7 +637,7 @@ class Ui_Dialog_Plot_PID_Window(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.widget_image = QWidget(self.frame_image)
         self.widget_image.setObjectName(u"widget_image")
-        self.widget_image.setMinimumSize(QSize(550, 325))
+        self.widget_image.setMinimumSize(QSize(550, 500))
         self.image_layout = QHBoxLayout(self.widget_image)
         self.image_layout.setObjectName(u"image_layout")
 

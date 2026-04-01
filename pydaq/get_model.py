@@ -471,10 +471,7 @@ class GetModel(Base):
         else:
             self.plot_ready_event.set()
         
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts * 0.9, 0.05)
             
         last_plot_update_time = time.perf_counter()
 

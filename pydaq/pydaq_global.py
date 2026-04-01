@@ -25,9 +25,10 @@ class PYDAQ_Global_GUI(QtWidgets.QMainWindow, Ui_PydaqGlobal):
         self.send_nidaq_placeholder.signals.returned.connect(self.fetch_object)
         self.step_ino_placeholder.signals.returned.connect(self.fetch_object)
         self.step_nidaq_placeholder.signals.returned.connect(self.fetch_object)
-        self.actionArduino_4.triggered.connect(self.open_firmware_upload_arduino)
-        self.actionArduino_3.triggered.connect(self.open_benchmarking_arduino)
-        self.actionNIDAQ_3.triggered.connect(self.open_benchmarking_nidaq)
+        self.actionArduino_3.triggered.connect(self.open_firmware_upload_arduino)
+        self.actionArduino_1.triggered.connect(self.open_benchmarking_arduino)
+        self.actionNIDAQ_1.triggered.connect(self.open_benchmarking_nidaq)
+        self.actionNIDAQ_3.triggered.connect(self.open_nidaq_drivers_website)
         self.actionDocumentation.triggered.connect(self.open_pydaq_website)
 
         # NIDAQ WARNING CONTROL
@@ -39,6 +40,10 @@ class PYDAQ_Global_GUI(QtWidgets.QMainWindow, Ui_PydaqGlobal):
 
     def open_pydaq_website(self):
         url = "https://samirmartins.github.io/pydaq/"
+        webbrowser.open(url)
+
+    def open_nidaq_drivers_website(self):
+        url = "https://www.ni.com/en-us/support/downloads/drivers/download.ni-daqmx.html"
         webbrowser.open(url)
 
     def open_benchmarking_arduino(self):
