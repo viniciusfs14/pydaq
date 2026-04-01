@@ -114,7 +114,7 @@ class GetData(Base):
         """
         # Wait for plot to be ready before starting acquisition to synchronize time_now to ~0
         self.plot_ready_event.wait() 
-
+        st_worker = None 
         task = nidaqmx.Task()
         
         try:
@@ -156,18 +156,22 @@ class GetData(Base):
         finally:
             task.close()
             data_queue.put(None) # Signal end of data acquisition
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )       
+
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\nThread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\nThread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
-        
+                print("\nThread finished before acquisition started (Configuration blocked).")        
 
     # Handler for plot window closure
     def _on_plot_close(self, event):

@@ -172,6 +172,13 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
     def start_func_get_data(self):  # Start getting data
+        
+        if not NIDAQ_AVAILABLE:
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found!\nCannot start hardware acquisition.")
+            error_w.exec()
+            return
+        
         try:
             # Instantiating the GetData class
             g = GetData()
@@ -352,7 +359,18 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
                 y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
                 
-                ts = x[1] - x[0]
+                if x.size < 2:
+                    print("⚠️ Insufficient data to plot frequency response.")
+                    return
+
+                # --- Force 2D array for multi-channel support ---
+                if x.ndim == 1: x = x.reshape(-1, 1)
+                if y.ndim == 1: y = y.reshape(-1, 1)
+                if y2.ndim == 1: y2 = y2.reshape(-1, 1)
+                
+                num_channels = y2.shape[1]
+                
+                ts = x[1, 0] - x[0, 0]
                 fs = 1/ts
                 
                 w, h = signal.freqz(self.fir_coeff, 1.0, worN=None, fs=fs)
@@ -360,41 +378,51 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 phase = np.angle(h)
                 
                 dt = 1/(fs*2.5)  
-        
-                fft_data = np.fft.fft(y2)
-                freqs = np.fft.fftfreq(len(y2), dt)
+                channels_selected = self.get_selected_channels()
 
-                
-                fft_data_filtered = np.fft.fft(y)
+                # Loop to calculate and create a figure for each channel
+                for i in range(num_channels):
+                    # Get channel name from self.channels securely
 
+                    ch_name = channels_selected[i] if i < len(channels_selected) else f"CH {i}"
+                    
+                    orig_col = y2[:, i]
+                    filt_col = y[:, i]
+
+                    fft_data = np.fft.fft(orig_col)
+                    freqs = np.fft.fftfreq(len(orig_col), dt)
+
+                    fft_data_filtered = np.fft.fft(filt_col)
+
+                    positive_freqs = freqs[:len(freqs) // 2]
+                    fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+                    fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                    
+                    fft_data_magnitude_norm = (fft_data_magnitude/np.max(fft_data_magnitude))*100
+                    fft_data_filtered_magnitude_norm = (fft_data_filtered_magnitude/np.max(fft_data_filtered_magnitude))*100
+                    
+                    # Create a new figure for this specific channel
+                    plt.figure(figsize=(7,5))
+                    
+                    plt.subplot(2,1,1)
+                    plt.plot(positive_freqs, fft_data_magnitude_norm, label=f'FFT Original ({ch_name})', color='r')
+                    plt.title(f'Original Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.subplot(2,1,2)
+                    plt.plot(positive_freqs, fft_data_filtered_magnitude_norm, label=f'FFT Filtered ({ch_name})', color='r')
+                    plt.title(f'Filtered Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.tight_layout()
                 
-                positive_freqs = freqs[:len(freqs) // 2]
-                fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
-                fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
-                
-                fft_data_magnitude_norm = (fft_data_magnitude/np.max(fft_data_magnitude))*100
-                fft_data_filtered_magnitude_norm = (fft_data_filtered_magnitude/np.max(fft_data_filtered_magnitude))*100
-                
-                
-                plt.figure(figsize=(7,5))
-                
-                plt.subplot(2,1,1)
-                plt.plot(positive_freqs, fft_data_magnitude_norm, label='FFT Original', color='r')
-                plt.title('Original Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.subplot(2,1,2)
-                plt.plot(positive_freqs, fft_data_filtered_magnitude_norm, label='FFT Filtered', color='r')
-                plt.title('Filtered Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.tight_layout()
+                # Show all created figures at once
                 plt.show()
                 
             else:
@@ -402,46 +430,62 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
                 y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
                 
-                ts = x[1] - x[0]
+                # --- Force 2D array for multi-channel support ---
+                if x.ndim == 1: x = x.reshape(-1, 1)
+                if y.ndim == 1: y = y.reshape(-1, 1)
+                if y2.ndim == 1: y2 = y2.reshape(-1, 1)
+                
+                num_channels = y2.shape[1]
+                
+                ts = x[1, 0] - x[0, 0]
                 fs = 1/ts
                 
                 w, h = signal.freqz(self.b, self.a, worN=None, fs=fs)
                 mag = 20*np.log10(np.abs(h))
                 phase = np.angle(h)
                 
-               
                 dt = 1/(fs*2.5)  # 1/(fs*2)
-        
                 
-                fft_data = np.fft.fft(y2)
-                freqs = np.fft.fftfreq(len(y2), dt)
+                # Loop to calculate and create a figure for each channel
+                for i in range(num_channels):
+                    # Get channel name from self.channels securely
+                    ch_name = self.channels[i] if hasattr(self, 'channels') and i < len(self.channels) else f"CH {i}"
+                    
+                    orig_col = y2[:, i]
+                    filt_col = y[:, i]
+                    
+                    fft_data = np.fft.fft(orig_col)
+                    freqs = np.fft.fftfreq(len(orig_col), dt)
 
-                fft_data_filtered = np.fft.fft(y)
+                    fft_data_filtered = np.fft.fft(filt_col)
 
-                positive_freqs = freqs[:len(freqs) // 2]
-                fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
-                fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                    positive_freqs = freqs[:len(freqs) // 2]
+                    fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+                    fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                    
+                    # Create a new figure for this specific channel
+                    plt.figure(figsize=(7,5))
+                    
+                    plt.subplot(2,1,1)
+                    plt.plot(positive_freqs, fft_data_magnitude, label=f'FFT Original ({ch_name})', color='r')
+                    plt.title(f'Original Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.subplot(2,1,2)
+                    # Note: I corrected the label here from 'FFT Original' to 'FFT Filtered' based on your original code's typo
+                    plt.plot(positive_freqs, fft_data_filtered_magnitude, label=f'FFT Filtered ({ch_name})', color='r')
+                    plt.title(f'Filtered Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.tight_layout()
                 
-                
-                plt.figure(figsize=(7,5))
-                
-                plt.subplot(2,1,1)
-                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='r')
-                plt.title('Original Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.subplot(2,1,2)
-                plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
-                plt.title('Filtered Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.tight_layout()
+                # Show all created figures at once
                 plt.show()
         else:
             pass
