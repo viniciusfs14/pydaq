@@ -3,11 +3,19 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import serial
 import serial.tools.list_ports
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 import warnings
 from ..guis.error_window_gui import Error_window
 
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
 
 class Base:
     """
@@ -236,8 +244,12 @@ class Base:
         self.device_names = []
         self.device_categories = []
         self.device_type = []
-        self.local_system = nidaqmx.system.System.local()
 
+        if not NIDAQ_AVAILABLE:
+            return # Exit gracefully if drivers are missing
+        
+        self.local_system = nidaqmx.system.System.local()
+        
         for device in self.local_system.devices:
             self.device_names.append(device.name)
             self.device_categories.append(device.product_category)
@@ -385,3 +397,12 @@ class Base:
         error_w = Error_window()
         error_w.ui.confirm.setText(message)
         error_w.exec()
+
+    def _check_nidaq_availability(self):
+        """Checks if NIDAQ drivers are installed and loaded."""
+        if not NIDAQ_AVAILABLE:
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.exec()
+            return False
+        return True

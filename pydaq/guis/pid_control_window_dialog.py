@@ -78,7 +78,12 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
     def go_back(self): #def to save and go back
         if hasattr(self, "_already_closed") and self._already_closed:
             return
+        
+        self.plot_running = False
+        self.control_running = False
         self._already_closed = True
+        time.sleep(0.1)
+
         if self.save: #save if wanted
             print("\nSaving data ...")
             self._save_data(self.time_var, "time.dat") # Saving time_var and data
@@ -106,21 +111,20 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.pid.ser.close() # Closing port
         elif self.board == 'nidaq':
             try:
-                if self.pid.task_ao:
-                    # Check how many AO channels we have
+                # Usa hasattr para checar se a tarefa existe antes de tentar acessá-la
+                if hasattr(self.pid, 'task_ao') and self.pid.task_ao:
                     n_ao = len(self.ao_channels)
                     if n_ao == 1:
                         self.pid.task_ao.write(0.0)
                     else:
                         self.pid.task_ao.write([0.0] * n_ao)
                     self.pid.task_ao.close()
-                if self.pid.task_ai:
+                    
+                if hasattr(self.pid, 'task_ai') and self.pid.task_ai:
                     self.pid.task_ai.close()
             except Exception as e:
                 print("Warning when closing NI-DAQ tasks:", e)
 
-        self.plot_running = False
-        self.control_running = False
         self.close()
 
     def closeEvent(self, event):

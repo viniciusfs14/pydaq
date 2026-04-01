@@ -1,4 +1,4 @@
-import nidaqmx
+
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,6 +15,14 @@ from pydaq.utils.signals import GuiSignals
 from PySide6.QtCore import Signal
 from PySide6 import QtWidgets
 from PySide6.QtGui import QIcon, QPalette, QColor
+
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+
 
 class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
     dataEntered = Signal(dict)

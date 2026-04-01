@@ -11,9 +11,19 @@ import queue
 
 import matplotlib.pyplot as plt
 import warnings
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 from scipy.linalg import solve_discrete_are
+
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
+
 
 
 class LQRControl(Base):
@@ -366,10 +376,9 @@ class LQRControl(Base):
 
         if self.save:
             print("\nSaving data ...")
-            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-            self._save_data(time_formated, f"time.dat")
-            self._save_data(self.input_h, f"input.dat")
-            self._save_data(self.output_h, f"output.dat")
+            self._save_data(self.time_var, "time.dat")
+            self._save_data(self.input_h, "input.dat")
+            self._save_data(self.output_h, "output.dat")
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
@@ -460,8 +469,9 @@ class LQRControl(Base):
 
         """
 
-        
-        print("Running LQR control for NIDAQ...")
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
 
         # --- LQR SAFETY LOCK ---
         if not self._check_lqr_dimensions():
@@ -574,10 +584,9 @@ class LQRControl(Base):
 
         if self.save:
             print("\nSaving data ...")
-            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-            self._save_data(time_formated, f"time.dat")
-            self._save_data(self.input_h, f"input.dat")
-            self._save_data(self.output_h, f"output.dat")
+            self._save_data(self.time_var, "time.dat")
+            self._save_data(self.input_h, "input.dat")
+            self._save_data(self.output_h, "output.dat")
             print("\nData saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:

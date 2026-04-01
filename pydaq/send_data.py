@@ -5,11 +5,21 @@ import threading
 import queue
 
 import matplotlib.pyplot as plt
-import nidaqmx
 import numpy as np
 import serial
 import serial.tools.list_ports
 from pydaq.utils.base import Base
+
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
 
 class SendData(Base):
     """
@@ -192,6 +202,10 @@ class SendData(Base):
             send_data_nidaq()
         """
 
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
         if self.data is None:
             warnings.warn("You must define data to be sent.")
             return

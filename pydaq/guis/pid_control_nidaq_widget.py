@@ -1,5 +1,4 @@
 import sys, os
-import nidaqmx
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -11,6 +10,13 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from ..guis.pid_control_window_dialog import PID_Control_Window_Dialog
 from .error_window_gui import Error_window
+
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
 
 class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
     def __init__(self, *args):
@@ -32,22 +38,30 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
         self.signals = GuiSignals()
-
+        self.kp = 1.0
+        self.ki = 0.0
+        self.kd = 0.0
         self._nidaq_info() # Gathering nidaq infos 
 
         # Discover AO channels
         try:
-            self.available_ao_channels = nidaqmx.system.device.Device(
-                self.device_names[0]
-            ).ao_physical_chans.channel_names
+            if NIDAQ_AVAILABLE and len(self.device_names) > 0:
+                self.available_ao_channels = nidaqmx.system.device.Device(
+                    self.device_names[0]
+                ).ao_physical_chans.channel_names
+            else:
+                self.available_ao_channels = []
         except BaseException:
             self.available_ao_channels = []
 
         # Discover AI channels
         try:
-            self.available_ai_channels = nidaqmx.system.device.Device(
-                self.device_names[0]
-            ).ai_physical_chans.channel_names
+            if NIDAQ_AVAILABLE and len(self.device_names) > 0:
+                self.available_ai_channels = nidaqmx.system.device.Device(
+                    self.device_names[0]
+                ).ai_physical_chans.channel_names
+            else:
+                self.available_ai_channels = []
         except BaseException:
             self.available_ai_channels = []
 
@@ -163,6 +177,14 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
 # Create the pid control window
     def show_graph_window(self):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+        
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found and simulation is not selected
+        if not self.simulate and not NIDAQ_AVAILABLE:
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found!\nCannot start hardware control.")
+            error_w.exec()
+            return
+        
         self.numerator = self.lineEdit_numerator.text()
         self.denominator = self.lineEdit_denominator.text()
         if self.simulate:
@@ -216,10 +238,16 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
             self.unit = self.lineEdit_unit.text()
     
     def _nidaq_info(self):
-        """Gathering NIDAQ info""" # Getting all available devices
+        """Gathering NIDAQ info""" 
+        
+        # Getting all available devices
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
         for device in self.local_system.devices:
             self.device_names.append(device.name)
@@ -227,17 +255,22 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        dev_name = self.device_names[
-            self.device_type.index(self.device_combo.currentText())
-        ]
 
         try:
-            new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            if NIDAQ_AVAILABLE:
+                new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            else:
+                new_ao = []
+
+            if NIDAQ_AVAILABLE:
+                new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+            else:
+                new_ai = []
         except BaseException:
             new_ao = []
-        try:
-            new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
-        except BaseException:
             new_ai = []
 
         self.available_ao_channels = new_ao

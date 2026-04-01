@@ -6,9 +6,16 @@ import time
 import serial
 import serial.tools.list_ports
 import warnings
-import nidaqmx
 import matplotlib.pyplot as plt
-from nidaqmx.system import System
+
+
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    from nidaqmx.system import System
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
 
 ard_vpb = 1  
 
@@ -178,10 +185,15 @@ class BenchmarkingNIWidget(QWidget, Ui_Form):
         self.update_nidaq_devices()
 
     def update_nidaq_devices(self):
-        system = System.local()
+        
         selected = self.device_box.currentText()
         self.device_box.clear()
 
+        # --- SAFETY LOCK ---
+        if not NIDAQ_AVAILABLE:
+            return
+
+        system = System.local()
         for dev in system.devices:
             for chan in dev.ai_physical_chans:
                 text = f"{chan.name} - {dev.product_type}"
@@ -196,6 +208,13 @@ class BenchmarkingNIWidget(QWidget, Ui_Form):
         self.close()
 
     def inicialize_benchmarking(self, period_s=[1, 0.5, 0.2, 0.1, 0.01, 0.001, 0.0001, 0.00001], duration_s=5.0, allowed_delay_percent=25.0):
+        # --- SAFETY LOCK ---
+        if not NIDAQ_AVAILABLE:
+            print("❌ NI-DAQmx drivers not found! Cannot run benchmark.")
+            self.value_beench.appendPlainText("❌ NI-DAQmx drivers not found! Cannot run benchmark.\n")
+            QApplication.processEvents()
+            return
+        
         print(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
         self.value_beench.appendPlainText(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
         QApplication.processEvents()

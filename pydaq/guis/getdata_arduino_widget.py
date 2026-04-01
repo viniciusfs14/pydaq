@@ -229,6 +229,10 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
                 y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
                 
+                if x.ndim > 1: x = x[:, 0]
+                if y.ndim > 1: y = y[:, 0]
+                if y2.ndim > 1: y2 = y2[:, 0]
+
                 ts = x[1] - x[0]
                 fs = 1/ts
                 
@@ -276,6 +280,10 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
                 x = np.loadtxt(self.path_line_edit.text() + "\\" + "time.dat")
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
                 y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
+                
+                if x.ndim > 1: x = x[:, 0]
+                if y.ndim > 1: y = y[:, 0]
+                if y2.ndim > 1: y2 = y2[:, 0]
                 
                 ts = x[1] - x[0]
                 fs = 1/ts

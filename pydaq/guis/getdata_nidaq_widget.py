@@ -1,5 +1,5 @@
 import os
-import nidaqmx
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,6 +18,13 @@ from ..get_data import GetData
 
 from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip
 
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):
         super(GetData_NIDAQ_Widget, self).__init__()
@@ -27,10 +34,17 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self._nidaq_info()
 
         try:
-            chan = nidaqmx.system.device.Device(
-                self.device_names[0]
-            ).ai_physical_chans.channel_names
-            defchan = chan[0]
+            if NIDAQ_AVAILABLE and len(self.device_names) > 0:
+                chan = nidaqmx.system.device.Device(
+                    self.device_names[0]
+                ).ai_physical_chans.channel_names
+                defchan = chan[0]
+            else:
+                chan = []
+                defchan = ""
+        except BaseException:
+            chan = []
+            defchan = ""
 
         except BaseException:
             chan = ""
@@ -273,6 +287,10 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
 
         for device in self.local_system.devices:
@@ -281,12 +299,16 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        dev_name = self.device_names[
-            self.device_type.index(self.device_combo.currentText())
-        ]
-
+        
         try:
-            new_ai_channels = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            
+            if NIDAQ_AVAILABLE:
+                new_ai_channels = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+            else:
+                new_ai_channels = []
         except BaseException:
             new_ai_channels = []
 

@@ -38,7 +38,9 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )   
-
+        self.kp = 1.0
+        self.ki = 0.0
+        self.kd = 0.0
         # Available channels (Arduino logic)
         self.available_ai_channels = [f"A{i}" for i in range(6)]
         self.available_ao_channels = [f"D{i}" for i in range(0, 14)]

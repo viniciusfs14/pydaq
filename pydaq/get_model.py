@@ -3,8 +3,6 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 import numpy as np
 import serial
 import serial.tools.list_ports
@@ -20,7 +18,6 @@ import matplotlib.pyplot as plt
 from pydaq.utils.signals import Signal
 from math import floor
 from sysidentpy.model_structure_selection import FROLS
-#from sysidentpy.basis_function._basis_function import Polynomial
 from sysidentpy.basis_function import Polynomial
 from sysidentpy.metrics import root_relative_squared_error
 from sysidentpy.utils.display_results import results
@@ -33,6 +30,19 @@ from collections import Counter
 from typing import Tuple
 
 from sysidentpy.parameter_estimation import LeastSquares
+
+
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
+
 
 mpl.rcParams["axes.spines.right"] = False
 mpl.rcParams["axes.spines.top"] = False
@@ -579,9 +589,9 @@ class GetModel(Base):
             sliced_input = {ch: self.inp_read[ch][:-1] for ch in self.channels}
             sliced_output = {ch: self.out_read[ch][1:] for ch in self.channels}
 
-            self._save_data(sliced_time_var, f"time.dat")
-            self._save_data(sliced_input, f"input.dat")
-            self._save_data(sliced_output, f"output.dat")
+            self._save_data(sliced_time_var, "time.dat")
+            self._save_data(sliced_input, "input.dat")
+            self._save_data(sliced_output, "output.dat")
             print("\nData saved ...")
 
         self.acquired_model = {}
@@ -703,7 +713,11 @@ class GetModel(Base):
             self.show_results(results_data,ch)
 
     def get_model_nidaq(self):
-
+        
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
         if self.input_channels:
             self.channels = self.input_channels
 
@@ -745,9 +759,9 @@ class GetModel(Base):
         if self.save:
             print("\nSaving data ...")
             # Saving time_var and data
-            self._save_data(self.time_var, f"time.dat")
-            self._save_data(self.inp_read, f"input.dat")
-            self._save_data(self.out_read, f"output.dat")
+            self._save_data(self.time_var, "time.dat")
+            self._save_data(self.inp_read, "input.dat")
+            self._save_data(self.out_read, "output.dat")
             print("\nData saved ...")
 
         self.acquired_model = {}

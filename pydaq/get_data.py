@@ -5,13 +5,22 @@ import threading
 import queue
 
 import matplotlib.pyplot as plt
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 import numpy as np
 import serial
 import serial.tools.list_ports
 from pydaq.utils.base import Base
 from scipy.signal import lfilter, butter, firwin, filtfilt
+
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
 
 
 class GetData(Base):
@@ -175,6 +184,11 @@ class GetData(Base):
         Data acquisition method using NI-DAQ and threading.
         Now includes a secondary plot thread using a complete redraw approach.
         """
+
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
         self.data = {ch: [] for ch in self.channels}
         self.time_var = {ch: [] for ch in self.channels}
         self.data_filtered = {ch: [] for ch in self.channels}
@@ -297,11 +311,13 @@ class GetData(Base):
             )
             plt.show(block=True) # Keeps the final plot open
 
-            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-            self._save_data(time_formated, f"time.dat")
-            self._save_data(self.data, f"data.dat")
-            if self.data_filtered[ch]:
-                self._save_data(self.data_filtered, f"data_filtered.dat")
+        if self.save:
+            print("\nSaving data ...")
+
+            self._save_data(self.time_var, "time.dat")
+            self._save_data(self.data, "data.dat")
+            if any(self.data_filtered.values()):
+                self._save_data(self.data_filtered, "data_filtered.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")
@@ -543,11 +559,11 @@ class GetData(Base):
 
         if self.save:
             print("\nSaving data ...")
-            time_formated = [f"{t:.10f}" for t in self.time_var[ch]]
-            self._save_data(time_formated, f"time.dat")
-            self._save_data(self.data, f"data.dat")
-            if self.data_filtered[ch]:
-                self._save_data(self.data_filtered, f"data_filtered.dat")
+
+            self._save_data(self.time_var, "time.dat")
+            self._save_data(self.data, "data.dat")
+            if any(self.data_filtered.values()):
+                self._save_data(self.data_filtered, "data_filtered.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
             print("\nData saved ...")

@@ -1,5 +1,4 @@
 import os
-import nidaqmx
 import numpy as np
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
@@ -12,6 +11,12 @@ from .error_window_gui import Error_window
 
 from ..send_data import SendData
 
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
 
 class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
     def __init__(self, *args):
@@ -122,6 +127,10 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
 
         for device in self.local_system.devices:
@@ -132,12 +141,15 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
     def update_channels(self):
 
         # Changing availables channels if device changes
-        dev_name = self.device_names[
-            self.device_type.index(self.device_combo.currentText())
-        ]
-
         try:
-            new_ao_channels = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            
+            if NIDAQ_AVAILABLE:
+                new_ao_channels = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            else:
+                new_ao_channels = []
         except BaseException:
             new_ao_channels = []
 

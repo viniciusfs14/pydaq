@@ -1,7 +1,17 @@
 import time
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 import warnings
+
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
 
 def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
                     periods_ms=[10, 5, 2, 1, 0.5, 0.2, 0.1], duration_s=5):
@@ -16,11 +26,16 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
         duration_s (float): Duração de cada teste, em segundos.
     """
 
+    if not NIDAQ_AVAILABLE:
+        print("❌ NI-DAQmx drivers not found! Cannot run benchmark.")
+        warnings.warn("NI-DAQmx drivers not found. Please install NI-MAX.")
+        return
+    
     print(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
 
     term_map = {
         "RSE": TerminalConfiguration.RSE,
-        "Diff": TerminalConfiguration.DIFFERENTIAL,
+        "Diff": TerminalConfiguration.DIFF, 
         "NRSE": TerminalConfiguration.NRSE
     }
 
@@ -77,7 +92,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
 
         if delays == 0:
             best_stable_period = period_ms
-            min_period_recommended = avg_cycle * 1.2  # 20% margem de segurança
+            min_period_recommended = avg_cycle * 1.2  # 20% safety margin
 
     if min_period_recommended:
         print("\n✅ Ideal sampling period (with 20% safety margin): "

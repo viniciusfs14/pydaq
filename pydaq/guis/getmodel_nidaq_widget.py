@@ -1,7 +1,5 @@
 import os
-import nidaqmx
-import serial
-import serial.tools.list_ports
+
 from sysidentpy.parameter_estimation import estimators
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
@@ -17,6 +15,12 @@ from ..get_model import GetModel
 from .prbs_config_widget import PRBSConfig_W
 from .getmodel_sysconfig_arduino_widget import SysIdentConfig_W
 
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
 
 class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
     def __init__(self, *args):
@@ -230,11 +234,15 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
 
     def _nidaq_info(self):
         """Gathering NIDAQ info"""
-
+        
         # Getting all available devices
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
 
         for device in self.local_system.devices:
@@ -244,19 +252,21 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
 
     def update_channels(self):
 
-        dev_name = self.device_names[
-            self.device_type.index(self.device_combo.currentText())
-        ]
-
-        # Tratamento de erro seguro para AO
         try:
-            new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            if NIDAQ_AVAILABLE:
+                new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            else:
+                new_ao = []
+
+            if NIDAQ_AVAILABLE:
+                new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+            else:
+                new_ai = []
         except BaseException:
             new_ao = []
-
-        try:
-            new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
-        except BaseException:
             new_ai = []
 
         self.available_ao_channels = new_ao

@@ -6,13 +6,19 @@ import scipy.signal as signal
 import serial
 import serial.tools.list_ports
 from pydaq.utils.base import Base
-import os
-import serial
-import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import warnings
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
+
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
 
 class PIDControl(Base): 
     def __init__( 
@@ -182,6 +188,11 @@ class PIDControl(Base):
         return (outputs,errors,{ch: self.setpoint for ch in self.channels},controls)
 
     def pid_control_nidaq(self): #Inicializating the updating nidaq values
+
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
         terminal_config = self.terminal # Terminal configuration
         self._nidaq_info() # Gathering nidaq info
         self.task_ai = nidaqmx.Task()
@@ -216,6 +227,12 @@ class PIDControl(Base):
 
     def update_plot_nidaq(self):
 
+        # --- SAFETY FALLBACK ---
+        # If the task was never created (missing drivers), return dummy data to keep the thread alive safely
+        if not hasattr(self, 'task_ai'):
+            dummy_zeros = {ch: 0.0 for ch in self.channels}
+            return (dummy_zeros, dummy_zeros, {ch: self.setpoint for ch in self.channels}, dummy_zeros)
+        
         values = self.task_ai.read()
 
         if len(self.channels) == 1:
