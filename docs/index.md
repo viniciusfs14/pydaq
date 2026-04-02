@@ -33,11 +33,11 @@ PYDAQ requires:
 * `numpy (>=1.22.3)` for numerical processing
 * `PySide6 (>=6.7.1)`, `PySide6_Addons`, `PySide6_Essentials`, and `shiboken6` for the graphical user interface
 * `pyserial (>=3.5)` for communication with Arduino boards
-* `sysidentpy (==0.3.4)` and `bitarray (>=3.0.0)` for system identification and signal generation
+* `sysidentpy (>=0.4.1)` and `bitarray (>=3.0.0)` for system identification and signal generation
 * `packaging (>=24.1)`
 * `scipy (>=1.16.1)` for digital filters and PID control
 
-**Note:** In version **v0.0.6**, NI-DAQmx drivers must be installed even if only Arduino boards are used. This limitation will be addressed in future releases.
+**Note:** In version **v0.0.6.1**, NI-DAQmx drivers must be installed even if only Arduino boards are used. This limitation will be addressed in future releases.
 
 ---
 
