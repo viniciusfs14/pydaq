@@ -5,7 +5,7 @@ import numpy as np
 
 from ..uis.ui_PYDAQ_Digital_filterss_NIDAQ_widget import Ui_Digitalfilters_NIDAQ_widget
 
-
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 from PySide6.QtWidgets import QFileDialog, QWidget
 
 from ..get_data import GetData
@@ -15,14 +15,6 @@ from pydaq.utils.signals import GuiSignals
 from PySide6.QtCore import Signal
 from PySide6 import QtWidgets
 from PySide6.QtGui import QIcon, QPalette, QColor
-
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
-
 
 class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
     dataEntered = Signal(dict)

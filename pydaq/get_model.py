@@ -6,7 +6,7 @@ import matplotlib as mpl
 import numpy as np
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 from sysidentpy.metrics import __ALL__ as metrics_list
 import sysidentpy.metrics as metrics
 import threading
@@ -31,17 +31,6 @@ from typing import Tuple
 
 from sysidentpy.parameter_estimation import LeastSquares
 
-
-try:
-    import nidaqmx
-    from nidaqmx.constants import TerminalConfiguration
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
-    class TerminalConfiguration:
-        DIFF = "Diff"
-        RSE = "RSE"
-        NRSE = "NRSE"
 
 
 mpl.rcParams["axes.spines.right"] = False

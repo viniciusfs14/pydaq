@@ -9,8 +9,11 @@ from ..guis.error_window_gui import Error_window
 try:
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
+    from nidaqmx.system import System
     NIDAQ_AVAILABLE = True
 except (ImportError, OSError):
+    nidaqmx = None
+    System = None
     NIDAQ_AVAILABLE = False
     class TerminalConfiguration:
         DIFF = "Diff"

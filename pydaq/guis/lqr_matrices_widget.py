@@ -13,18 +13,22 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
 
     dataEntered = Signal(dict)
 
-    def __init__(self, *args):
+    def __init__(self, simulate=False, *args):
         super(Select_LQR_Matrices_Widget, self).__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon('docs/img/favicon.ico'))
+        self.simulate_mode = simulate
+        self.update_simulation_mode()
 
         self.signals = GuiSignals()
 
-        # Matrizes padrão (Dicionário de consulta)
+        # Standard Matrices (Lookup Dictionary)
         self.default_matrices = {
             'A': np.array([[1.0, 0.1], [0.0, 1.0]]),
             'B': np.array([[0.0, 0.05], [0.1, 0.1]]),
-            'Q': np.eye(2), # Identidade 2x2
+            'C': np.eye(2),              # NEW
+            'D': np.zeros((2, 2)),        # NEW
+            'Q': np.eye(2), # Identity 2x2
             'R': np.eye(2)
         }
 
@@ -35,7 +39,7 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
         
         self.select_button.clicked.connect(self.send_data)
 
-        # Definindo valores padrão iniciais
+        # Default values
         self.spin_states.setValue(2)
         self.spin_inputs.setValue(2)
         
@@ -48,8 +52,11 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
 
         self._resize_table(self.tableA, n, n, 'A')
         self._resize_table(self.tableB, n, m, 'B')
+        self._resize_table(self.tableC, n, n, 'C')   
+        self._resize_table(self.tableD, n, m, 'D')   
         self._resize_table(self.tableQ, n, n, 'Q')
         self._resize_table(self.tableR, m, m, 'R')
+
     
     def _resize_table(self, table, rows, cols, matrix_key=None):
 
@@ -105,12 +112,16 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
 
             A = self.read_matrix(self.tableA)
             B = self.read_matrix(self.tableB)
+            C = self.read_matrix(self.tableC)   
+            D = self.read_matrix(self.tableD)   
             Q = self.read_matrix(self.tableQ)
             R = self.read_matrix(self.tableR)
 
             data = {
                 "A": A,
                 "B": B,
+                "C": C,
+                "D": D,
                 "Q": Q,
                 "R": R,
                 "n": self.spin_states.value(),
@@ -123,4 +134,22 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
         except Exception:
             error_w = Error_window()
             error_w.exec()
-            
+    
+    def update_simulation_mode(self):
+        """
+        Controls visibility of C and D matrices depending on simulation mode.
+        """
+        if self.simulate_mode:
+            self.Matrix_C.show()
+            self.Matrix_D.show()
+            self.labelC.show()
+            self.labelD.show()
+            self.tableC.show()
+            self.tableD.show()
+        else:
+            self.Matrix_C.hide()
+            self.Matrix_D.hide()
+            self.labelC.hide()
+            self.labelD.hide()
+            self.tableC.hide()
+            self.tableD.hide()

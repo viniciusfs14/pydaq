@@ -324,7 +324,20 @@ QLabel::toolTip {
 </string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="0">
+   <item row="3" column="0">
+    <widget class="Line" name="line_3">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
     <widget class="QFrame" name="frame_equation">
      <property name="minimumSize">
       <size>
@@ -353,7 +366,7 @@ QLabel::toolTip {
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="0" column="0">
     <widget class="QWidget" name="widget_top" native="true">
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="8" column="3">
@@ -1058,33 +1071,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      </layout>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="Line" name="line_3">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="Line" name="line_2">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0" alignment="Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter">
+   <item row="4" column="0" alignment="Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter">
     <widget class="QPushButton" name="pushButton_start">
      <property name="minimumSize">
       <size>
@@ -1110,7 +1097,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="save_radio_group"/>
   <buttongroup name="simulate_radio_group"/>
+  <buttongroup name="save_radio_group"/>
  </buttongroups>
 </ui>

@@ -4,7 +4,7 @@ import numpy as np
 
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 
 import threading
 import queue
@@ -12,18 +12,6 @@ import queue
 import matplotlib.pyplot as plt
 import warnings
 from scipy.linalg import solve_discrete_are
-
-try:
-    import nidaqmx
-    from nidaqmx.constants import TerminalConfiguration
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
-    class TerminalConfiguration:
-        DIFF = "Diff"
-        RSE = "RSE"
-        NRSE = "NRSE"
-
 
 
 class LQRControl(Base):
@@ -112,6 +100,8 @@ class LQRControl(Base):
         self.channels = [ai_channel]        # default single channel
         self.ao_channels = [ao_channel]     # default single channel
 
+        self.output_mode = "free"  # default
+
     def _calculate_lqr_gain(self):
         """Calculate the gain K by solving the Riccati Algebraic Equation (ARE)."""
         try:
@@ -145,16 +135,15 @@ class LQRControl(Base):
 
         n_ai = len(self.channels)
         n_ao = len(self.ao_channels)
-    
         
         try:
             self._open_serial()
-            
+
             if not self._verify_arduino_firmware():
                 self.ser.close()
                 warnings.warn(
                     "⚠️ PyDAQ Firmware not detected on this board!\n"
-                    "Please go to the top menu and click on 'Arduino Firmware' to upload the correct code."
+                    "Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code."
                 )
                 # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
                 # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
@@ -599,10 +588,7 @@ class LQRControl(Base):
         """
 
         if self.A is None or self.B is None or self.Q is None or self.R is None:
-            warnings.warn("A, B, Q, R matrices are not defined. Cannot simulate.")
-            return
-        
-        if not self._check_lqr_dimensions():
+            warnings.warn("Matrices are not defined. Cannot simulate.")
             return
 
         self._calculate_lqr_gain()
@@ -635,11 +621,14 @@ class LQRControl(Base):
         history_u = []
         time_arr = []
 
-        print("Running pure LQR simulation...")
+        print("Running LQR simulation...")
         for k in range(steps):
             # Control law
             u = -self.K @ x
             
+            if self.output_mode == "arduino_pwm":
+                u = np.clip(u, 0, 5)
+
             # Output equation (What the AI sensors would read)
             y = C_mat @ x + D_mat @ u
 
@@ -656,7 +645,7 @@ class LQRControl(Base):
 
         # Generate Static Plot
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
-        fig.suptitle("LQR Pure Simulation (No Hardware)", fontsize=14)
+        fig.suptitle("LQR Simulation", fontsize=14)
 
         # Output Plot (System Response - y)
         for i in range(history_y.shape[1]):
@@ -691,6 +680,9 @@ class LQRControl(Base):
         n_states = len(self.channels)      # Number of AI channels
         n_inputs = len(self.ao_channels)   # Number of AO channels
 
+        print(f"Number of AI channels: {n_states}")
+        print(f"Number of AO channels: {n_inputs}")
+
         # Check matrix A: must be square and match the number of AI channels
         if A.ndim != 2 or A.shape[0] != A.shape[1] or A.shape[0] != n_states:
             self._dim_error(f"Matrix A must be {n_states}x{n_states} to match AI channels!")
@@ -700,5 +692,8 @@ class LQRControl(Base):
         if B.ndim != 2 or B.shape[0] != n_states or B.shape[1] != n_inputs:
             self._dim_error(f"Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
             return False
+
+        print(A.ndim, A.shape)
+        print(B.ndim, B.shape)
 
         return True

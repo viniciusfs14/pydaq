@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 
 from pydaq.utils.signals import GuiSignals
 from scipy.signal import firwin, lfilter, freqz
@@ -17,13 +18,6 @@ from .error_window_gui import Error_window
 from ..get_data import GetData
 
 from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip
-
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
 
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):

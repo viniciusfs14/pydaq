@@ -25,7 +25,7 @@ class Ui_Arduino_LQR_Control(object):
     def setupUi(self, Arduino_LQR_Control):
         if not Arduino_LQR_Control.objectName():
             Arduino_LQR_Control.setObjectName(u"Arduino_LQR_Control")
-        Arduino_LQR_Control.resize(506, 522)
+        Arduino_LQR_Control.resize(616, 615)
         Arduino_LQR_Control.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -443,12 +443,6 @@ class Ui_Arduino_LQR_Control(object):
 
         self.horizontalLayout.addWidget(self.start_lqr_control)
 
-        self.simulate_button = QPushButton(self.widget_6)
-        self.simulate_button.setObjectName(u"simulate_button")
-        self.simulate_button.setMaximumSize(QSize(110, 30))
-
-        self.horizontalLayout.addWidget(self.simulate_button)
-
 
         self.gridLayout_3.addWidget(self.widget_6, 2, 0, 1, 1)
 
@@ -456,17 +450,62 @@ class Ui_Arduino_LQR_Control(object):
         self.widget.setObjectName(u"widget")
         self.gridLayout_2 = QGridLayout(self.widget)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.widget_5 = QWidget(self.widget)
-        self.widget_5.setObjectName(u"widget_5")
-        self.horizontalLayout_3 = QHBoxLayout(self.widget_5)
+        self.label_device = QLabel(self.widget)
+        self.label_device.setObjectName(u"label_device")
+        self.label_device.setMinimumSize(QSize(0, 30))
+        self.label_device.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout_2.addWidget(self.label_device, 1, 0, 1, 1)
+
+        self.label_14 = QLabel(self.widget)
+        self.label_14.setObjectName(u"label_14")
+
+        self.gridLayout_2.addWidget(self.label_14, 5, 0, 1, 1)
+
+        self.label_11 = QLabel(self.widget)
+        self.label_11.setObjectName(u"label_11")
+        self.label_11.setMinimumSize(QSize(0, 30))
+        self.label_11.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout_2.addWidget(self.label_11, 9, 0, 1, 1)
+
+        self.widget_device = QWidget(self.widget)
+        self.widget_device.setObjectName(u"widget_device")
+        self.horizontalLayout_8 = QHBoxLayout(self.widget_device)
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
+        self.device_combo = QComboBox(self.widget_device)
+        self.device_combo.setObjectName(u"device_combo")
+        self.device_combo.setMinimumSize(QSize(0, 22))
+        self.device_combo.setMaximumSize(QSize(16777215, 22))
+
+        self.horizontalLayout_8.addWidget(self.device_combo)
+
+        self.reload_devices = QPushButton(self.widget_device)
+        self.reload_devices.setObjectName(u"reload_devices")
+        self.reload_devices.setMinimumSize(QSize(22, 22))
+        self.reload_devices.setMaximumSize(QSize(22, 22))
+
+        self.horizontalLayout_8.addWidget(self.reload_devices)
+
+
+        self.gridLayout_2.addWidget(self.widget_device, 1, 2, 1, 1)
+
+        self.widget_ao_channel = QWidget(self.widget)
+        self.widget_ao_channel.setObjectName(u"widget_ao_channel")
+        self.horizontalLayout_3 = QHBoxLayout(self.widget_ao_channel)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.ao_channel_combo = QComboBox(self.widget_5)
+        self.ao_channel_combo = QComboBox(self.widget_ao_channel)
         self.ao_channel_combo.setObjectName(u"ao_channel_combo")
 
         self.horizontalLayout_3.addWidget(self.ao_channel_combo)
 
 
-        self.gridLayout_2.addWidget(self.widget_5, 2, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.widget_ao_channel, 3, 2, 1, 1)
+
+        self.label_simulate = QLabel(self.widget)
+        self.label_simulate.setObjectName(u"label_simulate")
+
+        self.gridLayout_2.addWidget(self.label_simulate, 0, 0, 1, 1)
 
         self.widget_10 = QWidget(self.widget)
         self.widget_10.setObjectName(u"widget_10")
@@ -485,89 +524,24 @@ class Ui_Arduino_LQR_Control(object):
         self.gridLayout_8.addWidget(self.sesh_dur_in, 0, 0, 1, 1)
 
 
-        self.gridLayout_2.addWidget(self.widget_10, 5, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.widget_10, 7, 2, 1, 1)
 
-        self.label_4 = QLabel(self.widget)
-        self.label_4.setObjectName(u"label_4")
+        self.label_ao_channel = QLabel(self.widget)
+        self.label_ao_channel.setObjectName(u"label_ao_channel")
 
-        self.gridLayout_2.addWidget(self.label_4, 2, 0, 1, 1)
-
-        self.label_9 = QLabel(self.widget)
-        self.label_9.setObjectName(u"label_9")
-        self.label_9.setMinimumSize(QSize(0, 30))
-        self.label_9.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout_2.addWidget(self.label_9, 6, 0, 1, 1)
-
-        self.widget_2 = QWidget(self.widget)
-        self.widget_2.setObjectName(u"widget_2")
-        self.gridLayout = QGridLayout(self.widget_2)
-        self.gridLayout.setObjectName(u"gridLayout")
-        self.insert_matrices = QPushButton(self.widget_2)
-        self.insert_matrices.setObjectName(u"insert_matrices")
-        self.insert_matrices.setMaximumSize(QSize(160, 30))
-
-        self.gridLayout.addWidget(self.insert_matrices, 0, 0, 1, 1)
-
-
-        self.gridLayout_2.addWidget(self.widget_2, 3, 2, 1, 1)
-
-        self.widget_16 = QWidget(self.widget)
-        self.widget_16.setObjectName(u"widget_16")
-        self.horizontalLayout_7 = QHBoxLayout(self.widget_16)
-        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
-        self.path_line_edit = QLineEdit(self.widget_16)
-        self.path_line_edit.setObjectName(u"path_line_edit")
-        self.path_line_edit.setMinimumSize(QSize(0, 22))
-        self.path_line_edit.setMaximumSize(QSize(16777215, 22))
-
-        self.horizontalLayout_7.addWidget(self.path_line_edit, 0, Qt.AlignmentFlag.AlignVCenter)
-
-        self.path_folder_browse = QPushButton(self.widget_16)
-        self.path_folder_browse.setObjectName(u"path_folder_browse")
-        self.path_folder_browse.setMinimumSize(QSize(0, 30))
-        self.path_folder_browse.setMaximumSize(QSize(16777215, 30))
-
-        self.horizontalLayout_7.addWidget(self.path_folder_browse, 0, Qt.AlignmentFlag.AlignVCenter)
-
-
-        self.gridLayout_2.addWidget(self.widget_16, 8, 2, 1, 1)
-
-        self.label_14 = QLabel(self.widget)
-        self.label_14.setObjectName(u"label_14")
-
-        self.gridLayout_2.addWidget(self.label_14, 3, 0, 1, 1)
-
-        self.label_15 = QLabel(self.widget)
-        self.label_15.setObjectName(u"label_15")
-        self.label_15.setMinimumSize(QSize(0, 30))
-        self.label_15.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout_2.addWidget(self.label_15, 4, 0, 1, 1)
-
-        self.widget_4 = QWidget(self.widget)
-        self.widget_4.setObjectName(u"widget_4")
-        self.horizontalLayout_2 = QHBoxLayout(self.widget_4)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.ai_channel_combo = QComboBox(self.widget_4)
-        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
-
-        self.horizontalLayout_2.addWidget(self.ai_channel_combo)
-
-
-        self.gridLayout_2.addWidget(self.widget_4, 1, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.label_ao_channel, 3, 0, 1, 1)
 
         self.label_12 = QLabel(self.widget)
         self.label_12.setObjectName(u"label_12")
         self.label_12.setMinimumSize(QSize(0, 30))
         self.label_12.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout_2.addWidget(self.label_12, 8, 0, 1, 1, Qt.AlignmentFlag.AlignVCenter)
+        self.gridLayout_2.addWidget(self.label_12, 10, 0, 1, 1, Qt.AlignmentFlag.AlignVCenter)
 
-        self.label_3 = QLabel(self.widget)
-        self.label_3.setObjectName(u"label_3")
+        self.label_ai_channel = QLabel(self.widget)
+        self.label_ai_channel.setObjectName(u"label_ai_channel")
 
-        self.gridLayout_2.addWidget(self.label_3, 1, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.label_ai_channel, 2, 0, 1, 1)
 
         self.widget_12 = QWidget(self.widget)
         self.widget_12.setObjectName(u"widget_12")
@@ -589,7 +563,69 @@ class Ui_Arduino_LQR_Control(object):
         self.horizontalLayout_5.addWidget(self.no_save_radio)
 
 
-        self.gridLayout_2.addWidget(self.widget_12, 7, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+        self.gridLayout_2.addWidget(self.widget_12, 9, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        self.label_10 = QLabel(self.widget)
+        self.label_10.setObjectName(u"label_10")
+        self.label_10.setMinimumSize(QSize(0, 30))
+        self.label_10.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout_2.addWidget(self.label_10, 7, 0, 1, 1)
+
+        self.line_2 = QFrame(self.widget)
+        self.line_2.setObjectName(u"line_2")
+        self.line_2.setFrameShape(QFrame.Shape.VLine)
+        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_2.addWidget(self.line_2, 1, 1, 10, 1)
+
+        self.label_9 = QLabel(self.widget)
+        self.label_9.setObjectName(u"label_9")
+        self.label_9.setMinimumSize(QSize(0, 30))
+        self.label_9.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout_2.addWidget(self.label_9, 8, 0, 1, 1)
+
+        self.widget_7 = QWidget(self.widget)
+        self.widget_7.setObjectName(u"widget_7")
+        self.gridLayout_4 = QGridLayout(self.widget_7)
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.yes_simulate_radio = QRadioButton(self.widget_7)
+        self.simulate_radio_group = QButtonGroup(Arduino_LQR_Control)
+        self.simulate_radio_group.setObjectName(u"simulate_radio_group")
+        self.simulate_radio_group.addButton(self.yes_simulate_radio)
+        self.yes_simulate_radio.setObjectName(u"yes_simulate_radio")
+
+        self.gridLayout_4.addWidget(self.yes_simulate_radio, 0, 0, 1, 1)
+
+        self.no_simulate_radio = QRadioButton(self.widget_7)
+        self.simulate_radio_group.addButton(self.no_simulate_radio)
+        self.no_simulate_radio.setObjectName(u"no_simulate_radio")
+        self.no_simulate_radio.setChecked(True)
+
+        self.gridLayout_4.addWidget(self.no_simulate_radio, 0, 1, 1, 1)
+
+
+        self.gridLayout_2.addWidget(self.widget_7, 0, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        self.widget_11 = QWidget(self.widget)
+        self.widget_11.setObjectName(u"widget_11")
+        self.gridLayout_9 = QGridLayout(self.widget_11)
+        self.gridLayout_9.setObjectName(u"gridLayout_9")
+        self.Ts_in = QDoubleSpinBox(self.widget_11)
+        self.Ts_in.setObjectName(u"Ts_in")
+        self.Ts_in.setMinimumSize(QSize(0, 22))
+        self.Ts_in.setMaximumSize(QSize(16777215, 22))
+        self.Ts_in.setDecimals(6)
+        self.Ts_in.setMaximum(999999999999.000000000000000)
+        self.Ts_in.setSingleStep(0.010000000000000)
+        self.Ts_in.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
+        self.Ts_in.setValue(1.000000000000000)
+
+        self.gridLayout_9.addWidget(self.Ts_in, 0, 0, 1, 1)
+
+
+        self.gridLayout_2.addWidget(self.widget_11, 6, 2, 1, 1)
 
         self.widget_13 = QWidget(self.widget)
         self.widget_13.setObjectName(u"widget_13")
@@ -623,75 +659,87 @@ class Ui_Arduino_LQR_Control(object):
         self.horizontalLayout_6.addWidget(self.no_plot_radio)
 
 
-        self.gridLayout_2.addWidget(self.widget_13, 6, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+        self.gridLayout_2.addWidget(self.widget_13, 8, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
-        self.widget_3 = QWidget(self.widget)
-        self.widget_3.setObjectName(u"widget_3")
-        self.horizontalLayout_8 = QHBoxLayout(self.widget_3)
-        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
-        self.device_combo = QComboBox(self.widget_3)
-        self.device_combo.setObjectName(u"device_combo")
-        self.device_combo.setMinimumSize(QSize(0, 22))
-        self.device_combo.setMaximumSize(QSize(16777215, 22))
+        self.widget_16 = QWidget(self.widget)
+        self.widget_16.setObjectName(u"widget_16")
+        self.horizontalLayout_7 = QHBoxLayout(self.widget_16)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.path_line_edit = QLineEdit(self.widget_16)
+        self.path_line_edit.setObjectName(u"path_line_edit")
+        self.path_line_edit.setMinimumSize(QSize(0, 22))
+        self.path_line_edit.setMaximumSize(QSize(16777215, 22))
 
-        self.horizontalLayout_8.addWidget(self.device_combo)
+        self.horizontalLayout_7.addWidget(self.path_line_edit, 0, Qt.AlignmentFlag.AlignVCenter)
 
-        self.reload_devices = QPushButton(self.widget_3)
-        self.reload_devices.setObjectName(u"reload_devices")
-        self.reload_devices.setMinimumSize(QSize(22, 22))
-        self.reload_devices.setMaximumSize(QSize(22, 22))
+        self.path_folder_browse = QPushButton(self.widget_16)
+        self.path_folder_browse.setObjectName(u"path_folder_browse")
+        self.path_folder_browse.setMinimumSize(QSize(0, 30))
+        self.path_folder_browse.setMaximumSize(QSize(16777215, 30))
 
-        self.horizontalLayout_8.addWidget(self.reload_devices)
-
-
-        self.gridLayout_2.addWidget(self.widget_3, 0, 2, 1, 1)
-
-        self.widget_11 = QWidget(self.widget)
-        self.widget_11.setObjectName(u"widget_11")
-        self.gridLayout_9 = QGridLayout(self.widget_11)
-        self.gridLayout_9.setObjectName(u"gridLayout_9")
-        self.Ts_in = QDoubleSpinBox(self.widget_11)
-        self.Ts_in.setObjectName(u"Ts_in")
-        self.Ts_in.setMinimumSize(QSize(0, 22))
-        self.Ts_in.setMaximumSize(QSize(16777215, 22))
-        self.Ts_in.setDecimals(6)
-        self.Ts_in.setMaximum(999999999999.000000000000000)
-        self.Ts_in.setSingleStep(0.010000000000000)
-        self.Ts_in.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
-        self.Ts_in.setValue(1.000000000000000)
-
-        self.gridLayout_9.addWidget(self.Ts_in, 0, 0, 1, 1)
+        self.horizontalLayout_7.addWidget(self.path_folder_browse, 0, Qt.AlignmentFlag.AlignVCenter)
 
 
-        self.gridLayout_2.addWidget(self.widget_11, 4, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.widget_16, 10, 2, 1, 1)
 
-        self.line_2 = QFrame(self.widget)
-        self.line_2.setObjectName(u"line_2")
-        self.line_2.setFrameShape(QFrame.Shape.VLine)
-        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
+        self.widget_ai_channel = QWidget(self.widget)
+        self.widget_ai_channel.setObjectName(u"widget_ai_channel")
+        self.horizontalLayout_2 = QHBoxLayout(self.widget_ai_channel)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.ai_channel_combo = QComboBox(self.widget_ai_channel)
+        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
 
-        self.gridLayout_2.addWidget(self.line_2, 0, 1, 9, 1)
+        self.horizontalLayout_2.addWidget(self.ai_channel_combo)
 
-        self.label_2 = QLabel(self.widget)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setMinimumSize(QSize(0, 30))
-        self.label_2.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout_2.addWidget(self.label_2, 0, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.widget_ai_channel, 2, 2, 1, 1)
 
-        self.label_11 = QLabel(self.widget)
-        self.label_11.setObjectName(u"label_11")
-        self.label_11.setMinimumSize(QSize(0, 30))
-        self.label_11.setMaximumSize(QSize(16777215, 30))
+        self.label_15 = QLabel(self.widget)
+        self.label_15.setObjectName(u"label_15")
+        self.label_15.setMinimumSize(QSize(0, 30))
+        self.label_15.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout_2.addWidget(self.label_11, 7, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.label_15, 6, 0, 1, 1)
 
-        self.label_10 = QLabel(self.widget)
-        self.label_10.setObjectName(u"label_10")
-        self.label_10.setMinimumSize(QSize(0, 30))
-        self.label_10.setMaximumSize(QSize(16777215, 30))
+        self.widget_2 = QWidget(self.widget)
+        self.widget_2.setObjectName(u"widget_2")
+        self.gridLayout = QGridLayout(self.widget_2)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.insert_matrices = QPushButton(self.widget_2)
+        self.insert_matrices.setObjectName(u"insert_matrices")
+        self.insert_matrices.setMaximumSize(QSize(160, 30))
 
-        self.gridLayout_2.addWidget(self.label_10, 5, 0, 1, 1)
+        self.gridLayout.addWidget(self.insert_matrices, 0, 0, 1, 1)
+
+
+        self.gridLayout_2.addWidget(self.widget_2, 5, 2, 1, 1)
+
+        self.label_output = QLabel(self.widget)
+        self.label_output.setObjectName(u"label_output")
+
+        self.gridLayout_2.addWidget(self.label_output, 4, 0, 1, 1)
+
+        self.widget_output = QWidget(self.widget)
+        self.widget_output.setObjectName(u"widget_output")
+        self.gridLayout_5 = QGridLayout(self.widget_output)
+        self.gridLayout_5.setObjectName(u"gridLayout_5")
+        self.Free_radio = QRadioButton(self.widget_output)
+        self.output_radio_group = QButtonGroup(Arduino_LQR_Control)
+        self.output_radio_group.setObjectName(u"output_radio_group")
+        self.output_radio_group.addButton(self.Free_radio)
+        self.Free_radio.setObjectName(u"Free_radio")
+
+        self.gridLayout_5.addWidget(self.Free_radio, 0, 0, 1, 1)
+
+        self.Arduino_PWM_radio = QRadioButton(self.widget_output)
+        self.output_radio_group.addButton(self.Arduino_PWM_radio)
+        self.Arduino_PWM_radio.setObjectName(u"Arduino_PWM_radio")
+        self.Arduino_PWM_radio.setChecked(True)
+
+        self.gridLayout_5.addWidget(self.Arduino_PWM_radio, 0, 1, 1, 1)
+
+
+        self.gridLayout_2.addWidget(self.widget_output, 4, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
 
         self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 1)
@@ -705,17 +753,23 @@ class Ui_Arduino_LQR_Control(object):
     def retranslateUi(self, Arduino_LQR_Control):
         Arduino_LQR_Control.setWindowTitle(QCoreApplication.translate("Arduino_LQR_Control", u"Form", None))
         self.start_lqr_control.setText(QCoreApplication.translate("Arduino_LQR_Control", u"LQR CONTROL", None))
-        self.simulate_button.setText(QCoreApplication.translate("Arduino_LQR_Control", u"SIMULATION", None))
-        self.label_4.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AO channels:", None))
-        self.label_9.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Plot data?", None))
-        self.insert_matrices.setText(QCoreApplication.translate("Arduino_LQR_Control", u"INSERT MATRICES", None))
-        self.path_folder_browse.setText(QCoreApplication.translate("Arduino_LQR_Control", u" BROWSE ", None))
-        self.label_14.setText(QCoreApplication.translate("Arduino_LQR_Control", u"A,B and LQR matriz:", None))
-        self.label_15.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Sample period (s):", None))
+        self.label_device.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Device:", None))
+        self.label_14.setText(QCoreApplication.translate("Arduino_LQR_Control", u"A, B and LQR matriz:", None))
+        self.label_11.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Save data?", None))
+#if QT_CONFIG(tooltip)
+        self.reload_devices.setToolTip(QCoreApplication.translate("Arduino_LQR_Control", u"<html><head/><body><p>Update COM ports</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.reload_devices.setText("")
+        self.label_simulate.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Simulate?", None))
+        self.label_ao_channel.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AO channels:", None))
         self.label_12.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Path:", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AI channels:", None))
+        self.label_ai_channel.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AI channels:", None))
         self.yes_save_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"No", None))
+        self.label_10.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Session duration (s):", None))
+        self.label_9.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Plot data?", None))
+        self.yes_simulate_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Yes", None))
+        self.no_simulate_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"No", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Real Time", None))
 #if QT_CONFIG(tooltip)
         self.label_warning.setToolTip(QCoreApplication.translate("Arduino_LQR_Control", u"<html><head/><body><p><span style=\" font-size:16pt;\">Selecting Real Time may reduce your acquisition performance if you need to collect data at high frequencies ( sample period &lt; 0.05 s ). We suggest plotting at the end of the acquisition if you don't want to be affected.</span></p></body></html>", None))
@@ -723,12 +777,11 @@ class Ui_Arduino_LQR_Control(object):
         self.label_warning.setText(QCoreApplication.translate("Arduino_LQR_Control", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
         self.yes_ate_plot_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"At the end", None))
         self.no_plot_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"No", None))
-#if QT_CONFIG(tooltip)
-        self.reload_devices.setToolTip(QCoreApplication.translate("Arduino_LQR_Control", u"<html><head/><body><p>Update COM ports</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.reload_devices.setText("")
-        self.label_2.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Device:", None))
-        self.label_11.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Save data?", None))
-        self.label_10.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Session duration (s):", None))
+        self.path_folder_browse.setText(QCoreApplication.translate("Arduino_LQR_Control", u" BROWSE ", None))
+        self.label_15.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Sample period (s):", None))
+        self.insert_matrices.setText(QCoreApplication.translate("Arduino_LQR_Control", u"INSERT MATRICES", None))
+        self.label_output.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Simulation output:", None))
+        self.Free_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Free (No limits)", None))
+        self.Arduino_PWM_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Arduino PWM (0-5 V limit)", None))
     # retranslateUi
 

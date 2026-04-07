@@ -26,7 +26,8 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         self.label_warning.hide()
         self.plot_radio_group.buttonToggled.connect(self._update_warning_label)
         self.insert_matrices.released.connect(self.openMatricesWindow)
-        self.simulate_button.released.connect(self.run_pure_simulation)
+        self.simulate_radio_group.buttonToggled.connect(self.on_simulate_change)
+        self.on_simulate_change()
         self.signals = GuiSignals()
 
         # Setting the starting values for some widgets
@@ -45,11 +46,14 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         # LQR matrices
         self.A = None
         self.B = None
+        self.C = None   
+        self.D = None
         self.Q = None
         self.R = None
 
     def openMatricesWindow(self):
-        self.Matrices = Select_LQR_Matrices_Widget()
+        simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+        self.Matrices = Select_LQR_Matrices_Widget(simulate=simulate)
 
         if self.A is not None:
             # We set the spin boxes first to trigger table resizing
@@ -60,11 +64,15 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             current_data = {
                 'A': self.A,
                 'B': self.B,
+                'C': self.C,
+                'D': self.D,
                 'Q': self.Q,
                 'R': self.R
             }
             # Update the defaults in the matrix widget before showing it
-            self.Matrices.default_matrices.update(current_data)
+            for key, value in current_data.items():
+                if value is not None:
+                    self.Matrices.default_matrices[key] = value
             self.Matrices.update_sizes() # Refresh tables with "cached" values
 
         self.Matrices.dataEntered.connect(self.update_values)
@@ -100,11 +108,38 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
 
     def start_func_LQR_Control(self):
         try:
-            
-            # Instantiating the StepResponse class
+            simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+
+            if self.Arduino_PWM_radio.isChecked():
+                output_mode = "arduino_pwm"
+            else:
+                output_mode = "free"
+
+            # --- COMMON VALIDATION ---
+            if self.A is None or self.B is None or self.Q is None or self.R is None:
+                raise BaseException
+
+            # --- SIMULATION MODE ---
+            if simulate:
+                l = LQRControl()
+                l.A = self.A
+                l.B = self.B
+                l.C = self.C   
+                l.D = self.D
+                l.Q = self.Q
+                l.R = self.R
+                l.output_mode = output_mode
+                l.ts = self.Ts_in.value()
+                l.session_duration = self.sesh_dur_in.value()
+
+                print("Running in SIMULATION mode")
+                l.simulate_lqr()
+
+                return  # IMPORTANT: stop here
+
+            # --- HARDWARE MODE ---
             l = LQRControl()
 
-            # Getting the values from the GUI
             l.channels = self.get_selected_ai()
             l.ao_channels = self.get_selected_ao()
             l.com_port = serial.tools.list_ports.comports()[
@@ -118,24 +153,23 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
                 l.plot_mode = 'end'
             else: # self.No_radio.isChecked()
                 l.plot_mode = 'no'
+
             l.save = True if self.save_radio_group.checkedId() == -2 else False
+            
+            if self.path_line_edit.text() == "":
+                raise BaseException
+            
             l.path = self.path_line_edit.text()
 
-            if self.A is None or self.B is None or self.Q is None or self.R is None:
-                raise BaseException
             l.A = self.A
             l.B = self.B
+            l.C = self.C   
+            l.D = self.D   
             l.Q = self.Q
             l.R = self.R
 
-            # Restarting variables
-            self.time_var, self.input, self.output = [], [], []
-
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
-
             l.lqr_control_arduino()
+
             self.signals.returned.emit(l)
 
         except BaseException:
@@ -226,6 +260,8 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
 
         self.A = data["A"]
         self.B = data["B"]
+        self.C = data.get("C", None)   
+        self.D = data.get("D", None)   
         self.Q = data["Q"]
         self.R = data["R"]
 
@@ -234,22 +270,28 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
 
         print("LQR matrices updated")
 
-    def run_pure_simulation(self):
-        try:
-            if self.A is None or self.B is None or self.Q is None or self.R is None:
-                print("Insira as matrizes antes de simular.")
-                return
+    def on_simulate_change(self):
+        self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+        if self.simulate is False: #Simulate = False
+            self.widget_device.show()
+            self.label_device.show()
+            self.ai_channel_combo.show()
+            self.ao_channel_combo.show()
+            self.label_ai_channel.show()
+            self.label_ao_channel.show()
+            self.widget_ai_channel.show()
+            self.widget_ao_channel.show()
+            self.label_output.hide()
+            self.widget_output.hide()
 
-            # Instancia apenas para simular
-            l = LQRControl()
-            l.A = self.A
-            l.B = self.B
-            l.Q = self.Q
-            l.R = self.R
-            l.ts = self.Ts_in.value()
-            l.session_duration = self.sesh_dur_in.value()
-
-            l.simulate_lqr()
-
-        except BaseException as e:
-            print(f"Erro na simulação: {e}")
+        elif self.simulate is True: #Simulate = True
+            self.widget_device.hide()
+            self.label_device.hide()
+            self.ai_channel_combo.hide()
+            self.ao_channel_combo.hide()
+            self.label_ai_channel.hide()
+            self.label_ao_channel.hide()
+            self.widget_ai_channel.hide()
+            self.widget_ao_channel.hide()
+            self.label_output.show()
+            self.widget_output.show()

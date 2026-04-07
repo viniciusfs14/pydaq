@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 
 from ..uis.ui_PyDAQ_get_model_NIDAQ_widget import Ui_Arduino_GetModel_W
 from .error_window_gui import Error_window
@@ -15,12 +16,6 @@ from ..get_model import GetModel
 from .prbs_config_widget import PRBSConfig_W
 from .getmodel_sysconfig_arduino_widget import SysIdentConfig_W
 
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
 
 class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
     def __init__(self, *args):

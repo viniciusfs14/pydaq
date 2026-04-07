@@ -5,18 +5,13 @@ from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 
 from ..uis.ui_PyDAQ_send_data_NIDAQ_widget import Ui_NIDAQ_SendData_W
 from .error_window_gui import Error_window
 
 from ..send_data import SendData
 
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
 
 class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
     def __init__(self, *args):

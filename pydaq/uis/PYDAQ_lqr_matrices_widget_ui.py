@@ -16,15 +16,16 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QGridLayout, QHeaderView,
-    QLabel, QPushButton, QSizePolicy, QSpinBox,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+    QLabel, QPushButton, QScrollArea, QSizePolicy,
+    QSpinBox, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 import resources_1_rc
 
 class Ui_Select_LQR_Matrices_Widget(object):
     def setupUi(self, Select_LQR_Matrices_Widget):
         if not Select_LQR_Matrices_Widget.objectName():
             Select_LQR_Matrices_Widget.setObjectName(u"Select_LQR_Matrices_Widget")
-        Select_LQR_Matrices_Widget.resize(907, 705)
+        Select_LQR_Matrices_Widget.resize(908, 882)
         Select_LQR_Matrices_Widget.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -463,7 +464,32 @@ class Ui_Select_LQR_Matrices_Widget(object):
 "")
         self.gridLayout = QGridLayout(Select_LQR_Matrices_Widget)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.Matrix_B = QWidget(Select_LQR_Matrices_Widget)
+        self.scrollArea = QScrollArea(Select_LQR_Matrices_Widget)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents = QWidget()
+        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 873, 882))
+        self.gridLayout_2 = QGridLayout(self.scrollAreaWidgetContents)
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
+        self.Matrix_R = QWidget(self.scrollAreaWidgetContents)
+        self.Matrix_R.setObjectName(u"Matrix_R")
+        self.verticalLayout_4 = QVBoxLayout(self.Matrix_R)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.labelR = QLabel(self.Matrix_R)
+        self.labelR.setObjectName(u"labelR")
+
+        self.verticalLayout_4.addWidget(self.labelR)
+
+        self.tableR = QTableWidget(self.Matrix_R)
+        self.tableR.setObjectName(u"tableR")
+
+        self.verticalLayout_4.addWidget(self.tableR)
+
+
+        self.gridLayout_2.addWidget(self.Matrix_R, 7, 0, 1, 1)
+
+        self.Matrix_B = QWidget(self.scrollAreaWidgetContents)
         self.Matrix_B.setObjectName(u"Matrix_B")
         self.verticalLayout_2 = QVBoxLayout(self.Matrix_B)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -478,9 +504,50 @@ class Ui_Select_LQR_Matrices_Widget(object):
         self.verticalLayout_2.addWidget(self.tableB)
 
 
-        self.gridLayout.addWidget(self.Matrix_B, 3, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.Matrix_B, 3, 0, 1, 1)
 
-        self.Matrix_A = QWidget(Select_LQR_Matrices_Widget)
+        self.Matrix_C = QWidget(self.scrollAreaWidgetContents)
+        self.Matrix_C.setObjectName(u"Matrix_C")
+        self.verticalLayout_5 = QVBoxLayout(self.Matrix_C)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.labelC = QLabel(self.Matrix_C)
+        self.labelC.setObjectName(u"labelC")
+
+        self.verticalLayout_5.addWidget(self.labelC)
+
+        self.tableC = QTableWidget(self.Matrix_C)
+        self.tableC.setObjectName(u"tableC")
+
+        self.verticalLayout_5.addWidget(self.tableC)
+
+
+        self.gridLayout_2.addWidget(self.Matrix_C, 4, 0, 1, 1)
+
+        self.Matrix_Q = QWidget(self.scrollAreaWidgetContents)
+        self.Matrix_Q.setObjectName(u"Matrix_Q")
+        self.verticalLayout_3 = QVBoxLayout(self.Matrix_Q)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.labelQ = QLabel(self.Matrix_Q)
+        self.labelQ.setObjectName(u"labelQ")
+
+        self.verticalLayout_3.addWidget(self.labelQ)
+
+        self.tableQ = QTableWidget(self.Matrix_Q)
+        self.tableQ.setObjectName(u"tableQ")
+
+        self.verticalLayout_3.addWidget(self.tableQ)
+
+
+        self.gridLayout_2.addWidget(self.Matrix_Q, 6, 0, 1, 1)
+
+        self.line_bottom = QFrame(self.scrollAreaWidgetContents)
+        self.line_bottom.setObjectName(u"line_bottom")
+        self.line_bottom.setFrameShape(QFrame.Shape.HLine)
+        self.line_bottom.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_2.addWidget(self.line_bottom, 8, 0, 1, 1)
+
+        self.Matrix_A = QWidget(self.scrollAreaWidgetContents)
         self.Matrix_A.setObjectName(u"Matrix_A")
         self.verticalLayout = QVBoxLayout(self.Matrix_A)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -495,29 +562,40 @@ class Ui_Select_LQR_Matrices_Widget(object):
         self.verticalLayout.addWidget(self.tableA)
 
 
-        self.gridLayout.addWidget(self.Matrix_A, 2, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.Matrix_A, 2, 0, 1, 1)
 
-        self.bottom = QWidget(Select_LQR_Matrices_Widget)
+        self.bottom = QWidget(self.scrollAreaWidgetContents)
         self.bottom.setObjectName(u"bottom")
         self.gridLayout_6 = QGridLayout(self.bottom)
         self.gridLayout_6.setObjectName(u"gridLayout_6")
         self.select_button = QPushButton(self.bottom)
         self.select_button.setObjectName(u"select_button")
         self.select_button.setMinimumSize(QSize(200, 0))
+        self.select_button.setMaximumSize(QSize(200, 16777215))
 
-        self.gridLayout_6.addWidget(self.select_button, 1, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter)
-
-        self.line_bottom = QFrame(self.bottom)
-        self.line_bottom.setObjectName(u"line_bottom")
-        self.line_bottom.setFrameShape(QFrame.Shape.HLine)
-        self.line_bottom.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout_6.addWidget(self.line_bottom, 0, 0, 1, 1)
+        self.gridLayout_6.addWidget(self.select_button, 1, 0, 1, 1)
 
 
-        self.gridLayout.addWidget(self.bottom, 6, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.bottom, 9, 0, 1, 1)
 
-        self.header = QWidget(Select_LQR_Matrices_Widget)
+        self.Matrix_D = QWidget(self.scrollAreaWidgetContents)
+        self.Matrix_D.setObjectName(u"Matrix_D")
+        self.verticalLayout_6 = QVBoxLayout(self.Matrix_D)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.labelD = QLabel(self.Matrix_D)
+        self.labelD.setObjectName(u"labelD")
+
+        self.verticalLayout_6.addWidget(self.labelD)
+
+        self.tableD = QTableWidget(self.Matrix_D)
+        self.tableD.setObjectName(u"tableD")
+
+        self.verticalLayout_6.addWidget(self.tableD)
+
+
+        self.gridLayout_2.addWidget(self.Matrix_D, 5, 0, 1, 1)
+
+        self.header = QWidget(self.scrollAreaWidgetContents)
         self.header.setObjectName(u"header")
         self.gridLayout_3 = QGridLayout(self.header)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
@@ -544,48 +622,18 @@ class Ui_Select_LQR_Matrices_Widget(object):
         self.gridLayout_3.addWidget(self.spin_inputs, 0, 3, 1, 1)
 
 
-        self.gridLayout.addWidget(self.header, 0, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.header, 0, 0, 1, 1)
 
-        self.line_header = QFrame(Select_LQR_Matrices_Widget)
+        self.line_header = QFrame(self.scrollAreaWidgetContents)
         self.line_header.setObjectName(u"line_header")
         self.line_header.setFrameShape(QFrame.Shape.HLine)
         self.line_header.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.gridLayout.addWidget(self.line_header, 1, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.line_header, 1, 0, 1, 1)
 
-        self.Matrix_R = QWidget(Select_LQR_Matrices_Widget)
-        self.Matrix_R.setObjectName(u"Matrix_R")
-        self.verticalLayout_4 = QVBoxLayout(self.Matrix_R)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.labelR = QLabel(self.Matrix_R)
-        self.labelR.setObjectName(u"labelR")
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-        self.verticalLayout_4.addWidget(self.labelR)
-
-        self.tableR = QTableWidget(self.Matrix_R)
-        self.tableR.setObjectName(u"tableR")
-
-        self.verticalLayout_4.addWidget(self.tableR)
-
-
-        self.gridLayout.addWidget(self.Matrix_R, 5, 0, 1, 1)
-
-        self.Matrix_Q = QWidget(Select_LQR_Matrices_Widget)
-        self.Matrix_Q.setObjectName(u"Matrix_Q")
-        self.verticalLayout_3 = QVBoxLayout(self.Matrix_Q)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.labelQ = QLabel(self.Matrix_Q)
-        self.labelQ.setObjectName(u"labelQ")
-
-        self.verticalLayout_3.addWidget(self.labelQ)
-
-        self.tableQ = QTableWidget(self.Matrix_Q)
-        self.tableQ.setObjectName(u"tableQ")
-
-        self.verticalLayout_3.addWidget(self.tableQ)
-
-
-        self.gridLayout.addWidget(self.Matrix_Q, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.scrollArea, 0, 0, 1, 1)
 
 
         self.retranslateUi(Select_LQR_Matrices_Widget)
@@ -595,12 +643,14 @@ class Ui_Select_LQR_Matrices_Widget(object):
 
     def retranslateUi(self, Select_LQR_Matrices_Widget):
         Select_LQR_Matrices_Widget.setWindowTitle(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Form", None))
+        self.labelR.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix R", None))
         self.labelB.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix B", None))
+        self.labelC.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix C", None))
+        self.labelQ.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix Q", None))
         self.labelA.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix A", None))
         self.select_button.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"SELECT LQR MATRICES", None))
+        self.labelD.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix D", None))
         self.label_states.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"States (n):", None))
         self.label_input.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Inputs (m):", None))
-        self.labelR.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix R", None))
-        self.labelQ.setText(QCoreApplication.translate("Select_LQR_Matrices_Widget", u"Matrix Q", None))
     # retranslateUi
 

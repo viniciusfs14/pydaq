@@ -8,19 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 from scipy.signal import lfilter, butter, firwin, filtfilt
 
-try:
-    import nidaqmx
-    from nidaqmx.constants import TerminalConfiguration
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
-    class TerminalConfiguration:
-        DIFF = "Diff"
-        RSE = "RSE"
-        NRSE = "NRSE"
 
 
 class GetData(Base):

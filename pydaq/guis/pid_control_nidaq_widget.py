@@ -3,6 +3,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from ..uis.ui_PyDAQ_pid_control_NIDAQ_widget import Ui_NIDAQ_PID_Control
@@ -11,12 +12,6 @@ from matplotlib.figure import Figure
 from ..guis.pid_control_window_dialog import PID_Control_Window_Dialog
 from .error_window_gui import Error_window
 
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
 
 class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
     def __init__(self, *args):

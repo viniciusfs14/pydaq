@@ -4,18 +4,13 @@ from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 
 from ..uis.ui_PyDAQ_step_response_NIDAQ_widget import Ui_NIDAQ_StepResponse_W
 from .error_window_gui import Error_window
 
 from ..step_response import StepResponse
 
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
 
 class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
     def __init__(self, *args):

@@ -383,6 +383,8 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.doubleSpinBox_KdDialog.setValue(0)
 
     def init_plot(self):
+        
+        is_single_channel = len(self.channels) == 1
 
         # Clear and create subplots
         self.figure.clear()
@@ -393,8 +395,8 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         # DARK THEME
         # =========================
         self.figure.patch.set_facecolor('#404040')
-        self.ax1.set_facecolor('#505050')
-        self.ax2.set_facecolor('#505050')
+        self.ax1.set_facecolor("#FFFFFF")
+        self.ax2.set_facecolor('#FFFFFF')
 
         for ax in [self.ax1, self.ax2]:
             ax.tick_params(axis='x', colors='white')
@@ -415,36 +417,44 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         colors = plt.cm.Set1.colors  # good contrast
 
         for i, ch in enumerate(self.channels):
-            color = colors[i % len(colors)]
+            if is_single_channel:
+                color_out = 'tab:blue'
+                color_sp  = 'tab:orange'
+                color_err = 'tab:red'
+            else:
+                base_color = plt.cm.Set1.colors[i % len(plt.cm.Set1.colors)]
+                color_out = base_color
+                color_sp  = base_color
+                color_err = base_color
 
-            # Output (o-)
+            # Output
             line_out, = self.ax1.plot(
                 [], [],
-                color=color,
+                color=color_out,
                 marker='o',
                 linestyle='-',
-                markersize=4,
-                linewidth=1.5,
+                markersize=3,
+                linewidth=1,
                 label=f'Output ({ch})'
             )
 
-            # Setpoint (--)
+            # Setpoint
             line_sp, = self.ax1.plot(
                 [], [],
                 linestyle='--',
-                color=color,
-                linewidth=1.8,
+                color=color_sp,
+                linewidth=1.5,
                 label=f'Setpoint ({ch})'
             )
 
-            # Error (:) com mais destaque
+            # Error
             line_err, = self.ax2.plot(
                 [], [],
-                color=color,
                 marker='o',
                 linestyle='-',
-                markersize=4,
-                linewidth=1.5,
+                color=color_err,
+                markersize=3,
+                linewidth=1,
                 label=f'Error ({ch})'
             )
 
@@ -460,7 +470,7 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         self.ax2.set_xlabel('Time (s)')
 
         self.ax1.grid(True, linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
-        self.ax2.grid(True, linestyle='--', linewidth=0.6, color='white', alpha=0.25)
+        self.ax2.grid(True, linestyle='--', linewidth=0.6, color='gray', alpha=0.6)
 
         # =========================
         # LEGENDS OUTSIDE

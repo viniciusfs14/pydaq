@@ -2,20 +2,12 @@ from PySide6.QtWidgets import QFileDialog, QWidget
 from pydaq.uis.ui_PyDAQ_Benchmarking import Ui_Form
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 import time
 import serial
 import serial.tools.list_ports
 import warnings
 import matplotlib.pyplot as plt
-
-
-# --- OPTIONAL DEPENDENCY HANDLING ---
-try:
-    import nidaqmx
-    from nidaqmx.system import System
-    NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
-    NIDAQ_AVAILABLE = False
 
 ard_vpb = 1  
 

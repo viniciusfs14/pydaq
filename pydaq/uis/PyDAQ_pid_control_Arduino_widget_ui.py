@@ -343,6 +343,14 @@ class Ui_Arduino_PID_Control(object):
 "")
         self.gridLayout = QGridLayout(Arduino_PID_Control)
         self.gridLayout.setObjectName(u"gridLayout")
+        self.line_3 = QFrame(Arduino_PID_Control)
+        self.line_3.setObjectName(u"line_3")
+        self.line_3.setMinimumSize(QSize(0, 0))
+        self.line_3.setFrameShape(QFrame.Shape.HLine)
+        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout.addWidget(self.line_3, 3, 0, 1, 1)
+
         self.frame_equation = QFrame(Arduino_PID_Control)
         self.frame_equation.setObjectName(u"frame_equation")
         self.frame_equation.setMinimumSize(QSize(400, 120))
@@ -359,7 +367,7 @@ class Ui_Arduino_PID_Control(object):
         self.verticalLayout.addWidget(self.widget_image)
 
 
-        self.gridLayout.addWidget(self.frame_equation, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.frame_equation, 1, 0, 1, 1)
 
         self.widget_top = QWidget(Arduino_PID_Control)
         self.widget_top.setObjectName(u"widget_top")
@@ -780,30 +788,14 @@ class Ui_Arduino_PID_Control(object):
         self.gridLayout_2.addWidget(self.widget_ao_channel, 5, 3, 1, 1)
 
 
-        self.gridLayout.addWidget(self.widget_top, 1, 0, 1, 1)
-
-        self.line_3 = QFrame(Arduino_PID_Control)
-        self.line_3.setObjectName(u"line_3")
-        self.line_3.setMinimumSize(QSize(0, 0))
-        self.line_3.setFrameShape(QFrame.Shape.HLine)
-        self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout.addWidget(self.line_3, 4, 0, 1, 1)
-
-        self.line_2 = QFrame(Arduino_PID_Control)
-        self.line_2.setObjectName(u"line_2")
-        self.line_2.setMinimumSize(QSize(0, 0))
-        self.line_2.setFrameShape(QFrame.Shape.HLine)
-        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout.addWidget(self.line_2, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.widget_top, 0, 0, 1, 1)
 
         self.pushButton_start = QPushButton(Arduino_PID_Control)
         self.pushButton_start.setObjectName(u"pushButton_start")
         self.pushButton_start.setMinimumSize(QSize(120, 30))
         self.pushButton_start.setMaximumSize(QSize(150, 30))
 
-        self.gridLayout.addWidget(self.pushButton_start, 5, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
+        self.gridLayout.addWidget(self.pushButton_start, 4, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
 
 
         self.retranslateUi(Arduino_PID_Control)
