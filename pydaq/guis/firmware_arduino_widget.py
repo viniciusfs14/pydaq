@@ -1,9 +1,12 @@
 import os
+import sys
 import subprocess
+from importlib.resources import files
 import serial.tools.list_ports
 from PySide6.QtWidgets import QWidget, QMessageBox, QApplication
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QThread, Signal
+import importlib.resources as pkg_resources
 
 # Adjust the import according to your UI file name
 from pydaq.uis.ui_PyDAQ_Firmware_Arduino import Ui_Firmware 
@@ -25,54 +28,127 @@ class FirmwareUploadWorker(QThread):
         self.fqbn = fqbn
 
     def run(self):
-        # Setup paths
-        # O base_dir aponta para a pasta principal do módulo: pydaq/pydaq/
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        cli_path = os.path.join(base_dir, "tools", "arduino-cli.exe")
-        
-        sketch_path = os.path.join(base_dir, "arduino_code", "arduino_code.ino")
-        
-        # Basic path validation
-        if not os.path.exists(cli_path):
-            self.finished_upload.emit(False, f"Arduino CLI not found at:\n{cli_path}")
-            return
-            
-        if not os.path.exists(sketch_path):
-            self.finished_upload.emit(False, f"Firmware file not found at:\n{sketch_path}")
-            return
+
+        # Cross-platform subprocess flag
+        flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 
         try:
-            # 1. Compilation Step
-            self.status_update.emit("Compiling firmware...")
-            self.progress_update.emit(20)
+            # 🔥 Get paths from package (works after pip install)
+            cli_path = files("pydaq.tools") / "arduino-cli.exe"
+            sketch_path = files("pydaq.arduino_code") / "arduino_code.ino"
 
-            compile_cmd = [cli_path, "compile", "--fqbn", self.fqbn, sketch_path]
-            res_compile = subprocess.run(compile_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            
+            cli_path = str(cli_path)
+            sketch_path = str(sketch_path)
+
+            # Validate paths
+            if not os.path.exists(cli_path):
+                self.finished_upload.emit(False, f"Arduino CLI not found at:\n{cli_path}")
+                return
+
+            if not os.path.exists(sketch_path):
+                self.finished_upload.emit(False, f"Firmware file not found at:\n{sketch_path}")
+                return
+
+            # 🔥 STEP 0 — Arduino setup
+            self.status_update.emit("Preparing Arduino environment (first run may take longer)...")
+            self.progress_update.emit(5)
+
+            try:
+                # Init config
+                subprocess.run(
+                    [cli_path, "config", "init"],
+                    capture_output=True,
+                    creationflags=flags
+                )
+
+                # Update index
+                subprocess.run(
+                    [cli_path, "core", "update-index"],
+                    capture_output=True,
+                    creationflags=flags
+                )
+
+                # Check installed cores
+                check = subprocess.run(
+                    [cli_path, "core", "list"],
+                    capture_output=True,
+                    text=True,
+                    creationflags=flags
+                )
+
+                if "arduino:avr" not in check.stdout:
+                    self.status_update.emit("Installing Arduino AVR core (first time only)...")
+
+                    res = subprocess.run(
+                        [cli_path, "core", "install", "arduino:avr"],
+                        capture_output=True,
+                        text=True,
+                        creationflags=flags
+                    )
+
+                    if res.returncode != 0:
+                        self.finished_upload.emit(False, f"Core installation failed:\n{res.stderr}")
+                        return
+
+            except Exception as e:
+                self.finished_upload.emit(False, f"Arduino setup failed:\n{str(e)}")
+                return
+
+            self.progress_update.emit(15)
+
+            # 🔥 STEP 1 — Compile
+            self.status_update.emit("Compiling firmware...")
+            self.progress_update.emit(30)
+
+            compile_cmd = [
+                cli_path,
+                "compile",
+                "--fqbn", self.fqbn,
+                sketch_path
+            ]
+
+            res_compile = subprocess.run(
+                compile_cmd,
+                capture_output=True,
+                text=True,
+                creationflags=flags
+            )
+
             if res_compile.returncode != 0:
                 self.finished_upload.emit(False, f"Compilation failed:\n{res_compile.stderr}")
                 return
 
-            self.progress_update.emit(60)
+            self.progress_update.emit(70)
 
-            # 2. Upload Step
+            # 🔥 STEP 2 — Upload
             self.status_update.emit(f"Uploading to {self.com_port}...")
-            
-            upload_cmd = [cli_path, "upload", "-p", self.com_port, "--fqbn", self.fqbn, sketch_path]
-            res_upload = subprocess.run(upload_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+
+            upload_cmd = [
+                cli_path,
+                "upload",
+                "-p", self.com_port,
+                "--fqbn", self.fqbn,
+                sketch_path
+            ]
+
+            res_upload = subprocess.run(
+                upload_cmd,
+                capture_output=True,
+                text=True,
+                creationflags=flags
+            )
 
             if res_upload.returncode != 0:
                 self.finished_upload.emit(False, f"Upload failed:\n{res_upload.stderr}")
                 return
 
-            # Success
+            # 🔥 SUCCESS
             self.progress_update.emit(100)
             self.status_update.emit("Upload Successful!")
             self.finished_upload.emit(True, "Firmware successfully installed.")
 
         except Exception as e:
-            self.finished_upload.emit(False, f"An unexpected error occurred:\n{str(e)}")
+            self.finished_upload.emit(False, f"Unexpected error:\n{str(e)}")
 
 
 class FirmwareUploadWidget(QWidget, Ui_Firmware):
@@ -167,3 +243,35 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
             self.upload_button.setText("Retry")
             self.progressBar.setValue(0)
             QMessageBox.critical(self, "Error", message)
+
+    def ensure_arduino_ready(cli_path):
+        flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+
+        try:
+            # Init config (safe even if already exists)
+            subprocess.run([cli_path, "config", "init"], capture_output=True, creationflags=flags)
+
+            # Update index
+            subprocess.run([cli_path, "core", "update-index"], capture_output=True, creationflags=flags)
+
+            # Check installed cores
+            check = subprocess.run(
+                [cli_path, "core", "list"],
+                capture_output=True,
+                text=True,
+                creationflags=flags
+            )
+
+            if "arduino:avr" not in check.stdout:
+                res = subprocess.run(
+                    [cli_path, "core", "install", "arduino:avr"],
+                    capture_output=True,
+                    text=True,
+                    creationflags=flags
+                )
+
+                if res.returncode != 0:
+                    raise RuntimeError(res.stderr)
+
+        except Exception as e:
+            raise RuntimeError(f"Arduino CLI setup failed: {e}")

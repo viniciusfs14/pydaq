@@ -41,3 +41,6 @@ documentation = "https://pydaq.org/"
 
 [tool.setuptools]
 packages = ["pydaq"]
+
+[tool.setuptools.package-data]
+pydaq = ["tools/*.exe", "arduino_code/*.ino"]

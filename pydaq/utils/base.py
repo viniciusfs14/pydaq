@@ -10,8 +10,10 @@ try:
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
     from nidaqmx.system import System
+    nidaqmx.system.System.local() 
+    
     NIDAQ_AVAILABLE = True
-except (ImportError, OSError):
+except (ImportError, OSError, Exception):
     nidaqmx = None
     System = None
     NIDAQ_AVAILABLE = False
