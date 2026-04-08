@@ -472,7 +472,7 @@ This configures the Arduino perfectly for continuous analog reading (A0-A5) and 
       <item>
        <widget class="QProgressBar" name="progressBar">
         <property name="value">
-         <number>24</number>
+         <number>0</number>
         </property>
        </widget>
       </item>

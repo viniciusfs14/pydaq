@@ -151,76 +151,58 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             g.error_path = True
 
         if not g.error_path:
-            if self.no_radio.isChecked():
-                g.get_data_arduino()
-                self.signals.returned.emit(g)
-            else:
-                fs = (1/float(self.Ts_in.value()))*2.5
+            filter_coefs = None
+            fs = (1 / float(self.Ts_in.value())) * 2.5 # Sample rate estimate
+
+            # 1. Check if we need to prepare filters before acquiring
+            if not self.no_radio.isChecked():
                 if self.filter == 'FIR':
-                    
+                    # FIR filter configuration
                     fc_fir = self.cutofffir
                     numtaps_fir = self.orderfir
                     window_fir = self.design
                     type_fir = self.type
                     
-                    if window_fir == 'Blackman':
-                        window_fir = 'blackman'
-                        
-                    elif window_fir == 'Hamming':
-                        window_fir = 'hamming'
-                    
-                    elif window_fir == 'Hann':
-                        window_fir = 'hann'
-                        
-                    elif window_fir == 'Bartlett-Hann':
-                        window_fir = 'barthann'
-                        
-                    elif window_fir == 'Kaiser':
-                        window_fir = 'kaiser'
-                        
-                    elif window_fir == 'Gauss':
-                        window_fir == 'gauss'
-                        
-                    if type_fir == 'bandstop':
-                        fc1 = self.fc1
-                        fc2 = self.fc2
-                        self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandstop')
+                    # Normalize window names for scipy
+                    window_map = {
+                        'Blackman': 'blackman', 'Hamming': 'hamming',
+                        'Hann': 'hann', 'Bartlett-Hann': 'barthann',
+                        'Kaiser': 'kaiser', 'Gauss': 'gauss'
+                    }
+                    window_fir = window_map.get(window_fir, window_fir)
 
-                    elif type_fir == 'bandpass':
-                        fc1 = self.fc1
-                        fc2 = self.fc2
-                        self.fir_coeff = firwin(numtaps_fir, [fc1/(0.5*fs), fc2/(0.5*fs)], window=window_fir, pass_zero='bandpass')
-
+                    if type_fir in ['bandstop', 'bandpass']:
+                        filter_coefs = firwin(numtaps_fir, [self.fc1/(0.5*fs), self.fc2/(0.5*fs)], 
+                                              window=window_fir, pass_zero=type_fir)
                     else:
-                        self.fir_coeff = firwin(numtaps_fir, fc_fir/(0.5*fs), window=window_fir, pass_zero=type_fir)
-                    g.get_data_arduino(filter_coefs=(self.fir_coeff))
-                    self.signals.returned.emit(g)
-                    self.frequency_response()
-                
+                        filter_coefs = firwin(numtaps_fir, fc_fir/(0.5*fs), 
+                                              window=window_fir, pass_zero=type_fir)
+                    self.fir_coeff = filter_coefs # Store for frequency_response
+
                 elif self.filter == 'IIR':
-                    # Create the project of IIR filter
-                    fc_iir = self.cutoffiir
-                    numtaps_iir = self.orderiir
-                    window_iir = self.design_iir
-                    type_iir = self.type_irr
-                    rp = self.rp 
-                    rs = self.rs
+                    # IIR filter configuration
+                    if self.design_iir == 'Chebyshev Type I':
+                        self.b, self.a = cheby1(self.orderiir, self.rp, self.cutoffiir/(0.5*fs), btype=self.type_irr)
+                    elif self.design_iir == 'Chebyshev Type II':
+                        self.b, self.a = cheby2(self.orderiir, self.rs, self.cutoffiir/(0.5*fs), btype=self.type_irr)
+                    elif self.design_iir == 'Butterworth':
+                        self.b, self.a = butter(self.orderiir, self.cutoffiir/(0.5*fs), btype=self.type_irr)
+                    elif self.design_iir == 'Elliptic':
+                        self.b, self.a = ellip(self.orderiir, self.rp, self.rs, self.cutoffiir/(0.5*fs), btype=self.type_irr)
                     
-                    if window_iir == 'Chebyshev Type I':
-                        self.b, self.a = cheby1(numtaps_iir, rp, fc_iir/(0.5*fs), btype=type_iir)
-                        
-                    elif window_iir == 'Chebyshev Type II':
-                        self.b, self.a = cheby2(numtaps_iir, rs, fc_iir/(0.5*fs), btype=type_iir)
-                        
-                    elif window_iir == 'Butterworth':
-                        self.b, self.a = butter(numtaps_iir, fc_iir/(0.5*fs), btype=type_iir)
-                        
-                    elif window_iir == 'Elliptic':
-                        self.b, self.a = ellip(numtaps_iir, rp, rs, fc_iir/(0.5*fs), btype=type_iir)
-                        
-                    g.get_data_arduino(filter_coefs=(self.b, self.a))
-                    self.signals.returned.emit(g)
-                    self.frequency_response()
+                    filter_coefs = (self.b, self.a)
+
+        success = g.get_data_arduino(filter_coefs=filter_coefs)
+
+        # 3. Handle the results
+        if success:
+            self.signals.returned.emit(g)
+            # Only call frequency response if filtering was active and successful
+            if not self.no_radio.isChecked():
+                self.frequency_response()
+        else:
+            # This will print if the firmware check failed or the user cancelled
+            print("Acquisition failed or interrupted. Analysis skipped.")
 
     def frequency_response(self):
         if self.fr == True:

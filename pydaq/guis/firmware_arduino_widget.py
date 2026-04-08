@@ -138,7 +138,6 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
         # Setup and start background worker
         self.worker = FirmwareUploadWorker(com_port)
         self.worker.step_reached.connect(self._on_step_reached)
-        self.worker.status_update.connect(lambda msg: print(f"[WORKER] {msg}"))
         self.worker.finished_upload.connect(self.upload_finished)
         self.worker.start()
 

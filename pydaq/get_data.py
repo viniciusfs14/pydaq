@@ -103,6 +103,7 @@ class GetData(Base):
         It does not touch the GUI, it only collects data and puts it on the queue.
         """
         # Wait for plot to be ready before starting acquisition to synchronize time_now to ~0
+        
         self.plot_ready_event.wait() 
         st_worker = None 
         task = nidaqmx.Task()
@@ -325,10 +326,10 @@ class GetData(Base):
         """
 
         channels = self.channels
-
         # Wait for plot to be ready before starting acquisition to synchronize time_now to ~0
         self.plot_ready_event.wait()
         num_cycles_performed = 0
+        st_worker = None
 
         try:
 
@@ -409,8 +410,8 @@ class GetData(Base):
             if hasattr(self, 'ser') and self.ser.is_open:
                 self.ser.close()
             data_queue.put(None)
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
+            if num_cycles_performed > 0 and st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
                 avg_acquisition_time_per_cycle = total_acquisition_duration / num_cycles_performed
                 print(
                     f"\nThread finished. "
@@ -563,4 +564,4 @@ class GetData(Base):
             plt.ioff()
             plt.close(self.fig)
 
-        return
+        return len(next(iter(self.data.values()))) > 0 if self.data else False

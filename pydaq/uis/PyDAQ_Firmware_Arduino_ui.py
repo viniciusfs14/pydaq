@@ -427,7 +427,7 @@ class Ui_Firmware(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.progressBar = QProgressBar(self.widget_2)
         self.progressBar.setObjectName(u"progressBar")
-        self.progressBar.setValue(24)
+        self.progressBar.setValue(0)
 
         self.verticalLayout.addWidget(self.progressBar)
 
