@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_Firmware_ArduinofSeWZP.ui'
+## Form generated from reading UI file 'PyDAQ_Firmware_ArduinonDtMXW.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -23,7 +23,7 @@ class Ui_Firmware(object):
     def setupUi(self, Firmware):
         if not Firmware.objectName():
             Firmware.setObjectName(u"Firmware")
-        Firmware.resize(608, 617)
+        Firmware.resize(602, 617)
         Firmware.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -448,6 +448,8 @@ class Ui_Firmware(object):
         self.reload_devices.setText("")
         self.label_2.setText(QCoreApplication.translate("Firmware", u"Upload the PyDAQ firmware to your Arduino board. \n"
 "\n"
-"This configures the Arduino perfectly for continuous analog reading (A0-A5) and dynamic digital/PWM writing (D2-D13), making it fully compatible with Get Data, Send Data, Step Response, Get Model, PID, and LQR Control functions, without needing to use the Arduino IDE.", None))
+"This configures the Arduino perfectly for continuous analog reading (A0-A5) and dynamic digital/PWM writing (D0-D13), making it fully compatible with Get Data, Send Data, Step Response, Get Model, PID, and LQR Control functions, without needing to use the Arduino IDE.\n"
+"\n"
+"\u26a0\ufe0f Note: If this is your first time, it may take a few minutes to download components.", None))
     # retranslateUi
 

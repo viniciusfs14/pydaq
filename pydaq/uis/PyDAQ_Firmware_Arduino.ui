@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>608</width>
+    <width>602</width>
     <height>617</height>
    </rect>
   </property>
@@ -451,7 +451,9 @@ QScrollArea{
      <property name="text">
       <string>Upload the PyDAQ firmware to your Arduino board. 
 
-This configures the Arduino perfectly for continuous analog reading (A0-A5) and dynamic digital/PWM writing (D2-D13), making it fully compatible with Get Data, Send Data, Step Response, Get Model, PID, and LQR Control functions, without needing to use the Arduino IDE.</string>
+This configures the Arduino perfectly for continuous analog reading (A0-A5) and dynamic digital/PWM writing (D0-D13), making it fully compatible with Get Data, Send Data, Step Response, Get Model, PID, and LQR Control functions, without needing to use the Arduino IDE.
+
+⚠️ Note: If this is your first time, it may take a few minutes to download components.</string>
      </property>
      <property name="textFormat">
       <enum>Qt::TextFormat::PlainText</enum>

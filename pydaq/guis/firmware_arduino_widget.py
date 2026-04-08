@@ -1,24 +1,20 @@
 import os
-import sys
 import subprocess
-from importlib.resources import files
 import serial.tools.list_ports
-from PySide6.QtWidgets import QWidget, QMessageBox, QApplication
+from importlib.resources import files
+from PySide6.QtWidgets import QWidget, QMessageBox
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QThread, Signal
-import importlib.resources as pkg_resources
+from PySide6.QtCore import QThread, Signal, QTimer
 
-# Adjust the import according to your UI file name
+# Import generated UI class
 from pydaq.uis.ui_PyDAQ_Firmware_Arduino import Ui_Firmware 
-
 
 class FirmwareUploadWorker(QThread):
     """
-    Worker thread to handle the firmware compilation and upload in the background,
-    preventing the main GUI from freezing.
+    Worker thread that handles heavy subprocess calls.
+    Communicates progress checkpoints to the main GUI.
     """
-    # Signals to communicate with the main GUI
-    progress_update = Signal(int)
+    step_reached = Signal(int) # Signal to indicate a subprocess has finished
     status_update = Signal(str)
     finished_upload = Signal(bool, str)
 
@@ -28,167 +24,95 @@ class FirmwareUploadWorker(QThread):
         self.fqbn = fqbn
 
     def run(self):
-
-        # Cross-platform subprocess flag
         flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-
+        
         try:
-            # 🔥 Get paths from package (works after pip install)
-            cli_path = files("pydaq.tools") / "arduino-cli.exe"
-            sketch_path = files("pydaq.arduino_code") / "arduino_code.ino"
+            # Resolve paths
+            cli_path_obj = files("pydaq.tools") / "arduino-cli.exe"
+            sketch_path_obj = files("pydaq.arduino_code") / "arduino_code.ino"
+            
+            cli_path = str(cli_path_obj)
+            sketch_path = str(sketch_path_obj)
 
-            cli_path = str(cli_path)
-            sketch_path = str(sketch_path)
-
-            # Validate paths
+            # --- PATH VALIDATION ---
             if not os.path.exists(cli_path):
-                self.finished_upload.emit(False, f"Arduino CLI not found at:\n{cli_path}")
+                self.finished_upload.emit(False, f"Critical Error: arduino-cli.exe not found at {cli_path}")
                 return
-
+            
             if not os.path.exists(sketch_path):
-                self.finished_upload.emit(False, f"Firmware file not found at:\n{sketch_path}")
+                self.finished_upload.emit(False, f"Critical Error: Firmware sketch not found at {sketch_path}")
                 return
 
-            # 🔥 STEP 0 — Arduino setup
-            self.status_update.emit("Preparing Arduino environment (first run may take longer)...")
-            self.progress_update.emit(5)
+            # --- STEP 1: Core Update (Target: 20%) ---
+            self.status_update.emit("Updating Arduino index...")
+            subprocess.run([cli_path, "config", "init"], capture_output=True, creationflags=flags)
+            subprocess.run([cli_path, "core", "update-index"], capture_output=True, creationflags=flags)
+            self.step_reached.emit(20)
 
-            try:
-                # Init config
-                subprocess.run(
-                    [cli_path, "config", "init"],
-                    capture_output=True,
-                    creationflags=flags
-                )
+            # --- STEP 2: Core Install (Target: 60%) ---
+            check = subprocess.run([cli_path, "core", "list"], capture_output=True, text=True, creationflags=flags)
+            if "arduino:avr" not in check.stdout:
+                self.status_update.emit("Installing AVR core (first run)...")
+                res = subprocess.run([cli_path, "core", "install", "arduino:avr"], capture_output=True, creationflags=flags)
+                if res.returncode != 0:
+                    # SAFE DECODE
+                    err_msg = res.stderr.decode('utf-8', errors='replace')
+                    self.finished_upload.emit(False, f"Core installation failed: {err_msg}")
+                    return
+            self.step_reached.emit(60)
 
-                # Update index
-                subprocess.run(
-                    [cli_path, "core", "update-index"],
-                    capture_output=True,
-                    creationflags=flags
-                )
-
-                # Check installed cores
-                check = subprocess.run(
-                    [cli_path, "core", "list"],
-                    capture_output=True,
-                    text=True,
-                    creationflags=flags
-                )
-
-                if "arduino:avr" not in check.stdout:
-                    self.status_update.emit("Installing Arduino AVR core (first time only)...")
-
-                    res = subprocess.run(
-                        [cli_path, "core", "install", "arduino:avr"],
-                        capture_output=True,
-                        text=True,
-                        creationflags=flags
-                    )
-
-                    if res.returncode != 0:
-                        self.finished_upload.emit(False, f"Core installation failed:\n{res.stderr}")
-                        return
-
-            except Exception as e:
-                self.finished_upload.emit(False, f"Arduino setup failed:\n{str(e)}")
-                return
-
-            self.progress_update.emit(15)
-
-            # 🔥 STEP 1 — Compile
-            self.status_update.emit("Compiling firmware...")
-            self.progress_update.emit(30)
-
-            compile_cmd = [
-                cli_path,
-                "compile",
-                "--fqbn", self.fqbn,
-                sketch_path
-            ]
-
-            res_compile = subprocess.run(
-                compile_cmd,
-                capture_output=True,
-                text=True,
-                creationflags=flags
-            )
-
+            # --- STEP 3: Compilation (Target: 85%) ---
+            self.status_update.emit("Compiling PyDAQ firmware...")
+            res_compile = subprocess.run([cli_path, "compile", "--fqbn", self.fqbn, sketch_path], capture_output=True, creationflags=flags)
             if res_compile.returncode != 0:
-                self.finished_upload.emit(False, f"Compilation failed:\n{res_compile.stderr}")
+                err_msg = res_compile.stderr.decode('utf-8', errors='replace')
+                self.finished_upload.emit(False, f"Compilation failed: {err_msg}")
                 return
+            self.step_reached.emit(85)
 
-            self.progress_update.emit(70)
-
-            # 🔥 STEP 2 — Upload
+            # --- STEP 4: Upload (Target: 100%) ---
             self.status_update.emit(f"Uploading to {self.com_port}...")
-
-            upload_cmd = [
-                cli_path,
-                "upload",
-                "-p", self.com_port,
-                "--fqbn", self.fqbn,
-                sketch_path
-            ]
-
-            res_upload = subprocess.run(
-                upload_cmd,
-                capture_output=True,
-                text=True,
-                creationflags=flags
-            )
-
+            res_upload = subprocess.run([cli_path, "upload", "-p", self.com_port, "--fqbn", self.fqbn, sketch_path], capture_output=True, creationflags=flags)
             if res_upload.returncode != 0:
-                self.finished_upload.emit(False, f"Upload failed:\n{res_upload.stderr}")
+                err_msg = res_upload.stderr.decode('utf-8', errors='replace')
+                self.finished_upload.emit(False, f"Upload failed: {err_msg}")
                 return
 
-            # 🔥 SUCCESS
-            self.progress_update.emit(100)
-            self.status_update.emit("Upload Successful!")
-            self.finished_upload.emit(True, "Firmware successfully installed.")
+            self.step_reached.emit(100)
+            self.finished_upload.emit(True, "Firmware successfully uploaded!")
 
         except Exception as e:
-            self.finished_upload.emit(False, f"Unexpected error:\n{str(e)}")
-
+            self.finished_upload.emit(False, f"Unexpected worker error: {str(e)}")
 
 class FirmwareUploadWidget(QWidget, Ui_Firmware):
     def __init__(self, *args):
         super(FirmwareUploadWidget, self).__init__(*args)
         self.setupUi(self)
-        self.setWindowTitle("Arduino Firmware Upload")
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
-
-        # Variables
-        self.com_ports = []
-        self.worker = None
-
-        # Resetting UI elements
-        self.progressBar.setValue(0)
-        self.upload_button.setText("Upload")
-
-        # Connecting signals
+        self.setWindowTitle("PyDAQ - Firmware Manager")
+        
+        # Internal state for smooth progress animation
+        self.current_display_value = 0
+        self.target_step_value = 0
+        
+        # Timer for smooth progress bar transition
+        self.smooth_timer = QTimer()
+        self.smooth_timer.timeout.connect(self._animate_progress)
+        
+        # Connect UI signals
         self.upload_button.released.connect(self.start_upload)
         self.reload_devices.released.connect(self.update_com_ports)
         
-        # Initialize ports
+        # Initial port scan
         self.update_com_ports()
 
     def update_com_ports(self):
-        """Updating available COM ports"""
+        """Refreshes the list of available COM ports."""
         self.com_ports = [i.description for i in serial.tools.list_ports.comports()]
-        selected = self.device_combo.currentText()
-
         self.device_combo.clear()
         self.device_combo.addItems(self.com_ports)
-        
-        index_current = self.device_combo.findText(selected)
-        if index_current != -1:
-            self.device_combo.setCurrentIndex(index_current)
 
     def start_upload(self):
-        """Starts the background thread to upload the firmware"""
-
-        # If the text is "Finished", close the window and interrupt the function.
+        """Initializes the background upload process."""
         if self.upload_button.text() == "Finished":
             self.close()
             return
@@ -197,81 +121,52 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
             QMessageBox.warning(self, "Warning", "Please select a valid COM port.")
             return
 
-        # Extract the exact COM port name (e.g., 'COM7')
-        selected_desc = self.device_combo.currentText()
-        com_port = serial.tools.list_ports.comports()[self.com_ports.index(selected_desc)].name
+        # Map description back to device name (e.g. COM3)
+        selected_index = self.device_combo.currentIndex()
+        com_port = serial.tools.list_ports.comports()[selected_index].name
 
-        # Lock the UI to prevent double clicking
+        # Lock UI and reset progress state
         self.upload_button.setEnabled(False)
-        self.upload_button.setText("Processing...")
         self.reload_devices.setEnabled(False)
-        self.progressBar.setValue(10)
+        self.current_display_value = 0
+        self.target_step_value = 15 # Initial fake progress while starting
+        self.progressBar.setValue(0)
+        
+        # Start the animation timer (100ms interval)
+        self.smooth_timer.start(100)
 
-        # NOTE: If you add a combo box for Arduino Boards later, get the FQBN here.
-        # For now, it defaults to Arduino Uno ("arduino:avr:uno")
-        board_fqbn = "arduino:avr:uno"
-
-        # Instantiate and start the worker thread
-        self.worker = FirmwareUploadWorker(com_port, board_fqbn)
-        self.worker.progress_update.connect(self.update_progress_bar)
-        self.worker.status_update.connect(self.update_status)
+        # Setup and start background worker
+        self.worker = FirmwareUploadWorker(com_port)
+        self.worker.step_reached.connect(self._on_step_reached)
+        self.worker.status_update.connect(lambda msg: print(f"[WORKER] {msg}"))
         self.worker.finished_upload.connect(self.upload_finished)
         self.worker.start()
 
-    def update_progress_bar(self, value):
-        """Updates the progress bar value"""
-        self.progressBar.setValue(value)
+    def _on_step_reached(self, val):
+        """Updates the animation target when a real step is completed."""
+        self.target_step_value = val
 
-    def update_status(self, message):
-        """Updates a status label if you have one, or print to terminal"""
-        print(message)
-        # If you have a label in Qt Designer named 'status_label', use:
-        # self.status_label.setText(message)
+    def _animate_progress(self):
+        """Incrementally increases progress bar value for a smooth visual effect."""
+        if self.current_display_value < self.target_step_value:
+            self.current_display_value += 1
+            self.progressBar.setValue(self.current_display_value)
+        
+        # Stop timer if we hit 100%
+        if self.current_display_value >= 100:
+            self.smooth_timer.stop()
 
     def upload_finished(self, success, message):
-        """Handles the end of the upload process"""
-        # Unlock the UI
+        """Finalizes the UI state based on success or failure."""
+        self.smooth_timer.stop()
         self.upload_button.setEnabled(True)
         self.reload_devices.setEnabled(True)
         
         if success:
+            self.progressBar.setValue(100)
             self.upload_button.setText("Finished")
             QMessageBox.information(self, "Success", message)
-            # Optional: reset button text after a few seconds
-            # self.upload_button.setText("Upload")
         else:
-            self.upload_button.setText("Retry")
             self.progressBar.setValue(0)
+            self.upload_button.setText("Retry")
             QMessageBox.critical(self, "Error", message)
-
-    def ensure_arduino_ready(cli_path):
-        flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-
-        try:
-            # Init config (safe even if already exists)
-            subprocess.run([cli_path, "config", "init"], capture_output=True, creationflags=flags)
-
-            # Update index
-            subprocess.run([cli_path, "core", "update-index"], capture_output=True, creationflags=flags)
-
-            # Check installed cores
-            check = subprocess.run(
-                [cli_path, "core", "list"],
-                capture_output=True,
-                text=True,
-                creationflags=flags
-            )
-
-            if "arduino:avr" not in check.stdout:
-                res = subprocess.run(
-                    [cli_path, "core", "install", "arduino:avr"],
-                    capture_output=True,
-                    text=True,
-                    creationflags=flags
-                )
-
-                if res.returncode != 0:
-                    raise RuntimeError(res.stderr)
-
-        except Exception as e:
-            raise RuntimeError(f"Arduino CLI setup failed: {e}")

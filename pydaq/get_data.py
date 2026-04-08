@@ -371,7 +371,7 @@ class GetData(Base):
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
                     if len(values) < 6:
-                        warnings.warn("Incomplete universal frame")
+                        warnings.warn("Incomplete universal frame, Please go to the 'Arduino' tab and upload the latest firmware.")
                         continue
 
                     time_now = time.perf_counter() - st_worker
