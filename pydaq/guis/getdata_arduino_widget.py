@@ -1,4 +1,5 @@
 import os
+import warnings
 import serial
 import serial.tools.list_ports
 
@@ -12,7 +13,6 @@ import scipy.signal as signal
 from ..uis.ui_PyDAQ_get_data_Arduino_widget import Ui_Arduino_GetData_W
 from ..guis.digital_filters_nidaq_widget import Digital_Filters_NIDAQ_Widget
 from .error_window_gui import Error_window
-
 from ..get_data import GetData
 
 from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip, freqz
@@ -115,14 +115,38 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
     def start_func_get_data(self):  # Start getting data
+
         try:
             # Instantiating the GetData class
             g = GetData()
 
+            # Checking if a path was set
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+
+            g.path = self.path_line_edit.text()
+
             # Getting the values from the GUI
-            g.com_port = serial.tools.list_ports.comports()[
-                self.com_ports.index(self.device_combo.currentText())
-            ].name
+            try:
+                g.com_port = serial.tools.list_ports.comports()[
+                    self.com_ports.index(self.device_combo.currentText())
+                ].name
+                #g.com_port = serial.tools.list_ports.comports()[999].name # Test Error
+            except (ValueError, IndexError):
+                raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+
+            try:
+                g._open_serial()
+                firmware_ok = g._verify_arduino_firmware()
+                g.ser.close() # CRITICAL: Release the port for the actual acquisition thread!
+            except Exception:
+                firmware_ok = False
+                if hasattr(g, 'ser') and g.ser.is_open:
+                    g.ser.close()
+
+            if not firmware_ok:
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+
             g.ts = self.Ts_in.value()
             g.session_duration = self.sesh_dur_in.value()
             if self.yes_rt_plot_radio.isChecked(): # Assumindo que 'yes_radio' agora significa 'Real time'
@@ -132,11 +156,6 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
-
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
 
             # Restarting variables
             g.data = []
@@ -145,10 +164,25 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
 
             g.channels = self.get_selected_channels()
 
-        except BaseException:
+        except BaseException as e :
+            # Standardized GUI Error Window
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
             error_w = Error_window()
+            # Dynamic GUI Message routing based on the error type
+            if "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and path are properly defined.")
             error_w.exec()
-            g.error_path = True
+
+            # Use locals() check in case 'g' failed to instantiate
+            if 'g' in locals():
+                g.error_path = True
+
+            return
 
         if not g.error_path:
             filter_coefs = None

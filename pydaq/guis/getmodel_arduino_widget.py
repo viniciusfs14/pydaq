@@ -153,13 +153,44 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             # Instantiating the GetModel class
             g = GetModel()
 
+            # 1. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+
+            g.path = self.path_line_edit.text()
+
+            # 2. Config Validation: Channels & Dimensions
             g.input_channels = self.get_selected_ai()
             g.output_channels = self.get_selected_ao()
             
-            # Getting the values from the GUI
-            g.com_port = serial.tools.list_ports.comports()[
-                self.com_ports.index(self.device_combo.currentText())
-            ].name
+            if len(g.input_channels) != len(g.output_channels):
+                raise ValueError(
+                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(g.input_channels)}) does not match the number of selected AO channels ({len(g.output_channels)})."
+                )
+            
+            # 3. Config Validation: COM Port
+            try:
+                g.com_port = serial.tools.list_ports.comports()[
+                    self.com_ports.index(self.device_combo.currentText())
+                ].name
+                #s.com_port = serial.tools.list_ports.comports()[999].name # Test Error
+            except (ValueError, IndexError):
+                raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+            
+            # 4. GUI-Level Firmware Verification (Fail Fast)
+            try:
+                g._open_serial()
+                firmware_ok = g._verify_arduino_firmware()
+                g.ser.close() # CRITICAL: Release the port for the actual acquisition thread!
+            except Exception:
+                firmware_ok = False
+                if hasattr(g, 'ser') and g.ser.is_open:
+                    g.ser.close()
+
+            if not firmware_ok:
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            
+            # 5. Remaining Parameters
             g.ts = self.Ts_in.value()
             g.start_save_time = self.save_time_in.value()
             g.session_duration = self.sesh_dur_in.value()
@@ -170,7 +201,6 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
 
             g.prbs_bits = self.signal_bits
             g.prbs_seed = self.signal_seed
@@ -184,21 +214,37 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             g.ext_lsq = self.ext_lsq
             g.perc_value = self.perc_value
 
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
-
             # Restarting variables
             g.data = []
             g.time_var = []
             g.out_read = []
             g.error_path = False
 
-        except BaseException:
-            error_w = Error_window()
-            error_w.exec()
-            g.error_path = True
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
 
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+            elif "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            
+            error_w.exec()
+            
+            # Use locals() check in case 'g' failed to instantiate
+            if 'g' in locals():
+                g.error_path = True
+            return # Exit function to prevent execution
+
+        # Execute
         if not g.error_path:
             # Calling data aquisition method
             g.get_model_arduino()

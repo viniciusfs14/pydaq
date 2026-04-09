@@ -39,8 +39,8 @@ void loop() {
     command.trim();
     
     if (command == "0") {
-       // Stop command: Turn off all commonly used actuator pins (D2 to D13)
-       for(int i = 2; i <= 13; i++) {
+       // Stop command: Turn off all commonly used actuator pins (D0 to D13)
+       for(int i = 0; i <= 13; i++) {
           pinMode(i, OUTPUT);
           digitalWrite(i, LOW);
        }

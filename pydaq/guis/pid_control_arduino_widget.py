@@ -10,6 +10,9 @@ from PySide6.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, Q
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
+from pydaq.utils.base import Base
+from .error_window_gui import Error_window
+
 from ..uis.ui_PyDAQ_pid_control_Arduino_widget import Ui_Arduino_PID_Control
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -175,36 +178,87 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
 
 # Create the pid control window
     def show_graph_window(self):
-        self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
-        self.numerator = self.lineEdit_numerator.text()
-        self.denominator = self.lineEdit_denominator.text()
-        if self.simulate:
-            self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
-            self.ao_channels = [" "]
-            self.com_port = None
-        else:
-            self.channels = self.get_selected_ai()
-            self.ao_channels = self.get_selected_ao()
-            self.com_port = serial.tools.list_ports.comports()[
-                    self.com_ports.index(self.comboBox_arduino.currentText())
-                ].name
+        try:
+            self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+            # 1. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            self.path = self.path_line_edit.text()
 
-        self.setpoint = self.doubleSpinBox_setpoint.value()
-        self.getunit()
-        self.equationvu = self.lineEdit_equationvu.text()
-        self.equationuv = self.lineEdit_equationuv.text()
-        self.period = self.doubleSpinBox_period.value()
-        self.path = self.path_line_edit.text()
-        self.index = self.comboBox_type.currentIndex()
-        self.save = True if self.save_radio_group.checkedId() == -2 else False
-        print('Save? ', self.save)
-        self.board = 'arduino'
+            if self.simulate:
+                self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
+                self.ao_channels = [" "]
+                self.com_port = None
+            else:
+                self.channels = self.get_selected_ai()
+                self.ao_channels = self.get_selected_ao()
 
-        plot_window = PID_Control_Window_Dialog()
-        plot_window.check_board(self.board, self.com_port, self.ao_channels, self.channels, None, self.simulate)
-        plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
-        plot_window.send_values.connect(self.update_values)
-        plot_window.exec()
+                # 2. Config Validation: Dimensions
+                if len(self.channels) != len(self.ao_channels):
+                    raise ValueError(
+                        f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(self.channels)}) does not match the number of selected AO channels ({len(self.ao_channels)})."
+                    )
+                
+                # 3. Config Validation: COM Port
+                try:
+                    self.com_port = serial.tools.list_ports.comports()[
+                        self.com_ports.index(self.comboBox_arduino.currentText())
+                    ].name
+                except (ValueError, IndexError):
+                    raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+                
+                # 4. GUI-Level Firmware Verification (Fail Fast)
+                tester = Base()
+                tester.com_port = self.com_port
+                try:
+                    tester._open_serial()
+                    firmware_ok = tester._verify_arduino_firmware()
+                    tester.ser.close()
+                except Exception:
+                    firmware_ok = False
+                    if hasattr(tester, 'ser') and tester.ser.is_open:
+                        tester.ser.close()
+
+                if not firmware_ok:
+                    raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+                
+            # 5. Remaining Parameters
+            self.numerator = self.lineEdit_numerator.text()
+            self.denominator = self.lineEdit_denominator.text()
+            self.setpoint = self.doubleSpinBox_setpoint.value()
+            self.getunit()
+            self.equationvu = self.lineEdit_equationvu.text()
+            self.equationuv = self.lineEdit_equationuv.text()
+            self.period = self.doubleSpinBox_period.value()
+            self.index = self.comboBox_type.currentIndex()
+            self.save = True if self.save_radio_group.checkedId() == -2 else False
+            print('Save? ', self.save)
+            self.board = 'arduino'
+
+            print(f"\n[PYDAQ] Opening PID Control Dialog ...")
+            plot_window = PID_Control_Window_Dialog()
+            plot_window.check_board(self.board, self.com_port, self.ao_channels, self.channels, None, self.simulate)
+            plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
+            plot_window.send_values.connect(self.update_values)
+            plot_window.exec()
+
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+            elif "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            error_w.exec()
 
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory( # To locate the data path to armazenate

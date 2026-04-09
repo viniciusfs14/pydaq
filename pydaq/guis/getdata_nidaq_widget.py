@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -167,21 +168,33 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
     def start_func_get_data(self):  # Start getting data
         
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
         if not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
             error_w = Error_window()
-            error_w.ui.confirm.setText("NI-DAQmx drivers not found!\nCannot start hardware acquisition.")
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
             error_w.exec()
             return
-        
+
         try:
             # Instantiating the GetData class
             g = GetData()
 
             # Separating variables
-            selected = self.get_selected_channels()   # ["Dev1/ai0", "Dev1/ai2"]
+            selected = self.get_selected_channels() 
 
-            g.device = selected[0].split("/")[0]
-            g.channels = [ch.split("/")[1] for ch in selected]
+            # Checking if a path was set
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+
+            g.path = self.path_line_edit.text()
+
+            if selected:
+                g.device = selected[0].split("/")[0]
+                # Sending the list of channel names (e.g., ["ao0", "ao1"])
+                g.channels = [ch.split("/")[1] for ch in selected]
+            else:
+                raise ValueError("[PYDAQ] Missing configuration: Please ensure device and channel are properly defined.")
 
             g.terminal = g.term_map[self.terminal_config_combo.currentText()]
             g.ts = self.Ts_in.value()
@@ -193,21 +206,23 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
-
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
 
             # Restarting variables
             g.data = []
             g.time_var = []
             g.error_path = False
 
-        except BaseException:
+        except BaseException as e :
+            # Standardized GUI Error Window
+            if str(e): # Only warn if there is a specific message
+                warnings.warn(str(e))
+
             error_w = Error_window()
+            error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and path are properly defined.")
             error_w.exec()
+
             g.error_path = True
+            return
 
         # this conditional checks if will have filter or not
         if not g.error_path:

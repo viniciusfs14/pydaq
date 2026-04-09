@@ -1,6 +1,7 @@
 import os
 import serial
 import serial.tools.list_ports
+import numpy as np
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
@@ -109,44 +110,27 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
     def start_func_LQR_Control(self):
         try:
             simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+            output_mode = "arduino_pwm" if self.Arduino_PWM_radio.isChecked() else "free"
 
-            if self.Arduino_PWM_radio.isChecked():
-                output_mode = "arduino_pwm"
-            else:
-                output_mode = "free"
-
-            # --- COMMON VALIDATION ---
-            if self.A is None or self.B is None or self.Q is None or self.R is None:
-                raise BaseException
-
-            # --- SIMULATION MODE ---
-            if simulate:
-                l = LQRControl()
-                l.A = self.A
-                l.B = self.B
-                l.C = self.C   
-                l.D = self.D
-                l.Q = self.Q
-                l.R = self.R
-                l.output_mode = output_mode
-                l.ts = self.Ts_in.value()
-                l.session_duration = self.sesh_dur_in.value()
-
-                print("Running in SIMULATION mode")
-                l.simulate_lqr()
-
-                return  # IMPORTANT: stop here
-
-            # --- HARDWARE MODE ---
             l = LQRControl()
 
-            l.channels = self.get_selected_ai()
-            l.ao_channels = self.get_selected_ao()
-            l.com_port = serial.tools.list_ports.comports()[
-                self.com_ports.index(self.device_combo.currentText())
-            ].name
+            # 1. Config Validation: Matrices Defined
+            if self.A is None or self.B is None or self.Q is None or self.R is None:
+                raise ValueError("[PYDAQ] Missing configuration: Matrices are not defined. Cannot simulate or run control.")
+
+            # 2. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            
+            l.path = self.path_line_edit.text()
+
+            # Common LQR parameters for both Simulation and Hardware
+            l.A, l.B, l.C, l.D = self.A, self.B, self.C, self.D
+            l.Q, l.R = self.Q, self.R
+
             l.ts = self.Ts_in.value()
             l.session_duration = self.sesh_dur_in.value()
+            l.save = True if self.save_radio_group.checkedId() == -2 else False
             if self.yes_rt_plot_radio.isChecked(): 
                 l.plot_mode = 'realtime'
             elif self.yes_ate_plot_radio.isChecked():
@@ -154,26 +138,73 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             else: # self.No_radio.isChecked()
                 l.plot_mode = 'no'
 
-            l.save = True if self.save_radio_group.checkedId() == -2 else False
-            
-            if self.path_line_edit.text() == "":
-                raise BaseException
-            
-            l.path = self.path_line_edit.text()
+            if simulate:
+                l.output_mode = output_mode
+                l.simulate_lqr()
 
-            l.A = self.A
-            l.B = self.B
-            l.C = self.C   
-            l.D = self.D   
-            l.Q = self.Q
-            l.R = self.R
+                return  # IMPORTANT: stop here
+
+            l.channels = self.get_selected_ai()
+            l.ao_channels = self.get_selected_ao()
+
+            A_arr = np.array(self.A)
+            B_arr = np.array(self.B)
+
+            n_states = len(l.channels)      # Number of AI channels
+            n_inputs = len(l.ao_channels)   # Number of AO channels
+
+            # Check matrix A: must be square and match the number of AI channels
+            if A_arr.ndim != 2 or A_arr.shape[0] != A_arr.shape[1] or A_arr.shape[0] != n_states:
+                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix A must be {n_states}x{n_states} to match AI channels!")
+
+            # Check matrix B: rows must match AI channels, cols must match AO channels
+            if B_arr.ndim != 2 or B_arr.shape[0] != n_states or B_arr.shape[1] != n_inputs:
+                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
+
+            # 4. Config Validation: COM Port
+            try:
+                l.com_port = serial.tools.list_ports.comports()[
+                    self.com_ports.index(self.device_combo.currentText())
+                ].name
+            except (ValueError, IndexError):
+                raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+
+            # 5. GUI-Level Firmware Verification
+            try:
+                l._open_serial()
+                firmware_ok = l._verify_arduino_firmware()
+                l.ser.close() # CRITICAL: Release the port
+            except Exception:
+                firmware_ok = False
+                if hasattr(l, 'ser') and l.ser.is_open:
+                    l.ser.close()
+
+            if not firmware_ok:
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
 
             l.lqr_control_arduino()
 
             self.signals.returned.emit(l)
 
-        except BaseException:
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
+            elif "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+            elif "Matrices are not defined" in err_msg:
+                error_w.ui.confirm.setText("Missing configuration: LQR Matrices (A, B, Q, R) must be defined before running.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+
             error_w.exec()
 
     def _setup_ai_selector(self):
@@ -268,7 +299,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         self.n_states = data["n"]
         self.n_inputs = data["m"]
 
-        print("LQR matrices updated")
+        print("\n[PYDAQ] LQR matrices updated")
 
     def on_simulate_change(self):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False

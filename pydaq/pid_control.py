@@ -88,10 +88,7 @@ class PIDControl(Base):
         time.sleep(0.5)  # Wait for the serial connection to initialize
         if hasattr(self, '_verify_arduino_firmware') and not self._verify_arduino_firmware():
             self.ser.close()
-            warnings.warn(
-                "PyDAQ Firmware not detected on this board!\n"
-                "Please go to the top menu and click on 'Upload Firmware' to install the correct code."
-            )
+            warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
             self.plot_running = False
             self.control_running = False
             
@@ -123,7 +120,7 @@ class PIDControl(Base):
             values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
             if len(values) < 6:
-                raise ValueError("Incomplete universal frame") 
+                raise ValueError("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.") 
         except:
             values = None
 
@@ -310,7 +307,6 @@ class PIDControl(Base):
         if not self.calibration_equation_vu or not self.calibration_equation_vu.strip():
             return output
         else:
-            # WARNING: Using eval is a security risk if the equation string is not from a trusted source.
             # It can execute arbitrary code. For this application, we assume the user provides a safe
             # mathematical expression.
             try:
@@ -318,14 +314,13 @@ class PIDControl(Base):
                 output_calibrated = eval(self.calibration_equation_vu, {"__builtins__": None}, {"x": output})
                 return float(output_calibrated)
             except Exception as e:
-                print(f"Error evaluating calibration_equation_vu: {e}")
+                print(f"\n[PYDAQ] Error evaluating calibration_equation_vu: {e}")
                 return output # Return original value in case of error
 
     def calibrationuv(self, output):
         if not self.calibration_equation_uv or not self.calibration_equation_uv.strip():
             return output
         else:
-            # WARNING: Using eval is a security risk if the equation string is not from a trusted source.
             # It can execute arbitrary code. For this application, we assume the user provides a safe
             # mathematical expression.
             try:
@@ -333,7 +328,7 @@ class PIDControl(Base):
                 output_calibrated = eval(self.calibration_equation_uv, {"__builtins__": None}, {"x": output})
                 return float(output_calibrated)
             except Exception as e:
-                print(f"Error evaluating calibration_equation_uv: {e}")
+                print(f"\n[PYDAQ] Error evaluating calibration_equation_uv: {e}")
                 return output # Return original value in case of error
 
     def parse_polynomial(self,poly_str):
@@ -357,7 +352,7 @@ class PIDControl(Base):
                         if degree > max_degree:
                             max_degree = degree
                     except (ValueError, IndexError):
-                        raise ValueError(f"Invalid term format: {term}")
+                        raise ValueError(f"[PYDAQ] Invalid term format: {term}")
                 else: # s is present, but s** is not, so degree is 1
                     if 1 > max_degree:
                         max_degree = 1

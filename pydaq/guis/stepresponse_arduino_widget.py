@@ -1,4 +1,5 @@
 import os
+import warnings
 import serial
 import serial.tools.list_ports
 
@@ -71,19 +72,50 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
     def start_func_step_response(self):
+
         try:
             self.get_sintony_type()
             
             # Instantiating the StepResponse class
             s = StepResponse()
 
-            # Getting the values from the GUI
+            # 1. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            s.path = self.path_line_edit.text()
+            
+            # 2. Config Validation: Channels & Dimensions
             s.channels = self.get_selected_ai()
             s.ao_channels = self.get_selected_ao()
 
-            s.com_port = serial.tools.list_ports.comports()[
-                self.com_ports.index(self.device_combo.currentText())
-            ].name
+            if len(s.channels) != len(s.ao_channels):
+                raise ValueError(
+                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(s.channels)}) does not match the number of selected AO channels ({len(s.ao_channels)})."
+                )
+
+            # 3. Config Validation: COM Port
+            try:
+                s.com_port = serial.tools.list_ports.comports()[
+                    self.com_ports.index(self.device_combo.currentText())
+                ].name
+                #s.com_port = serial.tools.list_ports.comports()[999].name # Test Error
+            except (ValueError, IndexError):
+                raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+            
+            # 4. GUI-Level Firmware Verification (Fail Fast)
+            try:
+                s._open_serial()
+                firmware_ok = s._verify_arduino_firmware()
+                s.ser.close() # CRITICAL: Release the port for the actual acquisition thread!
+            except Exception:
+                firmware_ok = False
+                if hasattr(s, 'ser') and s.ser.is_open:
+                    s.ser.close()
+
+            if not firmware_ok:
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            
+            # 5. Remaining Parameters
             s.ts = self.Ts_in.value()
             s.session_duration = self.sesh_dur_in.value()
             s.step_time = self.step_on_s_in.value()
@@ -94,23 +126,40 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             else: # self.No_radio.isChecked()
                 s.plot_mode = 'no'
             s.save = True if self.save_radio_group.checkedId() == -2 else False
-            s.path = self.path_line_edit.text()
+
             s.calculate_pid = True if self.pid_radio_group.checkedId() == -2 else False
             s.sintony_type =  self.sintony_type
 
             # Restarting variables
             self.time_var, self.input, self.output = [], [], []
 
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
-
+            # Execute
             s.step_response_arduino()
             self.signals.returned.emit(s)
 
-        except BaseException:
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+            elif "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            
             error_w.exec()
+            
+            # Use locals() check in case 's' failed to instantiate
+            if 's' in locals():
+                s.error_path = True
+            return # Exit function to prevent execution
 
     def pidshow(self):
         self.enabled = True if self.pid_radio_group.checkedId() == -2 else False

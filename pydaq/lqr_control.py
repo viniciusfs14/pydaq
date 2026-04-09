@@ -112,21 +112,20 @@ class LQRControl(Base):
 
             P = solve_discrete_are(A, B, Q, R)
 
-
             self.K = np.linalg.solve(
                 self.B.T @ P @ self.B + self.R,
                 self.B.T @ P @ self.A
             )
 
-            print(f"LQR Gain K calculated: {self.K}")
+            print(f"\n[PYDAQ] LQR Gain K calculated: {self.K}")
         except Exception as e:
-            warnings.warn(f"Failed to calculate LQR gain: {e}")
+            warnings.warn(f"[PYDAQ] Failed to calculate LQR gain: {e}")
             self.K = np.zeros((len(self.ao_channels), len(self.channels)))
 
     # Handler for plot window closure
     def _on_plot_close(self, event):
         """..."""
-        print("Plot window closed by user. Initiating shutdown...")
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False
         self.plot_closed_by_user = True
 
@@ -135,18 +134,13 @@ class LQRControl(Base):
 
         n_ai = len(self.channels)
         n_ao = len(self.ao_channels)
-        
+        st_worker = None
         try:
             self._open_serial()
 
             if not self._verify_arduino_firmware():
                 self.ser.close()
-                warnings.warn(
-                    "⚠️ PyDAQ Firmware not detected on this board!\n"
-                    "Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code."
-                )
-                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
-                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
 
                 return 
             # --- WARM-UP SECTION ---
@@ -175,7 +169,7 @@ class LQRControl(Base):
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
                     if len(values) < 6:
-                        warnings.warn("Incomplete universal frame")
+                        warnings.warn("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.")
                         continue
 
                     time_now = time.perf_counter() - st_worker
@@ -212,7 +206,7 @@ class LQRControl(Base):
                         data_queue.put((time_now, ch, u_ref, x[i][0]))
 
                 except (ValueError, UnicodeDecodeError):
-                    warnings.warn(f"Invalid multichannel read: {raw}")
+                    warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
                     continue
                 
                 num_cycles_performed += 1
@@ -221,29 +215,31 @@ class LQRControl(Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent exceeded ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
 
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
         finally:
             # Turn off
             stop_msg = ",".join(["0"] * n_ao) + "\n"
             self.ser.write(stop_msg.encode())
             self.ser.close()
             data_queue.put(None)
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )         
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")  
 
 
     
@@ -265,7 +261,6 @@ class LQRControl(Base):
         self._calculate_lqr_gain()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
-        print("Running LQR control for Arduino...")
         self.time_var = {ch: [] for ch in self.channels}
         self.input_h = {ch: [] for ch in self.channels}
         self.output_h = {ch: [] for ch in self.channels}
@@ -277,6 +272,7 @@ class LQRControl(Base):
 
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
+        print("\n[PYDAQ] Running LQR Control ...")
         acquisition_thread = threading.Thread(
             target=self._lqr_control_worker_arduino,
             args=(data_queue,),
@@ -289,8 +285,6 @@ class LQRControl(Base):
             self._start_updatable_plot_lqr(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
 
             self.plot_ready_event.set()
@@ -298,10 +292,7 @@ class LQRControl(Base):
             self.plot_ready_event.set()
 
         # Plot update throttling logic for performance
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts*0.9, 0.05)
 
         last_plot_update_time = time.perf_counter()
 
@@ -364,21 +355,21 @@ class LQRControl(Base):
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.input_h, "input.dat")
             self._save_data(self.output_h, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
         return
 
     def _lqr_control_worker_nidaq(self, data_queue):
         # Wait for plot to be ready to synchronize start time
         self.plot_ready_event.wait()
-        st_worker = time.perf_counter()
+        st_worker = None
         task_ao = nidaqmx.Task()
         task_ai = nidaqmx.Task()
     
@@ -394,6 +385,7 @@ class LQRControl(Base):
             n_ai = len(self.channels)
             n_ao = len(self.ao_channels)
 
+            st_worker = time.perf_counter()
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
@@ -419,9 +411,7 @@ class LQRControl(Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         
         finally:
             # Turn off outputs
@@ -436,18 +426,21 @@ class LQRControl(Base):
             task_ao.close()
             task_ai.close()
             data_queue.put(None)
-
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )           
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")  
 
     def lqr_control_nidaq(self):
         """
@@ -479,6 +472,7 @@ class LQRControl(Base):
 
         self._check_path()
 
+        print ("\n[PYDAQ] Running LQR Control ...")
         acquisition_thread = threading.Thread(
             target=self._lqr_control_worker_nidaq,
             args=(data_queue,),
@@ -491,8 +485,6 @@ class LQRControl(Base):
             self._start_updatable_plot_lqr(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
 
             self.plot_ready_event.set()
@@ -569,14 +561,14 @@ class LQRControl(Base):
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.input_h, "input.dat")
             self._save_data(self.output_h, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
 
         return
@@ -588,7 +580,7 @@ class LQRControl(Base):
         """
 
         if self.A is None or self.B is None or self.Q is None or self.R is None:
-            warnings.warn("Matrices are not defined. Cannot simulate.")
+            warnings.warn("[PYDAQ] Matrices are not defined: Cannot simulate.")
             return
 
         self._calculate_lqr_gain()
@@ -621,11 +613,11 @@ class LQRControl(Base):
         history_u = []
         time_arr = []
 
-        print("Running LQR simulation...")
+        print("\n[PYDAQ] Running LQR Control ...")
         for k in range(steps):
             # Control law
             u = -self.K @ x
-            
+
             if self.output_mode == "arduino_pwm":
                 u = np.clip(u, 0, 5)
 
@@ -680,17 +672,14 @@ class LQRControl(Base):
         n_states = len(self.channels)      # Number of AI channels
         n_inputs = len(self.ao_channels)   # Number of AO channels
 
-        print(f"Number of AI channels: {n_states}")
-        print(f"Number of AO channels: {n_inputs}")
-
         # Check matrix A: must be square and match the number of AI channels
         if A.ndim != 2 or A.shape[0] != A.shape[1] or A.shape[0] != n_states:
-            self._dim_error(f"Matrix A must be {n_states}x{n_states} to match AI channels!")
+            self._dim_error(f"[PYDAQ] Matrix A must be {n_states}x{n_states} to match AI channels!")
             return False
 
         # Check matrix B: rows must match AI channels, cols must match AO channels
         if B.ndim != 2 or B.shape[0] != n_states or B.shape[1] != n_inputs:
-            self._dim_error(f"Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
+            self._dim_error(f"[PYDAQ] Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
             return False
 
         print(A.ndim, A.shape)

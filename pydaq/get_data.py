@@ -11,8 +11,6 @@ import serial.tools.list_ports
 from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 from scipy.signal import lfilter, butter, firwin, filtfilt
 
-
-
 class GetData(Base):
     """
     Class able to get data from data acquisition boards using (or not) a graphical user interface (GUI)
@@ -31,7 +29,6 @@ class GetData(Base):
         save: if True, saves data in path defined by path.
         path: where data will be saved.
         plot: if True, plot data iteractively as they are acquired
-
     """
 
     def __init__(
@@ -141,9 +138,7 @@ class GetData(Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         finally:
             task.close()
             data_queue.put(None) # Signal end of data acquisition
@@ -154,15 +149,15 @@ class GetData(Base):
                 if num_cycles_performed > 0:
                     avg = total_acquisition_duration / num_cycles_performed
                     print(
-                        f"\nThread finished. "
+                        f"\n[PYDAQ] Thread finished. "
                         f"Total time: {total_acquisition_duration:.5f}s | "
                         f"Cycles processed: {num_cycles_performed} | "
                         f"Avg per cycle: {avg:.5f}s"
                     )       
                 else:
-                    print("\nThread finished. No data cycles acquired.")
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished before acquisition started (Configuration blocked).")        
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")        
 
     # Handler for plot window closure
     def _on_plot_close(self, event):
@@ -170,7 +165,7 @@ class GetData(Base):
         Event handler for Matplotlib figure closure.
         Sets acquisition_running to False and plot_closed_by_user to True.
         """
-        print("Plot window closed by user. Initiating shutdown...")
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False # Signal acquisition to stop
         self.plot_closed_by_user = True # Signal that plot was closed manually
 
@@ -201,6 +196,8 @@ class GetData(Base):
 
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
+
+        print ("\n[PYDAQ] Running Get Data...")
 
         acquisition_thread = threading.Thread(
             target=self._acquisition_worker_nidaq,
@@ -277,7 +274,6 @@ class GetData(Base):
             for ch in self.channels:
                 if len(self.data[ch]) == 0:
                     continue
-
                 if isinstance(filter_coefs, tuple) and len(filter_coefs) == 2:
                     b, a = filter_coefs
                     self.data_filtered[ch] = lfilter(b, a, np.array(self.data[ch])).tolist()
@@ -285,12 +281,12 @@ class GetData(Base):
                     self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("Plot remaining open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remaining open. Close window manually to exit.")
             plt.show(block=True)
 
         # NEW BLOCK: Logic to plot at the end
         if self.plot_mode == 'end' and self.time_var:
-            print("\nGenerating plot at the end of acquisition...")
+            print("\n[PYDAQ] Generating plot at the end of acquisition...")
             self.title = f"PYDAQ - Final Acquisition: {self.device}, {self.channel}"
             self._start_updatable_plot(title_str=self.title)
             self._update_plot(
@@ -304,7 +300,7 @@ class GetData(Base):
             plt.show(block=True) # Keeps the final plot open
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
 
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.data, "data.dat")
@@ -312,7 +308,7 @@ class GetData(Base):
                 self._save_data(self.data_filtered, "data_filtered.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and self.plot_closed_by_user:
             plt.ioff()
@@ -337,14 +333,9 @@ class GetData(Base):
 
             if not self._verify_arduino_firmware():
                 self.ser.close()
-                warnings.warn(
-                    "⚠️ PyDAQ Firmware not detected on this board!\n"
-                    "Please go to the top menu and click on 'Arduino Firmware' to upload the correct code."
-                )
-                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
-                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
-
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
                 return
+            
             # --- WARM-UP SECTION ---
             # Send an initial command (b"0") to "wake up" the Arduino.
             time.sleep(0.05)
@@ -372,7 +363,7 @@ class GetData(Base):
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
                     if len(values) < 6:
-                        warnings.warn("Incomplete universal frame, Please go to the 'Arduino' tab and upload the latest firmware.")
+                        warnings.warn("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.")
                         continue
 
                     time_now = time.perf_counter() - st_worker
@@ -392,42 +383,42 @@ class GetData(Base):
                     num_cycles_performed += 1
 
                 except (ValueError, UnicodeDecodeError):
-                    warnings.warn(f"Invalid multichannel read: {raw}")
+                    warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
                     continue
 
                 wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open serial port {self.com_port}: {e}")
-            print(f"ERROR: Failed to open serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
             self.acquisition_running = False
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 self.ser.close()
             data_queue.put(None)
-            if num_cycles_performed > 0 and st_worker is not None:
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
                 total_acquisition_duration = time.perf_counter() - st_worker
-                avg_acquisition_time_per_cycle = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg_acquisition_time_per_cycle:.5f}s"
-                )  
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")  
 
     def get_data_arduino(self, filter_coefs=None):
         """
         This function can be used for data acquisition and step response experiments using Python + Arduino
         through serial communication. Now adapted to threading model for consistent plot handling.
         """
-
         # Data storage per channel
         self.data = {ch: [] for ch in self.channels}
         self.time_var = {ch: [] for ch in self.channels}
@@ -447,6 +438,8 @@ class GetData(Base):
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
+        print ("\n[PYDAQ] Running Get Data...")
+
         acquisition_thread = threading.Thread(
             target=self._acquisition_worker_arduino,
             args=(data_queue,), 
@@ -464,10 +457,7 @@ class GetData(Base):
             # If it is not in real time, release the acquisition immediately.
             self.plot_ready_event.set()
 
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts*0.9, 0.05)
 
         last_plot_update_time = time.perf_counter()
 
@@ -531,12 +521,12 @@ class GetData(Base):
                     self.data_filtered[ch] = lfilter(filter_coefs, 1.0, np.array(self.data[ch])).tolist()
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("Plot remaining open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remaining open. Close window manually to exit.")
             plt.show(block=True)
 
         # NEW BLOCK: Logic to plot at the end
         if self.plot_mode == 'end' and self.time_var:
-            print("\nGenerating plot at the end of acquisition...")
+
             self.title = f"PYDAQ - Final Acquisition: Arduino, Port: {self.com_port}"
             self._start_updatable_plot(title_str=self.title)
             self._update_plot(
@@ -550,7 +540,7 @@ class GetData(Base):
             plt.show(block=True) # Keeps the final plot open
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
 
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.data, "data.dat")
@@ -558,7 +548,7 @@ class GetData(Base):
                 self._save_data(self.data_filtered, "data_filtered.dat")
             if len(self.coeffs) > 0:
                 self._save_data(self.coeffs, "filter_coeffs.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and self.plot_closed_by_user:
             plt.ioff()

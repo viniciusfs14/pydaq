@@ -59,7 +59,7 @@ class Base:
         # Check if able to save data in defined path
         if not os.path.exists(self.path):
             warnings.warn(
-                "Defined path does not exists! Please redefine path and run the code again"
+                "[PYDAQ] Defined path does not exist! Please redefine the path and run the code again."
             )
             return
 
@@ -363,35 +363,42 @@ class Base:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-
     def _verify_arduino_firmware(self):
         """
-        Reads a sample from the Serial port to confirm that the PyDAQ firmware is running.
+        Reads samples from the Serial port to confirm that the PyDAQ firmware is running.
+        Reads up to 3 lines to avoid failing on partial data streams.
         Returns True if correct, or False if incorrect.
         """
         try:
             self.ser.reset_input_buffer() # Clear old junk
-
-            # Save the original timeout and set a quick one just for the test (1 second)
+            
+            # Save the original timeout and set a quick one
             original_timeout = self.ser.timeout
-            self.ser.timeout = 1.0 
+            self.ser.timeout = 0.5 # 0.5s is more than enough for a continuous stream
 
-            # Try reading the Arduino's "machine gun"
-            line = self.ser.readline().decode('utf-8').strip()
-            self.ser.timeout = original_timeout # Restore the timeout
+            try:
+                # Try reading up to 3 lines to catch at least one complete frame
+                for _ in range(3):
+                    # Use errors='ignore' to prevent crashes with random serial noise
+                    line = self.ser.readline().decode('utf-8', errors='ignore').strip()
+                    
+                    if not line:
+                        continue # If empty, try the next loop iteration
 
-            if not line:
-                return False # Didn't receive anything (Arduino silent)
+                    parts = line.split(',')
 
-            # Check if the line has the expected format by splitting by commas
-            parts = line.split(',')
+                    # Check for the exact 6-channel structure defined in the .ino
+                    if len(parts) == 6: 
+                        int(parts[0]) # Will raise ValueError if it's not a number
+                        return True   # Perfect frame found!
 
-            # If we managed to split and the first item is a number, it's the PyDAQ!
-            if len(parts) >= 1: 
-                int(parts[0]) # Will raise an error if it's not a number
-                return True
+                # If the loop finishes and didn't find a 6-part line
+                return False
 
-            return False
+            finally:
+                # This block ALWAYS runs, guaranteeing the timeout is restored
+                self.ser.timeout = original_timeout 
+
         except Exception:
             return False
 
@@ -407,7 +414,8 @@ class Base:
         """Checks if NIDAQ drivers are installed and loaded."""
         if not NIDAQ_AVAILABLE:
             error_w = Error_window()
-            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.ui.confirm.setText("[PYDAQ] NI-DAQmx drivers not found! Please install NI-MAX.")
             error_w.exec()
             return False
         return True
+    

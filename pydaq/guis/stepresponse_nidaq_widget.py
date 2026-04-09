@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
@@ -71,27 +72,42 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
             self.label_warning.hide()
             
     def start_func_step_response(self):
+
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
+        if not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.exec()
+            return
+        
         try:
             self.get_sintony_type()
 
             # Instantiating the StepResponse class
             s = StepResponse()
 
-            # Cleaning data
-            s.output, s.input, s.time_var = [], [], []
+            # 1. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            s.path = self.path_line_edit.text()
 
-            # Separating variables
-            
-            # Input and output range
+            # 2. Config Validation: Channels & Dimensions
             selected_ao = self.get_selected_ao()
             selected_ai = self.get_selected_ai()
 
-            if not selected_ao or not selected_ai:
-                raise ValueError("Select at least one AO and one AI channel")
-
-            s.device = selected_ao[0].split("/")[0]
-            s.channels = [ch.split("/")[1] for ch in selected_ai]
-            s.ao_channels = [ch.split("/")[1] for ch in selected_ao]
+            if len(selected_ai) != len(selected_ao):
+                raise ValueError(
+                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(selected_ai)}) does not match the number of selected AO channels ({len(selected_ao)})."
+                )
+            
+            # 3. Config Validation: COM Port
+            if selected_ao and selected_ai:
+                s.device = selected_ao[0].split("/")[0]
+                s.channels = [ch.split("/")[1] for ch in selected_ai]
+                s.ao_channels = [ch.split("/")[1] for ch in selected_ao]
+            else:
+                raise ValueError("[PYDAQ] Missing configuration: Please ensure device and channel are properly defined.")
 
             s.terminal = s.term_map[self.terminal_config_combo.currentText()]
             s.step_max = self.step_range_max_in.value()
@@ -99,29 +115,46 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
             s.ts = self.Ts_in.value()
             s.session_duration = self.sesh_dur_in.value()
             s.step_time = self.step_on_s_in.value()
+
             if self.yes_rt_plot_radio.isChecked(): 
                 s.plot_mode = 'realtime'
             elif self.yes_ate_plot_radio.isChecked(): 
                 s.plot_mode = 'end'
             else: # self.No_radio.isChecked()
                 s.plot_mode = 'no'
+
             s.save = True if self.save_radio_group.checkedId() == -2 else False
-            s.path = self.path_line_edit.text()
             s.calculate_pid = True if self.pid_radio_group.checkedId() == -2 else False
             s.sintony_type =  self.sintony_type
-            #s.error_path = False
+            
+            # Restarting variables
+            self.time_var, self.input, self.output = [], [], []
 
+            # Execute
             s.step_response_nidaq()
             self.signals.returned.emit(s)
 
-        except BaseException:
-            error_w = Error_window()
-            error_w.exec()
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
 
-        # Calling send data method
-        #if not s.error_path:
-        #    s.step_response_nidaq()
-        #    self.signals.returned.emit(s)
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            
+            error_w.exec()
+            
+            # Use locals() check in case 's' failed to instantiate
+            if 's' in locals():
+                s.error_path = True
+            return # Exit function to prevent execution
 
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory(

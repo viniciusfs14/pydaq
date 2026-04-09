@@ -1,4 +1,5 @@
 import os
+import warnings
 import numpy as np
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
@@ -30,18 +31,12 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
 
         # Setting the starting values 
         self.device_combo.addItems(self.device_type)
+        
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop", "data.dat")
         )
         
         self._setup_channel_selector()
-
-        #defchan_index = self.channel_combo.findText(defchan)
-#
- #       if defchan_index == -1:
-  #          pass
-   #     else:
-    #        self.channel_combo.setCurrentIndex(defchan_index)
 
         # Connecting Signals
         self.path_folder_browse.released.connect(self.locate_path)
@@ -59,6 +54,15 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             self.label_warning.hide()
             
     def start_func_send_data(self):  # Start sending data
+
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
+        if not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.exec()
+            return
+
         try:
             # Instantiating the SendData class
             s = SendData()
@@ -66,6 +70,10 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             s.ao_max = self.out_range_max_in.value()
             s.ao_min = self.out_range_min_in.value()
 
+            # Checking if a path was set
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty data path.")
+            
             # Reading data from defined path
             s.path = self.path_line_edit.text()
             
@@ -76,7 +84,7 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
                 # Sending the list of channel names (e.g., ["ao0", "ao1"])
                 s.channels = [ch.split("/")[1] for ch in selected]
             else:
-                raise ValueError("No channel selected")
+                raise ValueError("[PYDAQ] Missing configuration: Please ensure device and channel are properly defined.")
 
             s.data = self._prepare_data_matrix_nidaq(
                 s.path,
@@ -86,23 +94,39 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             )
 
             s.ts = self.Ts_in.value()
-            if self.yes_rt_plot_radio.isChecked(): # Assumindo que 'yes_radio' agora significa 'Real time'
+            if self.yes_rt_plot_radio.isChecked(): 
                 s.plot_mode = 'realtime'
-            elif self.yes_ate_plot_radio.isChecked(): # Supondo que você criou um radio button com este nome
+            elif self.yes_ate_plot_radio.isChecked(): 
                 s.plot_mode = 'end'
             else: # self.No_radio.isChecked()
                 s.plot_mode = 'no'
             s.error_path = False
 
-        except BaseException:
+        except BaseException as e:
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected channels does not match the data structure.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and data path are properly defined.")
+
             error_w.exec()
-            s.error_path = True
+
+            if 's' in locals():
+                s.error_path = True
+            return
 
         if not s.error_path:
             # Calling send data method
             s.send_data_nidaq()
             self.signals.returned.emit(s)
+
 
     def locate_path(self):  # Calling the File Browser Widget
         data_path = QFileDialog.getOpenFileName(
@@ -212,14 +236,15 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
         # -----------------------------
         elif raw_data.ndim == 2:
             if raw_data.shape[1] != n_channels:
+                # Padronizado para o Terminal
                 raise ValueError(
-                    f"File has {raw_data.shape[1]} columns but "
-                    f"{n_channels} channels were selected."
+                    f"[PYDAQ] Dimension mismatch: Number of selected channels incorrect. "
+                    f"File has {raw_data.shape[1]} columns, but {n_channels} channels were selected."
                 )
             data_matrix = raw_data
 
         else:
-            raise ValueError("Unsupported file format.")
+            raise ValueError("[PYDAQ] Missing configuration: Unsupported file format.")
 
         # -----------------------------
         # Range validation

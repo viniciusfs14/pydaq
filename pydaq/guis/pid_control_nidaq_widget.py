@@ -1,4 +1,5 @@
 import sys, os
+import warnings
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -11,7 +12,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from ..guis.pid_control_window_dialog import PID_Control_Window_Dialog
 from .error_window_gui import Error_window
-
 
 class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
     def __init__(self, *args):
@@ -173,10 +173,11 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
     def show_graph_window(self):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
         
-        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found and simulation is not selected
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
         if not self.simulate and not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
             error_w = Error_window()
-            error_w.ui.confirm.setText("NI-DAQmx drivers not found!\nCannot start hardware control.")
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
             error_w.exec()
             return
         

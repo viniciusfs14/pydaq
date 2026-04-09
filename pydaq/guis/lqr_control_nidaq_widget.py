@@ -1,4 +1,6 @@
 import os
+import warnings
+import numpy as np
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction, QIcon
@@ -80,33 +82,52 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             self.label_warning.hide()
             
     def start_func_LQR_Control(self):
+        
+        self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+        
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
+        if not self.simulate and not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.exec()
+            return
+        
         try:
             simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+            
+            l = LQRControl()
 
-            # --- COMMON VALIDATION ---
+            # 1. Config Validation: Matrices Defined
             if self.A is None or self.B is None or self.Q is None or self.R is None:
-                raise BaseException
+                raise ValueError("[PYDAQ] Missing configuration: Matrices are not defined. Cannot simulate or run control.")
+
+            # 2. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            l.path = self.path_line_edit.text()
+
+            # Common LQR parameters for both Simulation and Hardware
+            l.A, l.B, l.C, l.D = self.A, self.B, self.C, self.D
+            l.Q, l.R = self.Q, self.R
+
+            l.ts = self.Ts_in.value()
+            l.session_duration = self.sesh_dur_in.value()
+            l.save = True if self.save_radio_group.checkedId() == -2 else False
+
+            if self.yes_rt_plot_radio.isChecked(): 
+                l.plot_mode = 'realtime'
+            elif self.yes_ate_plot_radio.isChecked(): 
+                l.plot_mode = 'end'
+            else: # self.No_radio.isChecked()
+                l.plot_mode = 'no'
 
             # --- SIMULATION MODE ---
             if simulate:
-                l = LQRControl()
-                l.A = self.A
-                l.B = self.B
-                l.C = self.C   
-                l.D = self.D
-                l.Q = self.Q
-                l.R = self.R
-                l.ts = self.Ts_in.value()
-                l.session_duration = self.sesh_dur_in.value()
-
-                print("Running in SIMULATION mode")
                 l.simulate_lqr()
 
                 return  # IMPORTANT: stop here
 
-            # --- HARDWARE MODE ---
-            l = LQRControl()
-            
             # Input and output range
             selected_ao = self.get_selected_ao()
             selected_ai = self.get_selected_ai()
@@ -118,40 +139,44 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             l.channels = [ch.split("/")[1] for ch in selected_ai]
             l.ao_channels = [ch.split("/")[1] for ch in selected_ao]
 
-            l.terminal = l.term_map[self.terminal_config_combo.currentText()]
-            l.ts = self.Ts_in.value()
-            l.session_duration = self.sesh_dur_in.value()
-            if self.yes_rt_plot_radio.isChecked(): 
-                l.plot_mode = 'realtime'
-            elif self.yes_ate_plot_radio.isChecked(): 
-                l.plot_mode = 'end'
-            else: # self.No_radio.isChecked()
-                l.plot_mode = 'no'
-            l.save = True if self.save_radio_group.checkedId() == -2 else False
+            A_arr = np.array(self.A)
+            B_arr = np.array(self.B)
 
-            if self.path_line_edit.text() == "":
-                raise BaseException
-            
-            l.path = self.path_line_edit.text()
-            
-            l.A = self.A
-            l.B = self.B
-            l.C = self.C   
-            l.D = self.D
-            l.Q = self.Q
-            l.R = self.R
+            n_states = len(l.channels)      # Number of AI channels
+            n_inputs = len(l.ao_channels)   # Number of AO channels
+
+            # Check matrix A: must be square and match the number of AI channels
+            if A_arr.ndim != 2 or A_arr.shape[0] != A_arr.shape[1] or A_arr.shape[0] != n_states:
+                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix A must be {n_states}x{n_states} to match AI channels!")
+
+            # Check matrix B: rows must match AI channels, cols must match AO channels
+            if B_arr.ndim != 2 or B_arr.shape[0] != n_states or B_arr.shape[1] != n_inputs:
+                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
+
+            l.terminal = l.term_map[self.terminal_config_combo.currentText()]
 
             l.lqr_control_nidaq()
             self.signals.returned.emit(l)
 
-        except BaseException:
-            error_w = Error_window()
-            error_w.exec()
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
 
-        # Calling send data method
-        #if not s.error_path:
-        #    s.step_response_nidaq()
-        #    self.signals.returned.emit(s)
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
+            elif "Matrices are not defined" in err_msg:
+                error_w.ui.confirm.setText("Missing configuration: LQR Matrices (A, B, Q, R) must be defined before running.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+
+            error_w.exec()
+            return # Exit function to prevent execution
 
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory(
@@ -349,7 +374,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
         self.n_states = data["n"]
         self.n_inputs = data["m"]
 
-        print("LQR matrices updated")
+        print("\n[PYDAQ] LQR matrices updated")
     
     def openMatricesWindow(self):
         simulate = self.yes_simulate_radio.isChecked()

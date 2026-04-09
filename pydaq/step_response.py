@@ -108,7 +108,7 @@ class StepResponse(Base):
     # Handler for plot window closure
     def _on_plot_close(self, event):
         """..."""
-        print("Plot window closed by user. Initiating shutdown...")
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False
         self.plot_closed_by_user = True
 
@@ -118,17 +118,13 @@ class StepResponse(Base):
         n_channels = len(channels)  # === NEW ===
         self.plot_ready_event.wait()
         num_cycles_performed = 0  # === NEW ===
-
+        st_worker = None 
         try:
             self._open_serial()
             if not self._verify_arduino_firmware():
                 self.ser.close()
-                warnings.warn(
-                    "⚠️ PyDAQ Firmware not detected on this board!\n"
-                    "Please go to the top menu and click on 'Arduino Firmware' to upload the correct code."
-                )
-                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
-                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+
                 return
             # --- WARM-UP SECTION ---
             # Send an initial command (b"0") to "wake up" the Arduino.
@@ -170,7 +166,8 @@ class StepResponse(Base):
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
                     if len(values) < 6:
-                        raise ValueError("Incomplete universal frame")
+                        warnings.warn("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.")
+                        continue
 
                     time_now = time.perf_counter() - st_worker
 
@@ -183,19 +180,17 @@ class StepResponse(Base):
                     num_cycles_performed += 1
 
                 except (ValueError, UnicodeDecodeError):
-                    warnings.warn(f"Invalid multichannel read: {raw}")
+                    warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
                     continue
 
                 wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent exceeded ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
 
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 try:
@@ -206,21 +201,22 @@ class StepResponse(Base):
                 except:
                     pass
                 self.ser.close()
-                print(f"Serial port {self.com_port} closed.")
-
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )              
-            else:
-                print("\nThread finished. No data cycles acquired.")
-
             data_queue.put(None)
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")  
     
     def step_response_arduino(self):
         """
@@ -251,6 +247,7 @@ class StepResponse(Base):
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
+        print ("\n[PYDAQ] Running Step Response...")
         acquisition_thread = threading.Thread(
             target=self._step_response_worker_arduino,
             args=(data_queue,),
@@ -263,8 +260,6 @@ class StepResponse(Base):
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
 
             self.plot_ready_event.set()
@@ -272,10 +267,7 @@ class StepResponse(Base):
             self.plot_ready_event.set()
 
         # Plot update throttling logic for performance
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts*0.9, 0.05)
 
         last_plot_update_time = time.perf_counter()
 
@@ -400,23 +392,24 @@ class StepResponse(Base):
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.input, "input.dat")
             self._save_data(self.output, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
 
         return
 
     def _step_response_worker_nidaq(self, data_queue):
+
         # Wait for plot to be ready to synchronize start time
         self.plot_ready_event.wait()
+        st_worker = None
         
-        st_worker = time.perf_counter()
         task_ao = nidaqmx.Task()
         task_ai = nidaqmx.Task()
     
@@ -442,6 +435,7 @@ class StepResponse(Base):
             
             n_channels = len(self.channels)
 
+            st_worker = time.perf_counter()
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
@@ -477,9 +471,7 @@ class StepResponse(Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         
         finally:
             # Turn off outputs
@@ -494,18 +486,20 @@ class StepResponse(Base):
             task_ao.close()
             task_ai.close()
             data_queue.put(None)
-
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )               
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).") 
 
 
     def step_response_nidaq(self):
@@ -533,6 +527,7 @@ class StepResponse(Base):
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
+        print ("\n[PYDAQ] Running Step Response...")
         acquisition_thread = threading.Thread(
             target=self._step_response_worker_nidaq,
             args=(data_queue,),
@@ -545,8 +540,6 @@ class StepResponse(Base):
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
 
             self.plot_ready_event.set()
@@ -555,7 +548,7 @@ class StepResponse(Base):
 
         # Plot update throttling logic for performance
         plot_update_interval = max(self.ts * 0.9, 0.05)
-            
+
         last_plot_update_time = time.perf_counter()
         
         # Main loop for data consumption and plotting
@@ -660,14 +653,14 @@ class StepResponse(Base):
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.input, "input.dat")
             self._save_data(self.output, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
 
         return
@@ -750,10 +743,10 @@ class StepResponse(Base):
             Kd = Kp * Td
 
         if L_adjusted <= 0 or T <= 0 or Kp <= 0 or Ki < 0 or Kd < 0 or n < 3 or slope <= 0:
-            print(f"Invalid sample values for channel {channel_name}. Sintony cannot be calculated correctly.")
+            print(f"\n[PYDAQ] Invalid sample values for channel {channel_name}. Sintony cannot be calculated correctly.")
             return 0, 0, 0, tangent_line_real  # Retorna PID=0
         
-        print(f"Gains: Kp={Kp:.4f}, Ki={Ki:.4f}, Kd={Kd:.4f}")
+        print(f"\n[PYDAQ] Gains: Kp={Kp:.4f}, Ki={Ki:.4f}, Kd={Kd:.4f}")
         
         return Kp, Ki, Kd, tangent_line_real
 

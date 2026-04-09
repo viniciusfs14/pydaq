@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from sysidentpy.parameter_estimation import estimators
 
@@ -168,21 +169,39 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
         self.perc_value = config.ui.perc_data_val_in.value()
 
     def start_func_get_model(self):  # Start getting model
+
+        if not NIDAQ_AVAILABLE:
+            error_w = Error_window()
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware acquisition.")
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Cannot start hardware acquisition.")
+            error_w.exec()
+            return
+        
         try:
             # Instantiating the GetModel class
             g = GetModel()
 
-            # Getting the values from the GUI
-            # Input and output range
+            # 1. Config Validation: Path
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            g.path = self.path_line_edit.text()
+
+            # 2. Config Validation: Channels & Dimensions
             selected_ao = self.get_selected_ao()
             selected_ai = self.get_selected_ai()
 
-            if not selected_ao or not selected_ai:
-                raise ValueError("Select at least one AO and one AI channel")
-
-            g.device = selected_ao[0].split("/")[0]
-            g.ao_channels = [ch.split("/")[1] for ch in selected_ao]
-            g.channels = [ch.split("/")[1] for ch in selected_ai]
+            if len(selected_ai) != len(selected_ao):
+                raise ValueError(
+                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(selected_ai)}) does not match the number of selected AO channels ({len(selected_ao)})."
+                )
+            
+            # 3. Config Validation: COM Port
+            if selected_ao and selected_ai:
+                g.device = selected_ao[0].split("/")[0]
+                g.channels = [ch.split("/")[1] for ch in selected_ai]
+                g.ao_channels = [ch.split("/")[1] for ch in selected_ao]
+            else:
+                raise ValueError("[PYDAQ] Missing configuration: Please ensure device and channel are properly defined.")
 
             g.terminal = g.term_map[self.terminal_config_combo.currentText()]
             g.ts = self.Ts_in.value()
@@ -195,7 +214,6 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
 
             g.prbs_bits = self.signal_bits
             g.prbs_seed = self.signal_seed
@@ -209,19 +227,32 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             g.ext_lsq = self.ext_lsq
             g.perc_value = self.perc_value
 
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
-
             # Restarting variables
             g.data = []
             g.time_var = []
             g.out_read = []
             g.error_path = False
 
-        except BaseException:
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            
             error_w.exec()
+            
+            # Use locals() check in case 'g' failed to instantiate
+            if 'g' in locals():
+                g.error_path = True
+            return # Exit function to prevent execution
 
         if not g.error_path:
             # Calling data aquisition method

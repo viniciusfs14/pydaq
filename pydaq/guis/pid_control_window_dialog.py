@@ -85,24 +85,24 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         time.sleep(0.1)
 
         if self.save: #save if wanted
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat") # Saving time_var and data
             self._save_data(self.system_values, "output.dat")
             self._save_data(self.errors, "error.dat")
             self._save_data(self.setpoints, "setpoint.dat")
             self._save_data(self.controls, "controls.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         self.send_values.emit( #sending the values to QWidget
-            self.kp,
-            self.ki,
-            self.kd,
+            self.kp if self.kp is not None else 0.0,
+            self.ki if self.ki is not None else 0.0,
+            self.kd if self.kd is not None else 0.0,
             self.index,
             self.setpoint,
-        ) 
+        )
 
         if self.simulate == True:
-            print('Closing')
+            print('\n[PYDAQ] Closing simulation ...')
         elif self.board == 'arduino': #stop the event and close the dialog
             try:
                 self.pid.ser.write(b"0\n") # Turning off all outputs
@@ -123,7 +123,7 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
                 if hasattr(self.pid, 'task_ai') and self.pid.task_ai:
                     self.pid.task_ai.close()
             except Exception as e:
-                print("Warning when closing NI-DAQ tasks:", e)
+                print('\n[PYDAQ] Warning when closing NI-DAQ tasks:', e)
 
         self.close()
 
@@ -217,7 +217,7 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.check_start()
             self.start_threaded_control()
         except Exception as e:
-            print("Error starting control:", e)
+            print('\n[PYDAQ] Error starting control:', e)
 
     def start_threaded_control(self):
         self.data_queue = queue.Queue()
@@ -239,32 +239,51 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         self.t0 = st_worker
         self.k = 0
         
-        while not self.paused:
-            if not self.control_running:
-                break
+        try:
+            while not self.paused:
+                if not self.control_running:
+                    break
 
-            if self.simulate:
-                outputs, errors, setpoints, controls = self.pid.update_simulated_system()
-            elif self.board == 'arduino':
-                outputs, errors, setpoints, controls = self.pid.update_plot_arduino()
-            elif self.board == 'nidaq':
-                outputs, errors, setpoints, controls = self.pid.update_plot_nidaq()
+                if self.simulate:
+                    outputs, errors, setpoints, controls = self.pid.update_simulated_system()
+                elif self.board == 'arduino':
+                    outputs, errors, setpoints, controls = self.pid.update_plot_arduino()
+                elif self.board == 'nidaq':
+                    outputs, errors, setpoints, controls = self.pid.update_plot_nidaq()
 
-            time_now = (time.perf_counter() - self.t0) + self.elapsed_time
+                time_now = (time.perf_counter() - self.t0) + self.elapsed_time
 
-            with self.lock:
-                self.data_queue.put((time_now, outputs, errors, setpoints, controls))
+                with self.lock:
+                    self.data_queue.put((time_now, outputs, errors, setpoints, controls))
 
-            target_time = st_worker + (self.k + 1) * self.ts
-            wait_time = target_time - time.perf_counter()
-            if wait_time > 0:
-                time.sleep(wait_time)
+                target_time = st_worker + (self.k + 1) * self.ts
+                wait_time = target_time - time.perf_counter()
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                else:
+                    # Padronizado com a nossa matriz de erros
+                    warnings.warn(
+                        "[PYDAQ] Timing warning: Acquisition cycle exceeded sample period (ts). The 'time.dat' vector may be inaccurate."
+                    )
+
+                self.k += 1
+
+        finally:
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if self.k > 0:
+                    avg = total_acquisition_duration / self.k
+                    print(
+                        f"\n[PYDAQ] Control Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {self.k} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Control Thread finished. No data cycles acquired.")
             else:
-                warnings.warn(
-                    "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
-                )
-
-            self.k += 1
+                print("\n[PYDAQ] Control Thread finished before acquisition started (Configuration blocked).")
 
     def _update_plot(self):
 
@@ -341,7 +360,6 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.pid.channels = self.channels
             self.pid.terminal = self.pid.term_map[self.terminal]
             self.pid.pid_control_nidaq() 
-            #print(self.pid.terminal, ' = ', self.pid.term_map[self.terminal])
 
 # Changing the text of the pid parameters inputs
     def set_text(self):
@@ -360,18 +378,18 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
     def check_board(self, board, hardware_id, ao, ai, terminal, simulate):
         self.board = board
         self.simulate = simulate
-        self.ao_channels = ao  # Recebe [" "] se for simulação, ou a lista real
+        self.ao_channels = ao 
         self.channels = ai
 
         if self.simulate == True:
-            print ('Starting simulation ...')
+            print ('\n[PYDAQ] Starting PID Control Simulation ...')
         elif self.board == 'arduino':
             self.com_port = hardware_id
-            print ('Starting control in arduino ...')
+            print ('\n[PYDAQ] Starting PID Control on Arduino ...') 
         elif self.board == 'nidaq':
             self.device = hardware_id # Recebe o nome do dispositivo, ex: "Dev1"
             self.terminal = terminal
-            print ('Starting control in nidaq ...')
+            print ('\n[PYDAQ] Starting PID Control on NIDAQ ...')
 
     def enable_pid_parameters(self, kp_enabled, ki_enabled, kd_enabled):
         self.doubleSpinBox_KpDialog.setEnabled(kp_enabled)
@@ -493,8 +511,6 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         # LAYOUT FIX
         # =========================
         self.figure.subplots_adjust(right=0.78, bottom=0.15, hspace=0.3)
-
-
 
     def update_plot_task(self):
         plot_update_interval = max(self.ts * 0.9, 0.05)

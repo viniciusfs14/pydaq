@@ -96,11 +96,11 @@ def plot_combined_results_with_metrics(
     """Plot combined results with three stacked subplots and a metrics table."""
 
     if len(y) == 0 or len(yhat) == 0:
-        raise ValueError("Arrays must have at least 1 sample.")
+        raise ValueError("[PYDAQ] Arrays must have at least 1 sample.")
 
     if len(residuals) == 0 or len(cross_corr) == 0:
         raise ValueError(
-            "Residuals and cross-correlation arrays must have at least 1 sample."
+            "[PYDAQ] Residuals and cross-correlation arrays must have at least 1 sample."
         )
 
     # Set Matplotlib style and figure properties
@@ -274,18 +274,14 @@ class GetModel(Base):
 
         channels = self.channels
         n_channels = len(channels)
+        st_worker = None
 
         try:
             self._open_serial()
 
             if not self._verify_arduino_firmware():
                 self.ser.close()
-                warnings.warn(
-                    "⚠️ PyDAQ Firmware not detected on this board!\n"
-                    "Please go to the top menu and click on 'Arduino Firmware' to upload the correct code."
-                )
-                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
-                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
 
                 return 
             # --- WARM-UP SECTION ---
@@ -320,7 +316,8 @@ class GetModel(Base):
                     values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
                     if len(values) < 6:
-                        raise ValueError("Incomplete universal frame")
+                        warnings.warn("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.")
+                        continue
 
                     time_now = time.perf_counter() - st_worker
                     sent_value = signal_to_send[k]
@@ -333,35 +330,36 @@ class GetModel(Base):
                     num_cycles_performed += 1
 
                 except (ValueError, UnicodeDecodeError):
-                    warnings.warn(f"Invalid multichannel read: {raw}")
+                    warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
                     continue
 
                 wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent exceeded ts. You CANNOT trust time.dat"
-                    )
-
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 self.ser.write(b"0")
                 self.ser.close()
             data_queue.put(None)
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )       
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")    
 
     def _acquisition_worker_nidaq(self, data_queue, signal_to_send):
         """Worker to send signal and acquire data with NI-DAQ."""
@@ -369,7 +367,8 @@ class GetModel(Base):
 
         task_ao = nidaqmx.Task()
         task_ai = nidaqmx.Task()
-        
+        st_worker = None
+
         try:
             num_cycles_performed = 0
             # === MODIFIED === multi-channel configuration
@@ -410,9 +409,7 @@ class GetModel(Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn(
-                        "Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
-                    )
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         finally:
             # Ensure tasks are safely closed
             task_ao.write([self.ao_min] * len(self.ao_channels))
@@ -420,18 +417,21 @@ class GetModel(Base):
             task_ai.close()
 
             data_queue.put(None) # Signal the end of acquisition
-
-            total_acquisition_duration = time.perf_counter() - st_worker
-            if num_cycles_performed > 0:
-                avg = total_acquisition_duration / num_cycles_performed
-                print(
-                    f"\nThread finished. "
-                    f"Total time: {total_acquisition_duration:.5f}s | "
-                    f"Cycles processed: {num_cycles_performed} | "
-                    f"Avg per cycle: {avg:.5f}s"
-                )          
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\nThread finished. No data cycles acquired.")
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")
 
     def _orchestrate_acquisition(self, worker_target, worker_args):
         """General-purpose orchestrator for data acquisition and plotting."""
@@ -445,6 +445,7 @@ class GetModel(Base):
         self.plot_closed_by_user = False
         self.plot_ready_event.clear()
 
+        print ("\n[PYDAQ] Starting Get Model...")
         acquisition_thread = threading.Thread(
             target=worker_target,
             args=(data_queue, *worker_args),
@@ -521,7 +522,7 @@ class GetModel(Base):
 
     def _on_plot_close(self, event):
         """Event handler for Matplotlib figure closure."""
-        print("Plot window closed by user. Initiating shutdown...")
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False
         self.plot_closed_by_user = True
 
@@ -569,7 +570,7 @@ class GetModel(Base):
             plt.show(block=True)
 
         if self.save:  # Adjusting data, since no last data is acquired by arduino
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             # Saving time_var and data
             sliced_time_var = {ch: self.time_var[ch][:-1] for ch in self.channels}
             sliced_input = {ch: self.inp_read[ch][:-1] for ch in self.channels}
@@ -578,7 +579,7 @@ class GetModel(Base):
             self._save_data(sliced_time_var, "time.dat")
             self._save_data(sliced_input, "input.dat")
             self._save_data(sliced_output, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         self.acquired_model = {}
         self.final_model = {}
@@ -590,7 +591,7 @@ class GetModel(Base):
 
         for ch in self.channels:
 
-            print(f"\nIdentifying model for channel: {ch}")
+            print(f"\n[PYDAQ] Identifying model for channel: {ch}")
             data_x = np.array(self.inp_read[ch][:-1])   # input (discard last)
             data_y = np.array(self.out_read[ch][1:])    # output (discard first)
             
@@ -630,7 +631,7 @@ class GetModel(Base):
             model.fit(X=x_train, y=y_train)
             yhat = model.predict(X=x_valid, y=y_valid)
             rrse = root_relative_squared_error(y_valid, yhat)
-            print(f"Channel {ch}: Root relative squared error: {rrse}")
+            print(f"\n[PYDAQ] Channel {ch}: Root relative squared error: {rrse}")
 
             results_data = results(
                 model.final_model,
@@ -743,12 +744,12 @@ class GetModel(Base):
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             # Saving time_var and data
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.inp_read, "input.dat")
             self._save_data(self.out_read, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
 
         self.acquired_model = {}
         self.final_model = {}
@@ -760,7 +761,7 @@ class GetModel(Base):
         
         for ch in self.channels:
                 
-            print(f"\nIdentifying model for channel: {ch}")
+            print(f"\n[PYDAQ] Identifying model for channel: {ch}")
 
             data_x = np.array(self.inp_read[ch])
             data_y = np.array(self.out_read[ch])
@@ -796,7 +797,7 @@ class GetModel(Base):
             model.fit(X=x_train, y=y_train)
             yhat = model.predict(X=x_valid, y=y_valid)
             rrse = root_relative_squared_error(y_valid, yhat)
-            print(f"Channel {ch}: Root relative squared error: {rrse}")
+            print(f"\n[PYDAQ] Channel {ch}: Root relative squared error: {rrse}")
 
             results_data = results(
                 model.final_model,

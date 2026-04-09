@@ -1,4 +1,5 @@
 import os
+import warnings
 import serial
 import serial.tools.list_ports
 import numpy as np
@@ -75,6 +76,10 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
             # Restarting time and data
             s.time_var, s.data = [], []
 
+            # Checking if a path was set
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty data path")
+            
             # Reading data from defined path and rearranjing it
             s.path = self.path_line_edit.text()
             
@@ -83,11 +88,25 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
 
             s.data = self._prepare_data_matrix(s.path, s.channels)
 
-            # Getting the remaining values from the GUI
-            s.com_port = serial.tools.list_ports.comports()[
-                self.com_ports.index(self.device_combo.currentText())
-            ].name
+            try:
+                s.com_port = serial.tools.list_ports.comports()[
+                    self.com_ports.index(self.device_combo.currentText())
+                ].name
+            except (ValueError, IndexError):
+                raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
             
+            try:
+                s._open_serial()
+                firmware_ok = s._verify_arduino_firmware()
+                s.ser.close() # CRITICAL: Release the port for the actual thread!
+            except Exception:
+                firmware_ok = False
+                if hasattr(s, 'ser') and s.ser.is_open:
+                    s.ser.close()
+
+            if not firmware_ok:
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+
             s.ts = self.Ts_in.value()
             if self.yes_rt_plot_radio.isChecked():
                 s.plot_mode = 'realtime'
@@ -97,10 +116,29 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
                 s.plot_mode = 'no'
             s.error_path = False
 
-        except BaseException:
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected channels does not match the data structure.")
+            elif "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and data path are properly defined.")
+            
             error_w.exec()
-            s.error_path = True
+            
+            # Use locals() check in case 's' failed to instantiate
+            if 's' in locals():
+                s.error_path = True
+            return # Exit function to prevent execution
 
         if not s.error_path:
             # Calling send data method
@@ -131,15 +169,15 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
         elif raw_data.ndim == 2:
             if raw_data.shape[1] != n_channels:
                 raise ValueError(
-                    f"File has {raw_data.shape[1]} columns but "
-                    f"{n_channels} channels were selected."
+                    f"[PYDAQ] Dimension mismatch: Number of selected channels incorrect. "
+                    f"File has {raw_data.shape[1]} columns, but {n_channels} channels were selected."
                 )
 
             raw_data = np.where(raw_data > 2.5, 5, 0)
             data_matrix = raw_data
 
         else:
-            raise ValueError("Unsupported file format.")
+            raise ValueError("[PYDAQ] Missing configuration: Unsupported file format.")
 
         return data_matrix.tolist()
 
