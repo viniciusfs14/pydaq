@@ -3,11 +3,8 @@
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data
 Acquisition) device
 
-**NOTE 2**: To acquire/send data with arduino, the code provided here (located
-at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code))
-should be firstly uploaded in Arduino. Default output port is 13 and analog input is A0 and
-these ports can be changed in the above-mentioned code.
-This code only works with digital output, since this is a limitation of Arduino Boards.
+**NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
+at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
 
 **NOTE 3**: Since are used digital output ports, the output will be
 0V for step minimum and 5V for step maximum.
@@ -50,9 +47,13 @@ from pydaq.step_response import StepResponse
 sample_period_in_seconds = 1
 session_duration_in_seconds = 10.0
 step_time_in_seconds = 3.0
-com_port_arduino = 'COM3'
-will_plot = "no" # Can be realtime, end or no
+com_port_arduino = 'COM7'
+ai_channels_used = ['A0', 'A1']
+ao_channels_used = ['D0', 'D1']
+will_plot = "end" # Can be realtime, end or no
+
 ```
+
 
 Then, instantiate a class with defined parametes and send the data
 
@@ -60,6 +61,8 @@ Then, instantiate a class with defined parametes and send the data
 # Class StepResponse
 s = StepResponse(com=com_port_arduino,
                  ts=sample_period_in_seconds,
+                 ai_channels = ai_channels_used,
+                 ao_channels = ao_channels_used,
                  session_duration=session_duration_in_seconds,
                  step_time=step_time_in_seconds,
                  plot_mode=will_plot

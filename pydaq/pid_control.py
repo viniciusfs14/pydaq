@@ -79,7 +79,6 @@ class PIDControl(Base):
         self.previous_output = {ch: 0.0 for ch in self.channels}
         self.output = {ch: 0.0 for ch in self.channels}
 
-        self.com_ports = [i.description for i in serial.tools.list_ports.comports()] # COM ports
         self._open_serial() # Oppening ports
         self.arduino_ai_bits = 10 # Arduino ADC resolution (in bits)
         self.ard_ao_max, self.ard_ao_min = 5, 0 # Arduino analog input max and min

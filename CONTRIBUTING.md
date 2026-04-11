@@ -49,13 +49,14 @@ All the core source code is contained within the `pydaq/` directory.
 
 Below is a summary of the key files and their roles within the `pydaq/` folder:
 
-| File | Description |
-|------|--------------|
-| `pydaq/get_data.py` | Implements the data acquisition logic and filters. |
-| `pydaq/send_data.py` | Implements the data sending logic. |
+| File                     | Description |
+|------                    |--------------|
+| `pydaq/get_data.py`      | Implements the data acquisition logic and filters. |
+| `pydaq/send_data.py`     | Implements the data sending logic. |
 | `pydaq/step_response.py` | Implements the step response logic. |
 | `pydaq/pid_control.py` and `pid_control_window_dialog.py` | Implement the PID control logic. |
-| `pydaq/get_model.py` | Implements the system model identification logic. |
+| `pydaq/get_model.py`     | Implements the system model identification logic. |
+| `pydaq/lqr_control.py`   | Implements the lqr control logic. |
 
 All files include **inline comments** and **function docstrings** to help you understand their purpose and how to safely modify or extend their behavior.
 

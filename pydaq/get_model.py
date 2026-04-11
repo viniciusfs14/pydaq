@@ -169,9 +169,8 @@ class GetModel(Base):
     def __init__(
         self,
         device="Dev1",
-        ao_channel="ao0",
-        ai_channel="ai0",
-        channel="ai0",
+        ao_channels=None,
+        ai_channels=None,
         terminal="Diff",
         com="COM1",
         ts=0.5,
@@ -195,16 +194,23 @@ class GetModel(Base):
 
         super().__init__()
         self.device = device
-        self.ai_channel = ai_channel
-        self.ao_channel = ao_channel
+
         self.ao_min = ao_min
         self.ao_max = ao_max
-        # >>> CHANGE: normalize channels as list
-        self.channels = [ai_channel]
-        self.ao_channels = [ao_channel]
 
         self.input_channels = None
         self.output_channels = None
+
+        if ai_channels is None:
+            self.channels = ['A0'] if device == 'Arduino' else ['ai0']
+        else:
+            self.channels = ai_channels
+
+        if ao_channels is None:
+            self.ao_channels = ['D0'] if device == 'Arduino' else ['ao0'] 
+        else:
+            self.ao_channels = ao_channels
+            
         self.session_duration = session_duration
         self.ts = ts
         self.var_tb = var_tb
@@ -273,7 +279,6 @@ class GetModel(Base):
         self.plot_ready_event.wait()
 
         channels = self.channels
-        n_channels = len(channels)
         st_worker = None
 
         try:
@@ -704,12 +709,6 @@ class GetModel(Base):
         # --- NIDAQ SAFETY LOCK ---
         if not self._check_nidaq_availability():
             return
-        
-        if self.input_channels:
-            self.channels = self.input_channels
-
-        if self.output_channels:
-            self.ao_channels = self.output_channels
 
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1

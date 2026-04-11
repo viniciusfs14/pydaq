@@ -58,39 +58,66 @@ A disturbance input can also be simulated during real-time control. It acts as a
 
 # Control PID with NIDAQ (GUI via code)
 
-It is possible to access the PID Control GUI for NIDAQ devices directly with a few lines of code.
-
+It is possible to access the PID Control GUI directly with a few lines of code. This allows you to hardcode your hardware and controller settings for faster testing and deployment, bypassing the initial setup screens.
 
 ## Example
 
-The following code demonstrates how to set up and launch the control interface for an NI-DAQ device, specifying the device name and the analog input and output channels.
+The following code demonstrates how to set up and launch the control interface for an NI-DAQ device, set the analog/digital channels, and launch the control interface with predefined PID parameters.
 
 ```python
-import sys, os, serial.tools.list_ports
+import sys
 from PySide6.QtWidgets import QApplication
-from pydaq.pydaq.guis.pid_control_window_dialog import PID_Control_Window_Dialog
+from pydaq.guis.pid_control_window_dialog import PID_Control_Window_Dialog
 
 app = QApplication(sys.argv)
 plot_window = PID_Control_Window_Dialog()
 
-# Selection NIDAQ board
-plot_window.check_board(board="nidaq", device="Dev1", ao="ao0", ai="ai0", terminal="RSE", simulate=False)
+# 1. Hardware Configuration
+plot_window.check_board(
+    board="nidaq", 
+    hardware_id="Dev1", 
+    ao=['ao0'], 
+    ai=['ai0'], 
+    terminal="RSE", 
+    simulate=False
+)
 
-# Define PID parameters
-kp, ki, kd, setpoint, period = 1.0, 0.2, 0.05, 2.0, 0.1
-index, path, save = 3, None, True  
-# index = 0 -> P, 1 -> PI, 2 -> PD, 3 -> PID.
+# 2. Controller & Logging Parameters
+plot_window.set_parameters(
+    kp=1.0, ki=0.2, kd=0.05, index=3, 
+    numerator=None, denominator=None, 
+    setpoint=2.0, unit="Voltage (V)", 
+    equationvu="", equationuv="", 
+    period=0.1, path=None, save=True
+)
 
-# when path = None, by defaut saves to C:\Users\Desktop
-
-plot_window.set_parameters(kp, ki, kd, index, " ", " ", setpoint, "Voltage (V)", "", "", period, path, save)
-
-# Open GUI
+# 3. Launch the Application
 plot_window.exec()
 ```
 
-- check_board: Selects and configures the NI-DAQ device. You must specify the device name (device), the analog output channel (ao), the analog input channel (ai), and the terminal configuration (terminal).
+### Understanding the Methods
 
-- set_parameters: Sets the controller gains, setpoint, sampling period, and the path to save the data.
+#### `check_board()`
+This method injects the hardware configuration into the PyDAQ window.
+* **`board`**: Type of board (`'nidaq'` or `'arduino'`).
+* **`hardware_id`**: The name of the NI-DAQ device configured in NI MAX (e.g., `'Dev1'`, `'Dev2'`).
+* **`ai` / `ao`**: Lists defining the Analog Input channels (Sensors) and Analog Output channels (Actuators). For NI-DAQ, these are usually formatted like `['ai0', 'ai1']` and `['ao0', 'ao1']`. *Note: The number of AI and AO channels must match.*
+* **`terminal`**: The terminal configuration for the NI-DAQ inputs (e.g., `'RSE'`, `'Diff'`, or `'NRSE'`).
+* **`simulate`**: Set to `True` to run a mathematical simulation without hardware.
 
-- exec(): Opens the real-time control interface.
+#### `set_parameters()`
+This method sets the initial tuning for your controller and defines how data is saved. Pass `None` or `""` to fields you don't need to override.
+* **`kp`, `ki`, `kd`**: Proportional, Integral, and Derivative gains.
+* **`index`**: Controller Type (`0` = P, `1` = PI, `2` = PD, `3` = PID).
+* **`setpoint`**: The target value the controller will try to reach.
+* **`period`**: Sample period in seconds (e.g., `0.1` equals a 10Hz sampling rate).
+* **`unit`**: The Y-axis label for the plot.
+* **`path` / `save`**: Destination folder for `.dat` files. If `path` is `None`, it defaults to the user's Desktop. Set `save=True` to automatically save data when the window is closed.
+
+#### `exec()`
+Opens the control interface and starts the Qt event loop. This blocks the script until the window is closed by the user.
+
+### Summary of Execution
+* **`check_board`**: Selects NI-DAQ as the control device and configures the device name, channels, and terminal settings.
+* **`set_parameters`**: Sets gains, setpoint, sampling period, and save path.
+* **`exec()`**: Opens the real-time control interface.

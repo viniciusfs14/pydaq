@@ -44,8 +44,8 @@ class StepResponse(Base):
     def __init__(
         self,
         device="Dev1",
-        ao_channel="ao0",
-        ai_channel="ai0",
+        ao_channels=None,
+        ai_channels=None,
         ts=0.5,
         session_duration=10.0,
         step_time=3.0,
@@ -63,8 +63,6 @@ class StepResponse(Base):
         self.plot_mode = plot_mode
         self.step_time = step_time
         self.device = device
-        self.ai_channel = ai_channel
-        self.ao_channel = ao_channel
         self.step_min = step_min
         self.step_max = step_max
         self.save = save
@@ -102,8 +100,16 @@ class StepResponse(Base):
         self.plot_closed_by_user = False
         self.plot_ready_event = threading.Event()
 
-        self.channels = [ai_channel]        # default single channel
-        self.ao_channels = [ao_channel]     # default single channel
+        # --- Lógica de Inicialização Segura (MIMO) ---
+        if ai_channels is None:
+            self.channels = ['A0'] if device == 'Arduino' else ['ai0']
+        else:
+            self.channels = ai_channels
+
+        if ao_channels is None:
+            self.ao_channels = ['D9'] if device == 'Arduino' else ['ao0']
+        else:
+            self.ao_channels = ao_channels
 
     # Handler for plot window closure
     def _on_plot_close(self, event):

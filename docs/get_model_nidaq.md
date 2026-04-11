@@ -54,16 +54,15 @@ from pydaq.get_model import GetModel
 
 # Defining parameters
 device_name = "Dev1"
-ao_channel = "ao0"
-ai_channel = "ai0"
-channel = "ai0"
+ao_channels = ['ao0']
+ai_channels = ['ai0']
 terminal = "Diff"
 ao_min = 0
 ao_max = 5
-session_duration_in_s = 10
+session_duration_in_s = 100
 sample_period_in_s = 0.5
 save_data = True
-plot_data = "realtime"
+plot_data = "realtime" # Can be realtime, end or no
 
 # system identification parameters
 degree = 2
@@ -83,11 +82,10 @@ var_tb = 1
 # Class GetModel
 g = GetModel(
     device=device_name,
-    ai_channel=ai_channel,
-    ao_channel=ao_channel,
+    ai_channels=ai_channels,
+    ao_channels=ao_channels,
     ao_min=ao_min,
     ao_max=ao_max,
-    channel=channel,
     terminal=terminal,
     session_duration= session_duration_in_s,
     ts= sample_period_in_s,

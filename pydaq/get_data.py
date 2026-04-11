@@ -34,7 +34,7 @@ class GetData(Base):
     def __init__(
             self,
             device="Dev1",
-            channel="ai0",
+            channels=None,
             terminal="Diff",
             com="COM1",
             ts=0.5,
@@ -44,12 +44,14 @@ class GetData(Base):
     ):
         super().__init__()
         self.device = device
-        self.channel = channel
         self.ts = ts
         self.session_duration = session_duration
         self.save = save
         self.plot_mode = plot_mode
-        self.channels = []
+        if channels is None:
+            self.channels = ['A0'] if device == 'Arduino' else ['ai0']
+        else:
+            self.channels = channels
 
         # Terminal configuration
         self.terminal = self.term_map[terminal]
@@ -207,7 +209,7 @@ class GetData(Base):
         acquisition_thread.start()
 
         if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Data Acquisition. {self.device}, {self.channel}"
+            self.title = f"PYDAQ - Data Acquisition. {self.device}, {self.channels}"
             self._start_updatable_plot(title_str=self.title) 
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
             time.sleep(0.5)

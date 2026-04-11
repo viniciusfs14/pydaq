@@ -40,15 +40,15 @@ from pydaq.step_response import StepResponse
 
 # Defining parameters
 device_name = "Dev1"
-ao_channel_used = "ao0"
-ai_channel_used = "ai0"
+ao_channel_used = ['ao0']
+ai_channel_used = ['ai0']
 sample_period_in_seconds = 1
 session_duration_in_seconds = 10.0
 step_time_in_seconds = 3.0
 step_min_in_volts = 0
 step_max_in_volts = 5
 terminal_configuration = 'Diff'
-will_plot = "no" # Can be realtime, end or no
+will_plot = "realtime" # Can be realtime, end or no
 ```
 
 Then, instantiate a class with defined parametes and send the data
@@ -56,8 +56,8 @@ Then, instantiate a class with defined parametes and send the data
 ```python
 # Class StepResponse
 s = StepResponse(device=device_name,
-                 ao_channel=ao_channel_used,
-                 ai_channel=ai_channel_used,
+                 ao_channels=ao_channel_used,
+                 ai_channels=ai_channel_used,
                  ts=sample_period_in_seconds,
                  session_duration=session_duration_in_seconds,
                  step_time=step_time_in_seconds,

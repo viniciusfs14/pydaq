@@ -160,12 +160,12 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             g.path = self.path_line_edit.text()
 
             # 2. Config Validation: Channels & Dimensions
-            g.input_channels = self.get_selected_ai()
-            g.output_channels = self.get_selected_ao()
+            g.channels = self.get_selected_ai()
+            g.ao_channels = self.get_selected_ao()
             
-            if len(g.input_channels) != len(g.output_channels):
+            if len(g.channels) != len(g.ao_channels):
                 raise ValueError(
-                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(g.input_channels)}) does not match the number of selected AO channels ({len(g.output_channels)})."
+                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(g.channels)}) does not match the number of selected AO channels ({len(g.ao_channels)})."
                 )
             
             # 3. Config Validation: COM Port

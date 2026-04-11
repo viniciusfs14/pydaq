@@ -6,12 +6,14 @@
 
 ## Introduction
 
-**PYDAQ (Python Data Acquisition and Experimental Analysis)** is a framework designed to support **experimental data acquisition, real-time analysis, system identification, and control** using Python. It provides an integrated environment for working with **Arduino** and **National Instruments NIDAQ** boards, supporting both **graphical** and **command-line** workflows.
+**PYDAQ (Python Data Acquisition and Experimental Analysis)** is a framework designed to support **experimental data acquisition, real-time analysis, system identification and control** using Python. It provides an integrated environment for working with **Arduino** and **National Instruments NIDAQ** boards, supporting both **graphical** and **command-line** workflows.
 
 Initially focused on basic data acquisition and signal generation for experiments such as step-response tests, PYDAQ has evolved into a broader experimental platform. Its development milestones are:
 
 * **Version v0.0.5** introduced **real-time system identification**, enabling the estimation of linear and nonlinear black-box models directly from experimental data.
 * **Version v0.0.6** expanded PYDAQ with **real-time digital filtering (FIR and IIR)** and **classical control techniques**, including **PID control with Ziegler–Nichols tuning**, supporting both simulation and live experiments.
+* **Version v0.0.6.1** ensuring full compatibility with the latest Python environments, including versions **3.12, 3.13, and 3.14**.
+* **Version v0.0.7** introduced **Multiple-Input Multiple-Output (MIMO)** support and advanced modern control strategies, featuring the implementation of a **Linear Quadratic Regulator (LQR)** for state-space control and simulation.
 
 PYDAQ can be used through a **Graphical User Interface (GUI)** for rapid experimentation or via a **command-line interface** for scripting, automation, and advanced workflows. These features make the framework suitable for research, teaching laboratories, and rapid prototyping involving empirical data.
 
@@ -33,11 +35,11 @@ PYDAQ requires:
 * `numpy (>=1.22.3)` for numerical processing
 * `PySide6 (>=6.7.1)`, `PySide6_Addons`, `PySide6_Essentials`, and `shiboken6` for the graphical user interface
 * `pyserial (>=3.5)` for communication with Arduino boards
-* `sysidentpy (==0.3.4)` and `bitarray (>=3.0.0)` for system identification and signal generation
+* `sysidentpy (>=0.4.1)` and `bitarray (>=3.0.0)` for system identification and signal generation
 * `packaging (>=24.1)`
 * `scipy (>=1.16.1)` for digital filters and PID control
 
-**Note:** In version **v0.0.6**, NI-DAQmx drivers must be installed even if only Arduino boards are used. This limitation will be addressed in future releases.
+**Note:** In this version of pydaq (0.0.7), the [(NI-DAQmx drivers)](https://www.ni.com/en/support/downloads/drivers/download.ni-daq-mx.html#494676) drivers must be installed if you are using NI-DAQmx boards; they are not required if the user is only using Arduino boards.
 
 ---
 
@@ -99,6 +101,15 @@ This section provides a benchmarking tool to estimate the **maximum reliable sam
 
 Instructions on **how to run and interpret the benchmark** are available at:
 [Benchmarking tool documentation](https://pydaq.org/benchmarking/)
+
+### Arduino Firmware (Unified CSV Protocol)
+
+Starting from **v0.0.7**, PYDAQ utilizes a unified Arduino firmware that handles all core functionalities—multi-channel data acquisition, signal generation, system identification, and control—through a standardized CSV serial protocol. 
+
+This eliminates the need to send different `.ino` files for each experiment when selecting different channels. The firmware automatically maps analog inputs (A0 to A5) and digital outputs (D0 to D13) based on the Python script or GUI commands.
+
+Instructions on **how to upload and configure the unified firmware** are available at:
+* [Arduino Firmware](https://pydaq.org/arduino_firmware/)
 
 ---
 
