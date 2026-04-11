@@ -4,6 +4,8 @@
 
 **NOTE 2**: LQR (Linear Quadratic Regulator) control requires defining the state-space matrices ($A$, $B$, $C$, $D$) of your system, as well as the weight matrices ($Q$ and $R$) to calculate the optimal gain matrix $K$. Analog output ranges should be configured according to your system hardware limits.
 
+**NOTE 3**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form ($A_d$, $B_d$, $C_d$, $D_d$). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
+
 ## LQR Control using Graphical User Interface (GUI)
 
 Using the GUI for LQR control is really straightforward and requires only two LOC (lines of code):

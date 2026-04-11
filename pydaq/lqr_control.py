@@ -70,6 +70,11 @@ class LQRControl(Base):
         self.R = None
         self.K = None # LQR Gain
 
+        # --- NEW: Reference Tracking parameters ---
+        self.use_reference = False
+        self.x_ref = None
+        self.u_eq = None
+
         self.time_var = {}
         self.input_data = {}
         self.output_data = {}
@@ -157,6 +162,14 @@ class LQRControl(Base):
             st_worker = time.perf_counter()
             self.st_worker = st_worker
 
+            # --- NEW: Prepare Reference Vectors before the fast loop ---
+            if self.use_reference and self.x_ref is not None and self.u_eq is not None:
+                x_ref_vec = np.array(self.x_ref).reshape(n_ai, 1)
+                u_eq_vec = np.array(self.u_eq).reshape(n_ao, 1)
+            else:
+                x_ref_vec = np.zeros((n_ai, 1))
+                u_eq_vec = np.zeros((n_ao, 1))
+
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
@@ -182,7 +195,7 @@ class LQRControl(Base):
                     x = np.array(x_list).reshape(-1, 1) # Create state vector
 
                     # --- LQR Control Law: u = -Kx ---
-                    u = -self.K @ x
+                    u = -self.K @ (x - x_ref_vec) + u_eq_vec
 
                     # Saturation & Universal Write
                     u_to_plot = []
@@ -385,6 +398,14 @@ class LQRControl(Base):
             n_ai = len(self.channels)
             n_ao = len(self.ao_channels)
 
+            # --- NEW: Prepare Reference Vectors before the fast loop ---
+            if self.use_reference and self.x_ref is not None and self.u_eq is not None:
+                x_ref_vec = np.array(self.x_ref).reshape(n_ai, 1)
+                u_eq_vec = np.array(self.u_eq).reshape(n_ao, 1)
+            else:
+                x_ref_vec = np.zeros((n_ai, 1))
+                u_eq_vec = np.zeros((n_ao, 1))
+                
             st_worker = time.perf_counter()
             for k in range(self.cycles):
                 if not self.acquisition_running:
@@ -395,7 +416,7 @@ class LQRControl(Base):
                 y_list = y_raw if n_ai > 1 else [y_raw]
                 x = np.array(y_list).reshape(-1, 1)
 
-                u = -self.K @ x
+                u = -self.K @ (x - x_ref_vec) + u_eq_vec
                 
                 u_out = [np.clip(float(u[i]), 0, 5) for i in range(n_ao)]
                 task_ao.write(u_out if n_ao > 1 else u_out[0])
@@ -603,12 +624,20 @@ class LQRControl(Base):
             n_outputs = C_mat.shape[0]
             D_mat = np.zeros((n_outputs, n_inputs))
 
+        # --- NEW: Prepare Reference Vectors for simulation ---
+        if self.use_reference and self.x_ref is not None and self.u_eq is not None:
+            x_ref_vec = np.array(self.x_ref).reshape(n_states, 1)
+            u_eq_vec = np.array(self.u_eq).reshape(n_inputs, 1)
+        else:
+            x_ref_vec = np.zeros((n_states, 1))
+            u_eq_vec = np.zeros((n_inputs, 1))
+
         # Define initial condition (e.g., all states start at 1.0)
-        x = np.ones((n_states, 1))
+        x = np.zeros((n_states, 1))
 
         # Calculate number of iterations based on session duration and sample time
         steps = int(np.floor(self.session_duration / self.ts)) + 1
-        
+
         history_y = []
         history_u = []
         time_arr = []
@@ -616,7 +645,7 @@ class LQRControl(Base):
         print("\n[PYDAQ] Running LQR Control ...")
         for k in range(steps):
             # Control law
-            u = -self.K @ x
+            u = -self.K @ (x - x_ref_vec) + u_eq_vec
 
             if self.output_mode == "arduino_pwm":
                 u = np.clip(u, 0, 5)

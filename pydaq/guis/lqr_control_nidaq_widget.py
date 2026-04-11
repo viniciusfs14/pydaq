@@ -9,6 +9,7 @@ from pydaq.utils.signals import GuiSignals
 from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 
 from ..uis.ui_PyDAQ_lqr_control_NIDAQ_widget import Ui_NIDAQ_LQR_Control
+from ..guis.lqr_reference_widget import Select_LQR_Reference_Widget
 from .error_window_gui import Error_window
 from ..guis.lqr_matrices_widget import Select_LQR_Matrices_Widget
 from ..lqr_control import LQRControl
@@ -75,6 +76,14 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
         self.Q = None
         self.R = None
 
+        # --- NEW: Tracking LQR references ---
+        self.X_ref = None
+        self.U_eq = None
+        self.n_states = 2 # Default fallback
+        self.n_inputs = 2 # Default fallback
+
+        self.reference_radio_group.buttonToggled.connect(self.on_reference_change)
+
     def _update_warning_label(self):
         if self.yes_rt_plot_radio.isChecked():
             self.label_warning.show()
@@ -110,6 +119,16 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             # Common LQR parameters for both Simulation and Hardware
             l.A, l.B, l.C, l.D = self.A, self.B, self.C, self.D
             l.Q, l.R = self.Q, self.R
+
+            # --- NEW: Pass Reference Tracking variables ---
+            if self.yes_reference_radio.isChecked():
+                if self.X_ref is None or self.U_eq is None:
+                    raise ValueError("[PYDAQ] Missing configuration: Reference Tracking is enabled but X_ref or U_eq are empty.")
+                l.use_reference = True
+                l.x_ref = self.X_ref
+                l.u_eq = self.U_eq
+            else:
+                l.use_reference = False
 
             l.ts = self.Ts_in.value()
             l.session_duration = self.sesh_dur_in.value()
@@ -428,3 +447,56 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             self.widget_ao_channel.hide()
             self.label_terminal.hide()
             self.widget_terminal.hide()
+    
+    def on_reference_change(self):
+        """
+        Triggered when the user toggles the Reference Tracking Radio Group.
+        """
+        # If 'Yes' is selected
+        if self.yes_reference_radio.isChecked():
+            # Safety check: ensure A and B are defined so we know the dimensions
+            if self.A is None or self.B is None:
+                self.no_reference_radio.setChecked(True) # Revert to No
+                error_w = Error_window()
+                error_w.ui.confirm.setText("Please define the LQR Matrices (A, B) first before setting references.")
+                error_w.exec()
+                return
+            
+            self.openReferenceWindow()
+        else:
+            pass
+
+    def openReferenceWindow(self):
+        """
+        Opens the widget to input X_ref and U_eq matrices.
+        Passes the current n_states and n_inputs to lock the table dimensions.
+        """
+        self.RefWindow = Select_LQR_Reference_Widget(n_states=self.n_states, n_inputs=self.n_inputs)
+        
+        # Lógica de persistência idêntica ao widget de Matrizes
+        if self.X_ref is not None and self.U_eq is not None:
+            
+            # Create a dictionary with current data to update the table defaults
+            current_data = {
+                'X': self.X_ref,
+                'U': self.U_eq
+            }
+            
+            # Update the defaults in the matrix widget before showing it
+            for key, value in current_data.items():
+                if value is not None:
+                    self.RefWindow.default_matrices[key] = value
+                    
+            # Refresh tables with "cached" values
+            self.RefWindow.update_sizes() 
+
+        self.RefWindow.dataEntered.connect(self.update_reference_values)
+        self.RefWindow.show()
+
+    def update_reference_values(self, data):
+        """
+        Slot to receive data from the Select_LQR_Reference_Widget.
+        """
+        self.X_ref = data["X"]
+        self.U_eq = data["U"]
+        print("\n[PYDAQ] LQR Reference states updated")
