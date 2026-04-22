@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'Error_windowkOGPQy.ui'
+## Form generated from reading UI file 'Error_windowMqhlaw.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -59,6 +59,7 @@ class Ui_error_window_dialog(object):
 "	border: 2px solid rgb(255, 255, 255);\n"
 "}\n"
 "")
+        error_window_dialog.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(error_window_dialog)
         self.gridLayout.setObjectName(u"gridLayout")
         self.confirm = QPushButton(error_window_dialog)

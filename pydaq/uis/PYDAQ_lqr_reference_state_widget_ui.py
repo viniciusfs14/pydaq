@@ -461,6 +461,7 @@ class Ui_Select_LQR_References(object):
 "    background: none;\n"
 "}\n"
 "")
+        Select_LQR_References.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(Select_LQR_References)
         self.gridLayout.setObjectName(u"gridLayout")
         self.scrollArea = QScrollArea(Select_LQR_References)

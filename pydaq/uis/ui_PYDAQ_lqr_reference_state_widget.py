@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PYDAQ_lqr_reference_state_widgeteXrvpm.ui'
+## Form generated from reading UI file 'PYDAQ_lqr_reference_state_widgetRcixgH.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -460,6 +460,7 @@ class Ui_Select_LQR_References(object):
 "    background: none;\n"
 "}\n"
 "")
+        Select_LQR_References.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(Select_LQR_References)
         self.gridLayout.setObjectName(u"gridLayout")
         self.scrollArea = QScrollArea(Select_LQR_References)

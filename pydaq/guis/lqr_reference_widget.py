@@ -15,7 +15,7 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
     def __init__(self, n_states=2, n_inputs=2, *args):
         super(Select_LQR_Reference_Widget, self).__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
+        self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
 
         self.signals = GuiSignals()
 

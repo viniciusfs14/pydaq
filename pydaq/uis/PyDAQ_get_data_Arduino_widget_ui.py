@@ -206,6 +206,7 @@ class Ui_Arduino_GetData_W(object):
 "QPushButton#reload_devices:pressed{\n"
 "	border: 2px solid rgb(255, 255, 255);\n"
 "}")
+        Arduino_GetData_W.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.verticalLayout = QVBoxLayout(Arduino_GetData_W)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.widget = QWidget(Arduino_GetData_W)
@@ -280,6 +281,7 @@ class Ui_Arduino_GetData_W(object):
         self.Ts_in.setObjectName(u"Ts_in")
         self.Ts_in.setMinimumSize(QSize(0, 22))
         self.Ts_in.setMaximumSize(QSize(16777215, 22))
+        self.Ts_in.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.Ts_in.setDecimals(6)
         self.Ts_in.setMaximum(999999999999.000000000000000)
         self.Ts_in.setSingleStep(0.010000000000000)

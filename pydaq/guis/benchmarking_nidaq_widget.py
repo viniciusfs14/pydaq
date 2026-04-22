@@ -16,21 +16,21 @@ except (ImportError, OSError):
 def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
                     periods_ms=[10, 5, 2, 1, 0.5, 0.2, 0.1], duration_s=5):
     """
-    Realiza um benchmarking da performance de aquisição usando uma placa NI-DAQ.
+    Performs a benchmarking of acquisition performance using an NI-DAQ board.
     
     Parameters:
-        device (str): Nome do dispositivo NI (ex: "Dev1").
-        channel (str): Canal analógico de entrada (ex: "ai0").
-        terminal_config (str): Configuração do terminal ("RSE", "Diff", "NRSE").
-        periods_ms (list): Lista de períodos de amostragem a testar, em milissegundos.
-        duration_s (float): Duração de cada teste, em segundos.
+        device (str): Name of the NI device (ex: "Dev1").
+        channel (str): Analog input channel (ex: "ai0").
+        terminal_config (str): Terminal configuration ("RSE", "Diff", "NRSE").
+        periods_ms (list): List of sampling periods to test, in milliseconds.
+        duration_s (float): Duration of each test, in seconds.
     """
 
     if not NIDAQ_AVAILABLE:
         print("❌ NI-DAQmx drivers not found! Cannot run benchmark.")
         warnings.warn("NI-DAQmx drivers not found. Please install NI-MAX.")
         return
-    
+
     print(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
 
     term_map = {

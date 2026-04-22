@@ -60,6 +60,7 @@ class Ui_error_window_dialog(object):
 "	border: 2px solid rgb(255, 255, 255);\n"
 "}\n"
 "")
+        error_window_dialog.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(error_window_dialog)
         self.gridLayout.setObjectName(u"gridLayout")
         self.confirm = QPushButton(error_window_dialog)

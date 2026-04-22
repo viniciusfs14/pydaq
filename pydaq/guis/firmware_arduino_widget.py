@@ -89,6 +89,7 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
         super(FirmwareUploadWidget, self).__init__(*args)
         self.setupUi(self)
         self.setWindowTitle("PyDAQ - Firmware Manager")
+        self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
         
         # Internal state for smooth progress animation
         self.current_display_value = 0

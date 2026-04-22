@@ -25,7 +25,6 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
 
 # Calling the functions
         self.update_com_ports()
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
         self.setWindowTitle("PYDAQ - PID Control Arduino")
         self.reload_devices.clicked.connect(self.update_com_ports)
         self.on_unit_change()

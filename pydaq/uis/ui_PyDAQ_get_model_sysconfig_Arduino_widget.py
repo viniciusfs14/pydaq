@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_get_model_sysconfig_Arduino_widgetXzhGUk.ui'
+## Form generated from reading UI file 'PyDAQ_get_model_sysconfig_Arduino_widgetIgQrnS.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -18,7 +18,6 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QComboBox, QFrame,
     QGridLayout, QHBoxLayout, QLabel, QRadioButton,
     QSizePolicy, QSpinBox, QVBoxLayout, QWidget)
-
 class Ui_Arduino_GetModel_W(object):
     def setupUi(self, Arduino_GetModel_W):
         if not Arduino_GetModel_W.objectName():
@@ -255,6 +254,7 @@ class Ui_Arduino_GetModel_W(object):
 "QPushButton#reload_devices:pressed{\n"
 "	border: 2px solid rgb(255, 255, 255);\n"
 "}")
+        Arduino_GetModel_W.setLocale(QLocale(QLocale.English, QLocale.World))
         self.verticalLayout = QVBoxLayout(Arduino_GetModel_W)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.widget = QWidget(Arduino_GetModel_W)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_Firmware_ArduinobWiMHs.ui'
+## Form generated from reading UI file 'PyDAQ_Firmware_ArduinoREkuNn.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -348,6 +348,7 @@ class Ui_Firmware(object):
 "	border: none;\n"
 "}\n"
 "")
+        Firmware.setLocale(QLocale(QLocale.English, QLocale.World))
         self.gridLayout = QGridLayout(Firmware)
         self.gridLayout.setObjectName(u"gridLayout")
         self.label = QLabel(Firmware)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_pid_control_window_dialogyPnPPZ.ui'
+## Form generated from reading UI file 'PyDAQ_pid_control_window_dialogWqEXfl.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -448,6 +448,7 @@ class Ui_Dialog_Plot_PID_Window(object):
 "}\n"
 "\n"
 "")
+        Dialog_Plot_PID_Window.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.verticalLayout = QVBoxLayout(Dialog_Plot_PID_Window)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.scrollArea = QScrollArea(Dialog_Plot_PID_Window)

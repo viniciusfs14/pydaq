@@ -16,9 +16,8 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
     def __init__(self, simulate=False, *args):
         super(Select_LQR_Matrices_Widget, self).__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
+        self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
         self.simulate_mode = simulate
-        self.update_simulation_mode()
 
         self.signals = GuiSignals()
 
@@ -134,22 +133,3 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
         except Exception:
             error_w = Error_window()
             error_w.exec()
-    
-    def update_simulation_mode(self):
-        """
-        Controls visibility of C and D matrices depending on simulation mode.
-        """
-        if self.simulate_mode:
-            self.Matrix_C.show()
-            self.Matrix_D.show()
-            self.labelC.show()
-            self.labelD.show()
-            self.tableC.show()
-            self.tableD.show()
-        else:
-            self.Matrix_C.hide()
-            self.Matrix_D.hide()
-            self.labelC.hide()
-            self.labelD.hide()
-            self.tableC.hide()
-            self.tableD.hide()

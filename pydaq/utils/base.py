@@ -283,82 +283,85 @@ class Base:
         ax2: Control Effort (u)
         """
         plt.ion()
-        # sharex=True faz com que o zoom no eixo do tempo seja igual para os dois gráficos
-        self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+        # sharex=True guarantees synchronized zooming across all 3 plots
+        self.fig, (self.ax_y, self.ax_x, self.ax_u) = plt.subplots(3, 1, figsize=(9, 9), sharex=True)
         
         self.title = title_str
         self.fig.suptitle(self.title, fontsize=14)
 
-        self.ax1.set_ylabel("Amplitude (Output)")
-        self.ax1.grid(True)
+        self.ax_y.set_ylabel("Outputs (y)")
+        self.ax_y.grid(True)
 
-        self.ax2.set_xlabel("Time (s)")
-        self.ax2.set_ylabel("Amplitude (Input)")
-        self.ax2.grid(True)
+        self.ax_x.set_ylabel("States (x)")
+        self.ax_x.grid(True)
+
+        self.ax_u.set_xlabel("Time (s)")
+        self.ax_u.set_ylabel("Control Effort (u)")
+        self.ax_u.grid(True)
 
         self.fig.tight_layout()
         plt.show(block=False)
 
-    def _update_plot_lqr(self, x_values, y_values, u_values, y_label="System Response", u_label="Control Effort", y_channel_names=None, u_channel_names=None):
+    def _update_plot_lqr(self, time_values, y_values, x_state_values, u_values):
         """
-        Updates the LQR subplots.
-        ax1 plots x_values vs y_values (Output)
-        ax2 plots x_values vs u_values (Input/Control Effort)
+        Updates the LQR 3-axis subplots.
+        ax_y plots time vs y_values (Outputs)
+        ax_x plots time vs x_state_values (States)
+        ax_u plots time vs u_values (Control Effort)
         """
-        if self.fig is None or not hasattr(self, 'ax1') or not hasattr(self, 'ax2'):
+        if self.fig is None or not hasattr(self, 'ax_y'):
             warnings.warn("LQR Plot not initialized. Call _start_updatable_plot_lqr first.")
             return
 
-        # Cleans both axes
-        self.ax1.clear()
-        self.ax2.clear()
+        # Clear all axes
+        self.ax_y.clear()
+        self.ax_x.clear()
+        self.ax_u.clear()
 
-        # Configure it again (because clear() erases the settings).
-        self.ax1.set_ylabel("Amplitude (Output)")
-        self.ax1.grid(True)
-        self.ax2.set_xlabel("Time (s)")
-        self.ax2.set_ylabel("Amplitude (Input)")
-        self.ax2.grid(True)
+        # Re-apply styling (clearing removes grid and labels)
+        self.ax_y.set_ylabel("Outputs (y)")
+        self.ax_y.grid(True)
+        self.ax_x.set_ylabel("States (x)")
+        self.ax_x.grid(True)
+        self.ax_u.set_xlabel("Time (s)")
+        self.ax_u.set_ylabel("Control Effort (u)")
+        self.ax_u.grid(True)
 
-        if isinstance(x_values, dict):
-            keys = list(x_values.keys())
-
-            # Mapping for the legends
-            ch_map_y = {keys[i]: y_channel_names[i] for i in range(min(len(keys), len(y_channel_names)))} if isinstance(y_channel_names, list) else {}
-            ch_map_u = {keys[i]: u_channel_names[i] for i in range(min(len(keys), len(u_channel_names)))} if isinstance(u_channel_names, list) else ch_map_y
-
-            for idx, ch in enumerate(keys):
-                if len(x_values[ch]) == 0:
-                    continue
-
-                disp_y = ch_map_y.get(ch, str(ch))
-                disp_u = ch_map_u.get(ch, str(ch))
-
-                # Ensures that the same color is used in the top and bottom charts for the same channel.
-                color = plt.cm.tab10(idx % 10) 
-
-                # Top Chart: System Response (y)
-                self.ax1.plot(
-                    x_values[ch], y_values[ch],
-                    marker='o', linestyle='-', color=color,
-                    label=f"{y_label} ({disp_y})"
+        # Plot Outputs (y)
+        for i, ch_key in enumerate(y_values.keys()):
+            if len(y_values[ch_key]) > 0:
+                color = plt.cm.tab10(i % 10) 
+                self.ax_y.plot(
+                    time_values, y_values[ch_key],
+                    marker='o', linestyle='-', color=color, markersize=3,
+                    label=f"Output ({ch_key})"
                 )
 
-                # Lower Chart: Control Effort (u)
-                if u_values is not None and ch in u_values and len(u_values[ch]) > 0:
-                    self.ax2.plot(
-                        x_values[ch], u_values[ch],
-                        marker='o', linestyle='-', color=color,
-                        label=f"{u_label} ({disp_u})"
-                    )
+        # Plot States (x)
+        for i, ch_key in enumerate(x_state_values.keys()):
+            if len(x_state_values[ch_key]) > 0:
+                color = plt.cm.tab10(i % 10) 
+                self.ax_x.plot(
+                    time_values, x_state_values[ch_key],
+                    marker='o', linestyle='-', color=color, markersize=3,
+                    label=f"State ({ch_key})"
+                )
 
-        self.ax1.relim()
-        self.ax1.autoscale_view()
-        self.ax1.legend(loc="upper right")
+        # Plot Control Effort (u)
+        for i, ch_key in enumerate(u_values.keys()):
+            if len(u_values[ch_key]) > 0:
+                color = plt.cm.tab10(i % 10) 
+                self.ax_u.plot(
+                    time_values, u_values[ch_key],
+                    marker='o', linestyle='-', color=color, markersize=3,
+                    label=f"Input ({ch_key})"
+                )
 
-        self.ax2.relim()
-        self.ax2.autoscale_view()
-        self.ax2.legend(loc="upper right")
+        # Autoscale and Legend
+        for ax in [self.ax_y, self.ax_x, self.ax_u]:
+            ax.relim()
+            ax.autoscale_view()
+            ax.legend(loc="upper right", fontsize='small')
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()

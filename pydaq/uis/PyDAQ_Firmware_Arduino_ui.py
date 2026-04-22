@@ -348,6 +348,7 @@ class Ui_Firmware(object):
 "	border: none;\n"
 "}\n"
 "")
+        Firmware.setLocale(QLocale(QLocale.English, QLocale.World))
         self.gridLayout = QGridLayout(Firmware)
         self.gridLayout.setObjectName(u"gridLayout")
         self.label = QLabel(Firmware)

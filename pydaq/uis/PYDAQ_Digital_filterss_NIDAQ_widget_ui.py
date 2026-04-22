@@ -312,6 +312,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
 "	background-color: rgb(0, 50, 0);\n"
 "}\n"
 "")
+        Digitalfilters_NIDAQ_widget.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(Digitalfilters_NIDAQ_widget)
         self.gridLayout.setObjectName(u"gridLayout")
         self.line_2 = QFrame(Digitalfilters_NIDAQ_widget)

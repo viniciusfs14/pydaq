@@ -19,7 +19,6 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
     def __init__(self, *args):
         super(LQRControl_NIDAQ_Widget, self).__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
         # Gathering nidaq info
         self._nidaq_info()
 

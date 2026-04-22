@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>908</width>
-    <height>882</height>
+    <width>805</width>
+    <height>585</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Discrete LQR Matrices</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget{
@@ -441,9 +441,15 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
 }
 </string>
   </property>
+  <property name="locale">
+   <locale language="English" country="World"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+   <item row="1" column="0">
     <widget class="QScrollArea" name="scrollArea">
+     <property name="locale">
+      <locale language="English" country="World"/>
+     </property>
      <property name="widgetResizable">
       <bool>true</bool>
      </property>
@@ -452,66 +458,18 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>873</width>
-        <height>882</height>
+        <width>770</width>
+        <height>919</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="7" column="0">
-        <widget class="QWidget" name="Matrix_R" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <widget class="QLabel" name="labelR">
-            <property name="text">
-             <string>Matrix R</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QTableWidget" name="tableR"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QWidget" name="Matrix_B" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QLabel" name="labelB">
-            <property name="text">
-             <string>Matrix B</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QTableWidget" name="tableB"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QWidget" name="Matrix_C" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout_5">
-          <item>
-           <widget class="QLabel" name="labelC">
-            <property name="text">
-             <string>Matrix C</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QTableWidget" name="tableC"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
        <item row="6" column="0">
         <widget class="QWidget" name="Matrix_Q" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <widget class="QLabel" name="labelQ">
             <property name="text">
-             <string>Matrix Q</string>
+             <string>Matrix Q (State Cost)</string>
             </property>
            </widget>
           </item>
@@ -521,20 +479,36 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
          </layout>
         </widget>
        </item>
-       <item row="8" column="0">
-        <widget class="Line" name="line_bottom">
+       <item row="5" column="0">
+        <widget class="QWidget" name="Matrix_B" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="labelB">
+            <property name="text">
+             <string>Matrix B_d (Input Matrix)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableWidget" name="tableB"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="Line" name="line_header">
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="4" column="0">
         <widget class="QWidget" name="Matrix_A" native="true">
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
            <widget class="QLabel" name="labelA">
             <property name="text">
-             <string>Matrix A</string>
+             <string>Matrix A_d (State Matrix)</string>
             </property>
            </widget>
           </item>
@@ -545,37 +519,86 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
         </widget>
        </item>
        <item row="9" column="0">
-        <widget class="QWidget" name="bottom" native="true">
-         <layout class="QGridLayout" name="gridLayout_6">
-          <item row="1" column="0">
-           <widget class="QPushButton" name="select_button">
-            <property name="minimumSize">
-             <size>
-              <width>200</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>200</width>
-              <height>16777215</height>
-             </size>
-            </property>
+        <widget class="QLabel" name="label_3">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Used only to compute output: y[k] = C_d x[k] + D_d u[k]&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Output Model (for visualization only)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QWidget" name="Matrix_R" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QLabel" name="labelR">
             <property name="text">
-             <string>SELECT LQR MATRICES</string>
+             <string>Matrix R (Input Cost)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableWidget" name="tableR"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>LQR Design (Discrete)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QWidget" name="header" native="true">
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_states">
+            <property name="text">
+             <string>States (n):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="spin_states">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QSpinBox" name="spin_inputs">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_input">
+            <property name="text">
+             <string>Inputs (m):</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="5" column="0">
+       <item row="14" column="0">
+        <widget class="Line" name="line_bottom">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
         <widget class="QWidget" name="Matrix_D" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
            <widget class="QLabel" name="labelD">
             <property name="text">
-             <string>Matrix D</string>
+             <string>Matrix D_d (Feedthrough Matrix)</string>
             </property>
            </widget>
           </item>
@@ -586,41 +609,30 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QWidget" name="header" native="true">
-         <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_states">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>All matrices must be in discrete-time form: x[k+1] = A_d x[k] + B_d u[k]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QWidget" name="Matrix_C" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QLabel" name="labelC">
             <property name="text">
-             <string>States (n):</string>
+             <string>Matrix C_d (Output Matrix)</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QSpinBox" name="spin_states">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_input">
-            <property name="text">
-             <string>Inputs (m):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QSpinBox" name="spin_inputs">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-           </widget>
+          <item>
+           <widget class="QTableWidget" name="tableC"/>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="Line" name="line_header">
+       <item row="8" column="0">
+        <widget class="Line" name="line">
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
          </property>
@@ -628,6 +640,31 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
        </item>
       </layout>
      </widget>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QWidget" name="bottom" native="true">
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="1" column="0">
+       <widget class="QPushButton" name="select_button">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>SELECT LQR MATRICES</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>

@@ -191,6 +191,9 @@ QPushButton#reload_devices:pressed{
 	border: 2px solid rgb(255, 255, 255);
 }</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QWidget" name="widget" native="true">
@@ -307,6 +310,9 @@ QPushButton#reload_devices:pressed{
              <width>16777215</width>
              <height>22</height>
             </size>
+           </property>
+           <property name="locale">
+            <locale language="English" country="UnitedStates"/>
            </property>
            <property name="decimals">
             <number>6</number>
@@ -661,7 +667,7 @@ QPushButton#reload_devices:pressed{
  <connections/>
  <buttongroups>
   <buttongroup name="plot_radio_group"/>
-  <buttongroup name="save_radio_group"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="save_radio_group"/>
  </buttongroups>
 </ui>

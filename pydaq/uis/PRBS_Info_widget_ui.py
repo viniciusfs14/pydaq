@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PRBS_Info_widgetjsJlmk.ui'
+## Form generated from reading UI file 'PRBS_Info_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -17,6 +17,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QGridLayout, QLabel,
     QLineEdit, QSizePolicy, QSpinBox, QWidget)
+import resources_1_rc
 
 class Ui_PRBS_Info(object):
     def setupUi(self, PRBS_Info):

@@ -449,6 +449,7 @@ class Ui_Dialog_Plot_PID_Window(object):
 "}\n"
 "\n"
 "")
+        Dialog_Plot_PID_Window.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.verticalLayout = QVBoxLayout(Dialog_Plot_PID_Window)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.scrollArea = QScrollArea(Dialog_Plot_PID_Window)

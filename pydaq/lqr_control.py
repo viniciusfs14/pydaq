@@ -139,6 +139,12 @@ class LQRControl(Base):
 
         n_ai = len(self.channels)
         n_ao = len(self.ao_channels)
+
+        # --- NEW: Define C and D matrices with fallbacks ---
+        C_mat = np.array(self.C) if self.C is not None else np.eye(n_ai)
+        D_mat = np.array(self.D) if self.D is not None else np.zeros((C_mat.shape[0], n_ao))
+        n_outputs = C_mat.shape[0]
+
         st_worker = None
         try:
             self._open_serial()
@@ -197,6 +203,9 @@ class LQRControl(Base):
                     # --- LQR Control Law: u = -Kx ---
                     u = -self.K @ (x - x_ref_vec) + u_eq_vec
 
+                    # --- NEW: Output equation y = Cx + Du ---
+                    y = C_mat @ x + D_mat @ u
+
                     # Saturation & Universal Write
                     u_to_plot = []
                     msg_parts = []
@@ -213,10 +222,11 @@ class LQRControl(Base):
                     msg = ",".join(msg_parts) + "\n"
                     self.ser.write(msg.encode())
 
-                    for i, ch in enumerate(self.channels):
-                        # Nota: associamos u[0] ao primeiro canal por padrão
-                        u_ref = u_to_plot[0] if len(u_to_plot) > 0 else 0
-                        data_queue.put((time_now, ch, u_ref, x[i][0]))
+                    # --- NEW: Package data dynamically mapping channel names ---
+                    x_dict = {ch: x[i][0] for i, ch in enumerate(self.channels)}
+                    u_dict = {ch: u_to_plot[i] for i, ch in enumerate(self.ao_channels)}
+                    y_dict = {f"y{i+1}": y[i][0] for i in range(n_outputs)}
+                    data_queue.put((time_now, x_dict, u_dict, y_dict))
 
                 except (ValueError, UnicodeDecodeError):
                     warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
@@ -252,7 +262,7 @@ class LQRControl(Base):
                 else:
                     print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")  
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")
 
 
     
@@ -274,9 +284,12 @@ class LQRControl(Base):
         self._calculate_lqr_gain()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
-        self.time_var = {ch: [] for ch in self.channels}
-        self.input_h = {ch: [] for ch in self.channels}
-        self.output_h = {ch: [] for ch in self.channels}
+        # --- NEW: Unified time list and state/input/output dictionaries ---
+        n_outputs = np.array(self.C).shape[0] if self.C is not None else len(self.channels)
+        self.time_var = []
+        self.state_h = {ch: [] for ch in self.channels}
+        self.input_h = {ch: [] for ch in self.ao_channels}
+        self.output_h = {f"y{i+1}": [] for i in range(n_outputs)}
 
         data_queue = queue.Queue()
         self.acquisition_running = True
@@ -319,29 +332,28 @@ class LQRControl(Base):
                     while not data_queue.empty():
                         remaining_item = data_queue.get_nowait()
                         if remaining_item is not None:
-                            t, ch, u, y = remaining_item
-                            self.time_var[ch].append(t)
-                            self.input_h[ch].append(u)
-                            self.output_h[ch].append(y)
+                            t, x_dict, u_dict, y_dict = remaining_item
+                            self.time_var.append(t)
+                            for ch_key, val in x_dict.items(): self.state_h[ch_key].append(val)
+                            for ch_key, val in u_dict.items(): self.input_h[ch_key].append(val)
+                            for ch_key, val in y_dict.items(): self.output_h[ch_key].append(val)
                     break
 
-                t, ch, u, y = item
-                self.time_var[ch].append(t)
-                self.input_h[ch].append(u)
-                self.output_h[ch].append(y)
+                t, x_dict, u_dict, y_dict = item
+                self.time_var.append(t)
+                for ch_key, val in x_dict.items(): self.state_h[ch_key].append(val)
+                for ch_key, val in u_dict.items(): self.input_h[ch_key].append(val)
+                for ch_key, val in y_dict.items(): self.output_h[ch_key].append(val)
 
                 # Throttle plot updates for performance
                 now = time.perf_counter()
 
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
                     self._update_plot_lqr(
-                        x_values=self.time_var,
+                        time_values=self.time_var,
                         y_values=self.output_h,
-                        u_values=self.input_h,
-                        y_label="System Response / AI",
-                        u_label="Control Effort / AO",
-                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
-                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
+                        x_state_values=self.state_h,
+                        u_values=self.input_h
                     )
                     last_plot_update_time = now
 
@@ -357,20 +369,18 @@ class LQRControl(Base):
             self.title = f"PYDAQ - Final Step Response: Arduino, Port: {self.com_port}"
             self._start_updatable_plot_lqr(title_str=self.title)
             self._update_plot_lqr(
-                        x_values=self.time_var,
-                        y_values=self.output_h,
-                        u_values=self.input_h,
-                        y_label="System Response / AI",
-                        u_label="Control Effort / AO",
-                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
-                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
-                    )
+                time_values=self.time_var,
+                y_values=self.output_h,
+                x_state_values=self.state_h,
+                u_values=self.input_h
+            )
             plt.show(block=True)
 
         if self.save:
             print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat")
-            self._save_data(self.input_h, "input.dat")
+            self._save_data(self.state_h, "states.dat")
+            self._save_data(self.input_h, "control.dat")
             self._save_data(self.output_h, "output.dat")
             print("\n[PYDAQ] Data saved ...")
 
@@ -398,6 +408,11 @@ class LQRControl(Base):
             n_ai = len(self.channels)
             n_ao = len(self.ao_channels)
 
+            # --- NEW: Define C and D matrices with fallbacks ---
+            C_mat = np.array(self.C) if self.C is not None else np.eye(n_ai)
+            D_mat = np.array(self.D) if self.D is not None else np.zeros((C_mat.shape[0], n_ao))
+            n_outputs = C_mat.shape[0]
+
             # --- NEW: Prepare Reference Vectors before the fast loop ---
             if self.use_reference and self.x_ref is not None and self.u_eq is not None:
                 x_ref_vec = np.array(self.x_ref).reshape(n_ai, 1)
@@ -418,14 +433,19 @@ class LQRControl(Base):
 
                 u = -self.K @ (x - x_ref_vec) + u_eq_vec
                 
+                # --- NEW: Output equation y = Cx + Du ---
+                y = C_mat @ x + D_mat @ u
+
                 u_out = [np.clip(float(u[i]), 0, 5) for i in range(n_ao)]
                 task_ao.write(u_out if n_ao > 1 else u_out[0])
 
                 time_now = time.perf_counter() - st_worker
                 
-                # === NEW: queue per channel ===
-                for i, ch in enumerate(self.channels):
-                    data_queue.put((time_now, ch, u_out[0], x[i][0]))
+                # --- NEW: Package data dynamically mapping channel names ---
+                x_dict = {ch: x[i][0] for i, ch in enumerate(self.channels)}
+                u_dict = {ch: u_out[i] for i, ch in enumerate(self.ao_channels)}
+                y_dict = {f"y{i+1}": y[i][0] for i in range(n_outputs)}
+                data_queue.put((time_now, x_dict, u_dict, y_dict))
 
                 num_cycles_performed += 1
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
@@ -461,7 +481,7 @@ class LQRControl(Base):
                 else:
                     print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")  
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).")
 
     def lqr_control_nidaq(self):
         """
@@ -482,9 +502,13 @@ class LQRControl(Base):
         
         self._calculate_lqr_gain()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
-        self.time_var = {ch: [] for ch in self.channels}
-        self.input_h = {ch: [] for ch in self.channels}
-        self.output_h = {ch: [] for ch in self.channels}
+        
+        # --- NEW: Unified time list and state/input/output dictionaries ---
+        n_outputs = np.array(self.C).shape[0] if self.C is not None else len(self.channels)
+        self.time_var = []
+        self.state_h = {ch: [] for ch in self.channels}
+        self.input_h = {ch: [] for ch in self.ao_channels}
+        self.output_h = {f"y{i+1}": [] for i in range(n_outputs)}
 
         data_queue = queue.Queue()
         self.acquisition_running = True
@@ -529,17 +553,19 @@ class LQRControl(Base):
                     while not data_queue.empty():
                         remaining_item = data_queue.get_nowait()
                         if remaining_item is not None:
-                            t, ch, u, y = item
-                            self.time_var[ch].append(t)
-                            self.input_h[ch].append(u)
-                            self.output_h[ch].append(y)
+                            t, x_dict, u_dict, y_dict = remaining_item
+                            self.time_var.append(t)
+                            for ch_key, val in x_dict.items(): self.state_h[ch_key].append(val)
+                            for ch_key, val in u_dict.items(): self.input_h[ch_key].append(val)
+                            for ch_key, val in y_dict.items(): self.output_h[ch_key].append(val)
                     break
 
-                t, ch, u, y = item
+                t, x_dict, u_dict, y_dict = item
 
-                self.time_var[ch].append(t)
-                self.input_h[ch].append(u)
-                self.output_h[ch].append(y)
+                self.time_var.append(t)
+                for ch_key, val in x_dict.items(): self.state_h[ch_key].append(val)
+                for ch_key, val in u_dict.items(): self.input_h[ch_key].append(val)
+                for ch_key, val in y_dict.items(): self.output_h[ch_key].append(val)
 
                 # Throttle plot updates for performance
                 now = time.perf_counter()
@@ -549,13 +575,10 @@ class LQRControl(Base):
                     or not self.acquisition_running
                 ):
                     self._update_plot_lqr(
-                        x_values=self.time_var,
+                        time_values=self.time_var,
                         y_values=self.output_h,
-                        u_values=self.input_h,
-                        y_label="System Response / AI",
-                        u_label="Control Effort / AO",
-                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
-                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
+                        x_state_values=self.state_h,
+                        u_values=self.input_h
                     )
                     last_plot_update_time = now
 
@@ -567,24 +590,22 @@ class LQRControl(Base):
 
         acquisition_thread.join()
 
-        if self.plot_mode == 'end' and any(self.time_var.values()):
+        if self.plot_mode == 'end' and self.time_var:
             self.title = f"PYDAQ - Final Step Response (NIDAQ)"
             self._start_updatable_plot_lqr(title_str=self.title)
             self._update_plot_lqr(
-                        x_values=self.time_var,
-                        y_values=self.output_h,
-                        u_values=self.input_h,
-                        y_label="System Response / AI",
-                        u_label="Control Effort / AO",
-                        y_channel_names=self.channels,     # Ex: ["A0", "A1"] ou ["ai0"]
-                        u_channel_names=self.ao_channels   # Ex: ["D8", "D9"] ou ["ao0"]
-                    )
+                time_values=self.time_var,
+                y_values=self.output_h,
+                x_state_values=self.state_h,
+                u_values=self.input_h
+            )
             plt.show(block=True)
 
         if self.save:
             print("\n[PYDAQ] Saving data ...")
             self._save_data(self.time_var, "time.dat")
-            self._save_data(self.input_h, "input.dat")
+            self._save_data(self.state_h, "states.dat")
+            self._save_data(self.input_h, "control.dat")
             self._save_data(self.output_h, "output.dat")
             print("\n[PYDAQ] Data saved ...")
 
@@ -624,7 +645,7 @@ class LQRControl(Base):
             n_outputs = C_mat.shape[0]
             D_mat = np.zeros((n_outputs, n_inputs))
 
-        # --- NEW: Prepare Reference Vectors for simulation ---
+        # --- Prepare Reference Vectors for simulation ---
         if self.use_reference and self.x_ref is not None and self.u_eq is not None:
             x_ref_vec = np.array(self.x_ref).reshape(n_states, 1)
             u_eq_vec = np.array(self.u_eq).reshape(n_inputs, 1)
@@ -632,17 +653,18 @@ class LQRControl(Base):
             x_ref_vec = np.zeros((n_states, 1))
             u_eq_vec = np.zeros((n_inputs, 1))
 
-        # Define initial condition (e.g., all states start at 1.0)
-        x = np.zeros((n_states, 1))
+        # Define initial condition (Starting at 1.0 so we can see the transient response)
+        x = np.ones((n_states, 1))
 
         # Calculate number of iterations based on session duration and sample time
         steps = int(np.floor(self.session_duration / self.ts)) + 1
 
         history_y = []
         history_u = []
+        history_x = []
         time_arr = []
 
-        print("\n[PYDAQ] Running LQR Control ...")
+        print("\n[PYDAQ] Running LQR Control Simulation ...")
         for k in range(steps):
             # Control law
             u = -self.K @ (x - x_ref_vec) + u_eq_vec
@@ -656,32 +678,42 @@ class LQRControl(Base):
             # Store data
             history_y.append(y.flatten())
             history_u.append(u.flatten())
+            history_x.append(x.flatten())
             time_arr.append(k * self.ts)
 
             # Update the state for the next step: x(k+1) = Ax(k) + Bu(k)
             x = A_mat @ x + B_mat @ u
 
+        # --- PLOTTING LOGIC (This was missing!) ---
         history_y = np.array(history_y)
         history_u = np.array(history_u)
+        history_x = np.array(history_x)
 
-        # Generate Static Plot
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+        # Generate Static Plot (3 Subplots)
+        fig, (ax_y, ax_x, ax_u) = plt.subplots(3, 1, figsize=(9, 9), sharex=True)
         fig.suptitle("LQR Simulation", fontsize=14)
 
-        # Output Plot (System Response - y)
+        # Top Plot: Outputs (y)
         for i in range(history_y.shape[1]):
-            ax1.plot(time_arr, history_y[:, i], label=f"Output y{i+1}", linewidth=2)
-        ax1.set_ylabel("Amplitude")
-        ax1.grid(True)
-        ax1.legend(loc="upper right")
+            ax_y.plot(time_arr, history_y[:, i], label=f"Output y{i+1}", linewidth=2)
+        ax_y.set_ylabel("Outputs (y)")
+        ax_y.grid(True)
+        ax_y.legend(loc="upper right")
 
-        # Control Effort Plot (Input - u)
+        # Middle Plot: States (x)
+        for i in range(history_x.shape[1]):
+            ax_x.plot(time_arr, history_x[:, i], label=f"State x{i+1}", linewidth=2, linestyle='--')
+        ax_x.set_ylabel("States (x)")
+        ax_x.grid(True)
+        ax_x.legend(loc="upper right")
+
+        # Bottom Plot: Control Effort (u)
         for i in range(history_u.shape[1]):
-            ax2.plot(time_arr, history_u[:, i], label=f"Control Effort u{i+1}", linewidth=2)
-        ax2.set_xlabel("Time (s)")
-        ax2.set_ylabel("Amplitude")
-        ax2.grid(True)
-        ax2.legend(loc="upper right")
+            ax_u.plot(time_arr, history_u[:, i], label=f"Control Effort u{i+1}", linewidth=2)
+        ax_u.set_xlabel("Time (s)")
+        ax_u.set_ylabel("Control Effort (u)")
+        ax_u.grid(True)
+        ax_u.legend(loc="upper right")
 
         plt.tight_layout()
         plt.show(block=True)
