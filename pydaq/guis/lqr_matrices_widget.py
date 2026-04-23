@@ -23,8 +23,8 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
 
         # Standard Matrices (Lookup Dictionary)
         self.default_matrices = {
-            'A': np.array([[1.0, 0.1], [0.0, 1.0]]),
-            'B': np.array([[0.0, 0.05], [0.1, 0.1]]),
+            'A': np.array([[0.988055, 0.006748], [0.061341, 0.876776]]),
+            'B': np.array([[0.00497, 0.000228], [0.000157, 0.061726]]),
             'C': np.eye(2),              # NEW
             'D': np.zeros((2, 2)),        # NEW
             'Q': np.eye(2), # Identity 2x2
@@ -58,31 +58,25 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
 
     
     def _resize_table(self, table, rows, cols, matrix_key=None):
-
         table.setRowCount(rows)
         table.setColumnCount(cols)
-
         table.verticalHeader().setVisible(False)
         table.horizontalHeader().setVisible(False)
-
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         for i in range(rows):
             for j in range(cols):
-                val = "0"
-                # Check if we have data for this specific matrix and position
+                val = "0.0"
                 if matrix_key in self.default_matrices:
                     m = self.default_matrices[matrix_key]
-                    # Ensure the indices are within the bounds of the stored matrix
                     if i < m.shape[0] and j < m.shape[1]:
-                        val = str(m[i, j]).replace('.', ',')
+                        # Displaying with dot as global standard
+                        val = str(m[i, j])
 
-                # Use setItem only if the item doesn't exist or to update the text
                 if table.item(i, j) is None:
                     table.setItem(i, j, QTableWidgetItem(val))
                 else:
                     table.item(i, j).setText(val)
-    # ------------------------------------------------
 
     def read_matrix(self, table):
         rows = table.rowCount()
@@ -95,13 +89,12 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
                 if item is None or item.text() == "":
                     value = 0.0
                 else:
-                    # --- NEW: Replace comma with dot for Brazilian standard support ---
+                    # Accepts both dot and comma, converting to float standard
                     raw_text = item.text().replace(',', '.')
                     try:
                         value = float(raw_text)
                     except ValueError:
-                        value = 0.0 # Safety if user types letters
-                
+                        value = 0.0 
                 M[i, j] = value
         return M
     

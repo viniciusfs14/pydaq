@@ -513,18 +513,18 @@ class Ui_NIDAQ_LQR_Control(object):
 
         self.gridLayout.addWidget(self.label_ai_channel, 2, 0, 1, 1)
 
-        self.label_6 = QLabel(self.widget)
-        self.label_6.setObjectName(u"label_6")
-        self.label_6.setMinimumSize(QSize(0, 30))
-        self.label_6.setMaximumSize(QSize(16777215, 30))
+        self.label_plot = QLabel(self.widget)
+        self.label_plot.setObjectName(u"label_plot")
+        self.label_plot.setMinimumSize(QSize(0, 30))
+        self.label_plot.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout.addWidget(self.label_6, 9, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_plot, 9, 0, 1, 1)
 
-        self.widget_7 = QWidget(self.widget)
-        self.widget_7.setObjectName(u"widget_7")
-        self.horizontalLayout = QHBoxLayout(self.widget_7)
+        self.widget_plot = QWidget(self.widget)
+        self.widget_plot.setObjectName(u"widget_plot")
+        self.horizontalLayout = QHBoxLayout(self.widget_plot)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.yes_rt_plot_radio = QRadioButton(self.widget_7)
+        self.yes_rt_plot_radio = QRadioButton(self.widget_plot)
         self.plot_radio_group = QButtonGroup(NIDAQ_LQR_Control)
         self.plot_radio_group.setObjectName(u"plot_radio_group")
         self.plot_radio_group.addButton(self.yes_rt_plot_radio)
@@ -533,23 +533,23 @@ class Ui_NIDAQ_LQR_Control(object):
 
         self.horizontalLayout.addWidget(self.yes_rt_plot_radio)
 
-        self.label_warning = QLabel(self.widget_7)
+        self.label_warning = QLabel(self.widget_plot)
         self.label_warning.setObjectName(u"label_warning")
 
         self.horizontalLayout.addWidget(self.label_warning)
 
-        self.label_14 = QLabel(self.widget_7)
+        self.label_14 = QLabel(self.widget_plot)
         self.label_14.setObjectName(u"label_14")
 
         self.horizontalLayout.addWidget(self.label_14)
 
-        self.yes_ate_plot_radio = QRadioButton(self.widget_7)
+        self.yes_ate_plot_radio = QRadioButton(self.widget_plot)
         self.plot_radio_group.addButton(self.yes_ate_plot_radio)
         self.yes_ate_plot_radio.setObjectName(u"yes_ate_plot_radio")
 
         self.horizontalLayout.addWidget(self.yes_ate_plot_radio)
 
-        self.no_plot_radio = QRadioButton(self.widget_7)
+        self.no_plot_radio = QRadioButton(self.widget_plot)
         self.plot_radio_group.addButton(self.no_plot_radio)
         self.no_plot_radio.setObjectName(u"no_plot_radio")
         self.no_plot_radio.setChecked(True)
@@ -557,7 +557,7 @@ class Ui_NIDAQ_LQR_Control(object):
         self.horizontalLayout.addWidget(self.no_plot_radio)
 
 
-        self.gridLayout.addWidget(self.widget_7, 9, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+        self.gridLayout.addWidget(self.widget_plot, 9, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
         self.label_10 = QLabel(self.widget)
         self.label_10.setObjectName(u"label_10")
@@ -796,7 +796,7 @@ class Ui_NIDAQ_LQR_Control(object):
         self.label_7.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Save data?", None))
         self.label_5.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Session duration (s):", None))
         self.label_ai_channel.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"AI channels:", None))
-        self.label_6.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Plot data?", None))
+        self.label_plot.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Plot data?", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("NIDAQ_LQR_Control", u"Real Time", None))
 #if QT_CONFIG(tooltip)
         self.label_warning.setToolTip(QCoreApplication.translate("NIDAQ_LQR_Control", u"<html><head/><body><p><span style=\" font-size:16pt;\">Selecting Real Time may reduce your acquisition performance if you need to collect data at high frequencies ( sample period &lt; 0.05 s ). We suggest plotting at the end of the acquisition if you don't want to be affected.</span></p></body></html>", None))

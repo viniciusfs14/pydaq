@@ -53,13 +53,21 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         self.Q = None
         self.R = None
 
-        # Tracking LQR references (New)
+        # Tracking LQR references
         self.X_ref = None
         self.U_eq = None
         self.n_states = 2 # Default fallback
         self.n_inputs = 2 # Default fallback
+        
+        # --- NEW: Trajectory logic variables ---
+        self.is_trajectory = False
+        self.trajectory_steps = 1
 
-        self.reference_radio_group.buttonToggled.connect(self.on_reference_change)
+        self.yes_reference_radio.toggled.connect(self.on_reference_change)
+        
+        # --- NEW: Auto update duration when Sample Period (Ts) changes ---
+        if hasattr(self, 'Ts_in'):
+            self.Ts_in.valueChanged.connect(self.auto_update_duration)
 
     def openMatricesWindow(self):
         simulate = True if self.simulate_radio_group.checkedId() == -2 else False
@@ -116,6 +124,16 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         else:
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
+    # --- NEW: Auto calculate session duration based on file ---
+    def auto_update_duration(self):
+        if self.is_trajectory and self.yes_reference_radio.isChecked():
+            new_duration = self.trajectory_steps * self.Ts_in.value()
+            if hasattr(self, 'sesh_dur_in'):
+                # Block signals momentarily to avoid recursive loops if connected
+                self.sesh_dur_in.blockSignals(True)
+                self.sesh_dur_in.setValue(new_duration)
+                self.sesh_dur_in.blockSignals(False)
+
     def start_func_LQR_Control(self):
         try:
             simulate = True if self.simulate_radio_group.checkedId() == -2 else False
@@ -137,10 +155,19 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             l.A, l.B, l.C, l.D = self.A, self.B, self.C, self.D
             l.Q, l.R = self.Q, self.R
 
-            # --- NEW: Pass Reference Tracking variables ---
+            # --- NEW: Validation for Trajectory Duration ---
             if self.yes_reference_radio.isChecked():
                 if self.X_ref is None or self.U_eq is None:
                     raise ValueError("[PYDAQ] Missing configuration: Reference Tracking is enabled but X_ref or U_eq are empty.")
+                
+                # Check if the user maliciously/accidentally altered the duration
+                if self.is_trajectory:
+                    expected_duration = self.trajectory_steps * self.Ts_in.value()
+                    # Using a small tolerance (1e-3) due to float approximations
+                    if abs(self.sesh_dur_in.value() - expected_duration) > 1e-3:
+                        raise ValueError(f"[PYDAQ] Trajectory File Mismatch: Session duration must be exactly {expected_duration:.2f}s "
+                                         f"({self.trajectory_steps} rows * {self.Ts_in.value()}s) to match the uploaded trajectory file.")
+
                 l.use_reference = True
                 l.x_ref = self.X_ref
                 l.u_eq = self.U_eq
@@ -150,18 +177,18 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             l.ts = self.Ts_in.value()
             l.session_duration = self.sesh_dur_in.value()
             l.save = True if self.save_radio_group.checkedId() == -2 else False
+            
             if self.yes_rt_plot_radio.isChecked(): 
                 l.plot_mode = 'realtime'
             elif self.yes_ate_plot_radio.isChecked():
                 l.plot_mode = 'end'
-            else: # self.No_radio.isChecked()
+            else: 
                 l.plot_mode = 'no'
 
             if simulate:
                 l.output_mode = output_mode
                 l.simulate_lqr()
-
-                return  # IMPORTANT: stop here
+                return  
 
             l.channels = self.get_selected_ai()
             l.ao_channels = self.get_selected_ao()
@@ -169,8 +196,8 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             A_arr = np.array(self.A)
             B_arr = np.array(self.B)
 
-            n_states = len(l.channels)      # Number of AI channels
-            n_inputs = len(l.ao_channels)   # Number of AO channels
+            n_states = len(l.channels)      
+            n_inputs = len(l.ao_channels)   
 
             # Check matrix A: must be square and match the number of AI channels
             if A_arr.ndim != 2 or A_arr.shape[0] != A_arr.shape[1] or A_arr.shape[0] != n_states:
@@ -192,21 +219,20 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             try:
                 l._open_serial()
                 firmware_ok = l._verify_arduino_firmware()
-                l.ser.close() # CRITICAL: Release the port
+                l.ser.close() 
             except Exception:
                 firmware_ok = False
                 if hasattr(l, 'ser') and l.ser.is_open:
                     l.ser.close()
 
             if not firmware_ok:
-                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
 
             l.lqr_control_arduino()
 
             self.signals.returned.emit(l)
 
         except BaseException as e:
-            # Standardized GUI Error Window
             import warnings
             err_msg = str(e)
             if err_msg: 
@@ -214,13 +240,15 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
 
             error_w = Error_window()
 
-            # Dynamic GUI Message routing
             if "Dimension mismatch" in err_msg:
                 error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
             elif "Firmware" in err_msg:
                 error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
             elif "Matrices are not defined" in err_msg:
                 error_w.ui.confirm.setText("Missing configuration: LQR Matrices (A, B, Q, R) must be defined before running.")
+            elif "Trajectory File Mismatch" in err_msg:
+                # --- NEW: Catching the specific trajectory duration error ---
+                error_w.ui.confirm.setText(err_msg.replace("[PYDAQ] ", ""))
             else:
                 error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
 
@@ -322,7 +350,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
 
     def on_simulate_change(self):
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
-        if self.simulate is False: #Simulate = False
+        if self.simulate is False: 
             self.widget_device.show()
             self.label_device.show()
             self.ai_channel_combo.show()
@@ -333,8 +361,10 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             self.widget_ao_channel.show()
             self.label_output.hide()
             self.widget_output.hide()
+            self.widget_plot.show()
+            self.label_plot.show()
 
-        elif self.simulate is True: #Simulate = True
+        elif self.simulate is True: 
             self.widget_device.hide()
             self.label_device.hide()
             self.ai_channel_combo.hide()
@@ -345,56 +375,55 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             self.widget_ao_channel.hide()
             self.label_output.show()
             self.widget_output.show()
+            self.widget_plot.hide()
+            self.label_plot.hide()
 
-    def on_reference_change(self):
+    def on_reference_change(self, checked): # Adicione o argumento 'checked'
         """
         Triggered when the user toggles the Reference Tracking Radio Group.
         """
-        # If 'Yes' is selected
-        if self.yes_reference_radio.isChecked():
+        # Use o argumento 'checked' que o sinal envia automaticamente
+        if checked:
             # Safety check: ensure A and B are defined so we know the dimensions
             if self.A is None or self.B is None:
-                self.no_reference_radio.setChecked(True) # Revert to No
+                # Bloqueia sinais temporariamente para não abrir a janela no setChecked
+                self.no_reference_radio.blockSignals(True)
+                self.no_reference_radio.setChecked(True) 
+                self.no_reference_radio.blockSignals(False)
+                
                 error_w = Error_window()
                 error_w.ui.confirm.setText("Please define the LQR Matrices (A, B) first before setting references.")
                 error_w.exec()
                 return
             
             self.openReferenceWindow()
-        else:
-            pass
 
     def openReferenceWindow(self):
-        """
-        Opens the widget to input X_ref and U_eq matrices.
-        Passes the current n_states and n_inputs to lock the table dimensions.
-        """
         self.RefWindow = Select_LQR_Reference_Widget(n_states=self.n_states, n_inputs=self.n_inputs)
         
-        # Lógica de persistência idêntica ao widget de Matrizes
         if self.X_ref is not None and self.U_eq is not None:
-            
-            # Create a dictionary with current data to update the table defaults
             current_data = {
                 'X': self.X_ref,
                 'U': self.U_eq
             }
-            
-            # Update the defaults in the matrix widget before showing it
             for key, value in current_data.items():
                 if value is not None:
                     self.RefWindow.default_matrices[key] = value
                     
-            # Refresh tables with "cached" values
             self.RefWindow.update_sizes() 
 
         self.RefWindow.dataEntered.connect(self.update_reference_values)
         self.RefWindow.show()
 
     def update_reference_values(self, data):
-        """
-        Slot to receive data from the Select_LQR_Reference_Widget.
-        """
         self.X_ref = data["X"]
         self.U_eq = data["U"]
-        print("\n[PYDAQ] LQR Reference states updated")
+        
+        # --- NEW: Capturing trajectory parameters ---
+        self.is_trajectory = data.get("is_trajectory", False)
+        self.trajectory_steps = data.get("steps", 1)
+        
+        if self.is_trajectory:
+            self.auto_update_duration()
+            
+        print(f"\n[PYDAQ] LQR Reference states updated. Trajectory mode: {self.is_trajectory}")

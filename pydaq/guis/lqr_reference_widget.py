@@ -1,5 +1,5 @@
 import numpy as np
-from PySide6.QtWidgets import QWidget, QTableWidgetItem, QHeaderView
+from PySide6.QtWidgets import QWidget, QTableWidgetItem, QHeaderView, QFileDialog
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 
@@ -39,6 +39,12 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
         # Connections
         self.select_button.clicked.connect(self.send_data)
 
+        # --- NEW: Connections for the Browse buttons ---
+        if hasattr(self, 'btn_browse_x'):
+            self.btn_browse_x.clicked.connect(lambda: self.browse_file(self.path_x_ref))
+        if hasattr(self, 'btn_browse_u'):
+            self.btn_browse_u.clicked.connect(lambda: self.browse_file(self.path_u_eq))
+
         # Initial table setup - This will populate with default_matrices values
         self.update_sizes()
 
@@ -54,7 +60,6 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
     def _resize_table(self, table, rows, cols, matrix_key=None):
         table.setRowCount(rows)
         table.setColumnCount(cols)
-
         table.verticalHeader().setVisible(False)
         table.horizontalHeader().setVisible(False)
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -62,12 +67,11 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
         for i in range(rows):
             for j in range(cols):
                 val = "0.0"
-                # Check if we have "cached" data to keep the user values
                 if matrix_key in self.default_matrices:
                     m = self.default_matrices[matrix_key]
                     if i < m.shape[0] and j < m.shape[1]:
-                        # Format for Brazilian standard display
-                        val = str(m[i, j]).replace('.', ',')
+                        # Default display using dot
+                        val = str(m[i, j])
 
                 if table.item(i, j) is None:
                     table.setItem(i, j, QTableWidgetItem(val))
@@ -85,32 +89,88 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
                 if item is None or item.text() == "":
                     value = 0.0
                 else:
-                    # Replace comma with dot for numerical processing
+                    # Robust reading for both decimal separators
                     raw_text = item.text().replace(',', '.')
                     try:
                         value = float(raw_text)
                     except ValueError:
                         value = 0.0 
-                
                 M[i, j] = value
         return M
-    
+
+    # --- NEW: Browse file method ---
+    def browse_file(self, line_edit):
+        path, _ = QFileDialog.getOpenFileName(self, "Select Reference File", "", "Data Files (*.dat *.txt);;All Files (*)")
+        if path:
+            line_edit.setText(path)
+
+    # --- NEW: Process file method ---
+    def process_file(self, path, expected_cols):
+        """Professor's logic: 1 row = Fixed | N rows = Trajectory"""
+        if not path:
+            # If no file was passed (e.g., U_eq left blank), assume fixed zero
+            return np.zeros((expected_cols, 1)), False, 1
+
+        raw_data = np.loadtxt(path, ndmin=2)
+
+        if raw_data.ndim == 1:
+            # CASE 1: Only 1 row
+            if len(raw_data) != expected_cols and expected_cols != 1:
+                raise ValueError(f"File has {len(raw_data)} columns, expected {expected_cols}.")
+            return raw_data.reshape(expected_cols, 1), False, 1
+            
+        elif raw_data.ndim == 2:
+            # CASE 2: Trajectory (Multiple rows)
+            if raw_data.shape[1] != expected_cols:
+                raise ValueError(f"File has {raw_data.shape[1]} columns, expected {expected_cols}.")
+            return raw_data, True, raw_data.shape[0]
+
     def send_data(self):
         """
         Emits the reference data and closes the widget.
         """
         try:
-            X = self.read_matrix(self.tableX)
-            U = self.read_matrix(self.tableU)
+            # CHECK WHICH TAB IS ACTIVE
+            current_tab = 0
+            if hasattr(self, 'tabWidget_refs'):
+                current_tab = self.tabWidget_refs.currentIndex()
 
+            if current_tab == 0:
+                # TAB 1: MANUAL TABLES
+                X = self.read_matrix(self.tableX)
+                U = self.read_matrix(self.tableU)
+                is_trajectory = False
+                steps = 1
+            
+            elif current_tab == 1:
+                # TAB 2: FILES
+                if not self.path_x_ref.text():
+                    raise ValueError("The X_ref file is mandatory in file mode.")
+
+                X, is_traj_x, steps_x = self.process_file(self.path_x_ref.text(), self.n_states)
+                U, is_traj_u, steps_u = self.process_file(self.path_u_eq.text(), self.n_inputs)
+
+                is_trajectory = is_traj_x or is_traj_u
+                steps = max(steps_x, steps_u)
+
+            # Package into the dictionary
             data = {
                 "X": X,
-                "U": U
+                "U": U,
+                "is_trajectory": is_trajectory,
+                "steps": steps
             }
 
             self.dataEntered.emit(data)
             self.close()
 
-        except Exception:
+        except Exception as e:
+            # Calls your existing error window
+            import warnings
+            err_msg = str(e)
+            warnings.warn(f"[PYDAQ] Reference Configuration Error: {err_msg}")
+            
             error_w = Error_window()
+            if hasattr(error_w.ui, 'confirm'):
+                error_w.ui.confirm.setText(err_msg)
             error_w.exec()

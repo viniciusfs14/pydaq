@@ -522,11 +522,11 @@ class Ui_Arduino_LQR_Control(object):
 
         self.gridLayout_2.addWidget(self.widget_output, 4, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
-        self.widget_13 = QWidget(self.widget)
-        self.widget_13.setObjectName(u"widget_13")
-        self.horizontalLayout_6 = QHBoxLayout(self.widget_13)
+        self.widget_plot = QWidget(self.widget)
+        self.widget_plot.setObjectName(u"widget_plot")
+        self.horizontalLayout_6 = QHBoxLayout(self.widget_plot)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.yes_rt_plot_radio = QRadioButton(self.widget_13)
+        self.yes_rt_plot_radio = QRadioButton(self.widget_plot)
         self.plot_radio_group = QButtonGroup(Arduino_LQR_Control)
         self.plot_radio_group.setObjectName(u"plot_radio_group")
         self.plot_radio_group.addButton(self.yes_rt_plot_radio)
@@ -535,18 +535,18 @@ class Ui_Arduino_LQR_Control(object):
 
         self.horizontalLayout_6.addWidget(self.yes_rt_plot_radio)
 
-        self.label_warning = QLabel(self.widget_13)
+        self.label_warning = QLabel(self.widget_plot)
         self.label_warning.setObjectName(u"label_warning")
 
         self.horizontalLayout_6.addWidget(self.label_warning)
 
-        self.yes_ate_plot_radio = QRadioButton(self.widget_13)
+        self.yes_ate_plot_radio = QRadioButton(self.widget_plot)
         self.plot_radio_group.addButton(self.yes_ate_plot_radio)
         self.yes_ate_plot_radio.setObjectName(u"yes_ate_plot_radio")
 
         self.horizontalLayout_6.addWidget(self.yes_ate_plot_radio)
 
-        self.no_plot_radio = QRadioButton(self.widget_13)
+        self.no_plot_radio = QRadioButton(self.widget_plot)
         self.plot_radio_group.addButton(self.no_plot_radio)
         self.no_plot_radio.setObjectName(u"no_plot_radio")
         self.no_plot_radio.setChecked(True)
@@ -554,7 +554,7 @@ class Ui_Arduino_LQR_Control(object):
         self.horizontalLayout_6.addWidget(self.no_plot_radio)
 
 
-        self.gridLayout_2.addWidget(self.widget_13, 10, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+        self.gridLayout_2.addWidget(self.widget_plot, 10, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
         self.label_simulate = QLabel(self.widget)
         self.label_simulate.setObjectName(u"label_simulate")
@@ -636,12 +636,12 @@ class Ui_Arduino_LQR_Control(object):
 
         self.gridLayout_2.addWidget(self.widget_11, 8, 2, 1, 1)
 
-        self.label_9 = QLabel(self.widget)
-        self.label_9.setObjectName(u"label_9")
-        self.label_9.setMinimumSize(QSize(0, 30))
-        self.label_9.setMaximumSize(QSize(16777215, 30))
+        self.label_plot = QLabel(self.widget)
+        self.label_plot.setObjectName(u"label_plot")
+        self.label_plot.setMinimumSize(QSize(0, 30))
+        self.label_plot.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout_2.addWidget(self.label_9, 10, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.label_plot, 10, 0, 1, 1)
 
         self.line_2 = QFrame(self.widget)
         self.line_2.setObjectName(u"line_2")
@@ -798,7 +798,7 @@ class Ui_Arduino_LQR_Control(object):
         self.no_save_radio.setText(QCoreApplication.translate("Arduino_LQR_Control", u"No", None))
         self.label_14.setText(QCoreApplication.translate("Arduino_LQR_Control", u"A, B and LQR matriz:", None))
         self.label_ao_channel.setText(QCoreApplication.translate("Arduino_LQR_Control", u"AO channels:", None))
-        self.label_9.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Plot data?", None))
+        self.label_plot.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Plot data?", None))
         self.label_12.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Path:", None))
         self.label_15.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Sample period (s):", None))
         self.label_device.setText(QCoreApplication.translate("Arduino_LQR_Control", u"Device:", None))

@@ -80,8 +80,16 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
         self.U_eq = None
         self.n_states = 2 # Default fallback
         self.n_inputs = 2 # Default fallback
+        
+        # --- NEW: Trajectory logic variables ---
+        self.is_trajectory = False
+        self.trajectory_steps = 1
 
-        self.reference_radio_group.buttonToggled.connect(self.on_reference_change)
+        self.yes_reference_radio.toggled.connect(self.on_reference_change)
+        
+        # --- NEW: Auto update duration when Sample Period (Ts) changes ---
+        if hasattr(self, 'Ts_in'):
+            self.Ts_in.valueChanged.connect(self.auto_update_duration)
 
     def _update_warning_label(self):
         if self.yes_rt_plot_radio.isChecked():
@@ -89,6 +97,16 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
         else:
             self.label_warning.hide()
             
+    # --- NEW: Auto calculate session duration based on file ---
+    def auto_update_duration(self):
+        if self.is_trajectory and self.yes_reference_radio.isChecked():
+            new_duration = self.trajectory_steps * self.Ts_in.value()
+            if hasattr(self, 'sesh_dur_in'):
+                # Block signals momentarily to avoid recursive loops if connected
+                self.sesh_dur_in.blockSignals(True)
+                self.sesh_dur_in.setValue(new_duration)
+                self.sesh_dur_in.blockSignals(False)
+
     def start_func_LQR_Control(self):
         
         self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
@@ -119,10 +137,19 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             l.A, l.B, l.C, l.D = self.A, self.B, self.C, self.D
             l.Q, l.R = self.Q, self.R
 
-            # --- NEW: Pass Reference Tracking variables ---
+            # --- NEW: Pass Reference Tracking variables & Duration Validation ---
             if self.yes_reference_radio.isChecked():
                 if self.X_ref is None or self.U_eq is None:
                     raise ValueError("[PYDAQ] Missing configuration: Reference Tracking is enabled but X_ref or U_eq are empty.")
+                
+                # Check if the user maliciously/accidentally altered the duration
+                if self.is_trajectory:
+                    expected_duration = self.trajectory_steps * self.Ts_in.value()
+                    # Using a small tolerance (1e-3) due to float approximations
+                    if abs(self.sesh_dur_in.value() - expected_duration) > 1e-3:
+                        raise ValueError(f"[PYDAQ] Trajectory File Mismatch: Session duration must be exactly {expected_duration:.2f}s "
+                                         f"({self.trajectory_steps} rows * {self.Ts_in.value()}s) to match the uploaded trajectory file.")
+
                 l.use_reference = True
                 l.x_ref = self.X_ref
                 l.u_eq = self.U_eq
@@ -190,6 +217,8 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
                 error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
             elif "Matrices are not defined" in err_msg:
                 error_w.ui.confirm.setText("Missing configuration: LQR Matrices (A, B, Q, R) must be defined before running.")
+            elif "Trajectory File Mismatch" in err_msg:
+                error_w.ui.confirm.setText("Trajectory File Mismatch: Session duration must match the uploaded trajectory file.")
             else:
                 error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
 
@@ -434,6 +463,8 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             self.widget_ao_channel.show()
             self.label_terminal.show()
             self.widget_terminal.show()
+            self.widget_plot.show()
+            self.label_plot.show()
 
         elif self.simulate is True: #Simulate = True
             self.widget_device.hide()
@@ -446,24 +477,22 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             self.widget_ao_channel.hide()
             self.label_terminal.hide()
             self.widget_terminal.hide()
+            self.widget_plot.hide()
+            self.label_plot.hide()
     
-    def on_reference_change(self):
-        """
-        Triggered when the user toggles the Reference Tracking Radio Group.
-        """
-        # If 'Yes' is selected
-        if self.yes_reference_radio.isChecked():
-            # Safety check: ensure A and B are defined so we know the dimensions
+    def on_reference_change(self, checked): # Adicione 'checked'
+        if checked:
             if self.A is None or self.B is None:
-                self.no_reference_radio.setChecked(True) # Revert to No
+                self.no_reference_radio.blockSignals(True)
+                self.no_reference_radio.setChecked(True)
+                self.no_reference_radio.blockSignals(False)
+                
                 error_w = Error_window()
                 error_w.ui.confirm.setText("Please define the LQR Matrices (A, B) first before setting references.")
                 error_w.exec()
                 return
             
             self.openReferenceWindow()
-        else:
-            pass
 
     def openReferenceWindow(self):
         """
@@ -493,9 +522,14 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
         self.RefWindow.show()
 
     def update_reference_values(self, data):
-        """
-        Slot to receive data from the Select_LQR_Reference_Widget.
-        """
         self.X_ref = data["X"]
         self.U_eq = data["U"]
-        print("\n[PYDAQ] LQR Reference states updated")
+        
+        # --- NEW: Capturing trajectory parameters ---
+        self.is_trajectory = data.get("is_trajectory", False)
+        self.trajectory_steps = data.get("steps", 1)
+        
+        if self.is_trajectory:
+            self.auto_update_duration()
+            
+        print(f"\n[PYDAQ] LQR Reference states updated. Trajectory mode: {self.is_trajectory}")

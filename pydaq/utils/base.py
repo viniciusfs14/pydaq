@@ -347,14 +347,19 @@ class Base:
                     label=f"State ({ch_key})"
                 )
 
-        # Plot Control Effort (u)
+        # Plot Control Effort (u) using step for discrete representation
         for i, ch_key in enumerate(u_values.keys()):
             if len(u_values[ch_key]) > 0:
                 color = plt.cm.tab10(i % 10) 
-                self.ax_u.plot(
+                # Use .step instead of .plot
+                self.ax_u.step(
                     time_values, u_values[ch_key],
-                    marker='o', linestyle='-', color=color, markersize=3,
-                    label=f"Input ({ch_key})"
+                    where='post',  # Holds the value after the time step
+                    marker='o', linestyle='-',
+                    color=color, 
+                    markersize=3,
+                    linewidth=2,
+                    label=f"Input/PWM ({ch_key})"
                 )
 
         # Autoscale and Legend
