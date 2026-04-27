@@ -108,7 +108,20 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
                 self.pid.ser.write(b"0\n") # Turning off all outputs
             except:
                 pass
-            self.pid.ser.close() # Closing port
+        elif self.board == 'arduino': # Stop the event and close the dialog
+            if hasattr(self.pid, 'ser') and self.pid.ser.is_open:
+                try:
+                    stop_parts = []
+                    # Ensure 'self.pid.ao_channels' is the correct variable holding the output channels
+                    for ch in self.pid.ao_channels: 
+                        pin_num = ch.replace("D", "")
+                        stop_parts.append(f"{pin_num}:0")
+                    
+                    # Turning off all outputs with the unified firmware format (e.g., "9:0")
+                    self.pid.ser.write((",".join(stop_parts) + "\n").encode())
+                except Exception as e:
+                    print('\n[PYDAQ] Warning when sending stop command to Arduino:', e)
+                self.pid.ser.close() # Closing port
         elif self.board == 'nidaq':
             try:
                 # Usa hasattr para checar se a tarefa existe antes de tentar acessá-la

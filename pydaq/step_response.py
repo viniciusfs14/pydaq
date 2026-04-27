@@ -149,17 +149,20 @@ class StepResponse(Base):
                 if not self.acquisition_running:
                     break
 
-                # Update step value
+                # Update step value (Respeita min/max da interface)
                 if k * self.ts >= float(self.step_time):
-                    digital_val = 1
+                    sent_val = float(self.step_max)
                 else:
-                    digital_val = 0
+                    sent_val = float(self.step_min)
+
+                # Converte os Volts (0 a 5) em Duty Cycle (0 a 255)
+                duty_val = int((sent_val / 5.0) * 255)
 
                 # === MODIFIED: multi-channel digital send ===
                 msg_parts = []
                 for ch in self.ao_channels:
                     pin_num = ch.replace("D", "")
-                    msg_parts.append(f"{pin_num}:{digital_val}")
+                    msg_parts.append(f"{pin_num}:{duty_val}")
                 
                 msg = ",".join(msg_parts) + "\n"
                 self.ser.write(msg.encode())
@@ -181,7 +184,7 @@ class StepResponse(Base):
                     for ch in channels:
                         idx = int(ch.replace("A", ""))
                         value = values[idx] * self.ard_vpb
-                        data_queue.put((time_now, ch, digital_val * 5.0, value))
+                        data_queue.put((time_now, ch, sent_val, value))
 
                     num_cycles_performed += 1
 
@@ -200,10 +203,11 @@ class StepResponse(Base):
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 try:
-                    if n_channels > 1:
-                        self.ser.write((",".join(["0"] * n_channels) + "\n").encode())
-                    else:
-                        self.ser.write(b"0")
+                    stop_parts = []
+                    for ch in self.ao_channels:
+                        pin_num = ch.replace("D", "")
+                        stop_parts.append(f"{pin_num}:0")
+                    self.ser.write((",".join(stop_parts) + "\n").encode())
                 except:
                     pass
                 self.ser.close()
@@ -439,7 +443,8 @@ class StepResponse(Base):
                 terminal_config=self.terminal
             )
             
-            n_channels = len(self.channels)
+            n_ai = len(self.channels)
+            n_ao = len(self.ao_channels)
 
             st_worker = time.perf_counter()
             for k in range(self.cycles):
@@ -453,17 +458,16 @@ class StepResponse(Base):
                     sent_val = self.step_min
                 
                 # === NEW: multi-channel AO write ===
-                if n_channels == 1:
+                if n_ao == 1:
                     task_ao.write(sent_val)
-                    input_vals = [sent_val]
                 else:
-                    input_vals = [sent_val] * n_channels
-                    task_ao.write(input_vals)
+                    task_ao.write([sent_val] * n_ao)
+                input_vals = [sent_val] * n_ai
 
                 # Read AI
                 temp = task_ai.read()
 
-                if n_channels == 1:
+                if n_ai == 1:
                     temp = [temp]
 
                 time_now = time.perf_counter() - st_worker
@@ -482,10 +486,10 @@ class StepResponse(Base):
         finally:
             # Turn off outputs
             try:
-                if n_channels == 1:
+                if n_ao == 1:
                     task_ao.write(0)
                 else:
-                    task_ao.write([0] * n_channels)
+                    task_ao.write([0] * n_ao)
             except:
                 pass
 

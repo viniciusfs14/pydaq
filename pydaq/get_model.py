@@ -347,7 +347,14 @@ class GetModel(Base):
             warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
-                self.ser.write(b"0")
+                try:
+                    stop_parts = []
+                    for ch in self.ao_channels:
+                        pin_num = ch.replace("D", "")
+                        stop_parts.append(f"{pin_num}:0")
+                    self.ser.write((",".join(stop_parts) + "\n").encode())
+                except:
+                    pass
                 self.ser.close()
             data_queue.put(None)
             # PROTECTION: Only calculates the time if the acquisition has actually started.

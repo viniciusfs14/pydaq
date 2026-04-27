@@ -349,13 +349,13 @@ class SendData(Base):
                 else:
                     current_vals = self.data[k].tolist()
 
-                # Digital logic: High/Low based on 2.5V threshold
-                digital_vals = [1 if x > 2.5 else 0 for x in current_vals]
+                # Digital logic: High/Low based on 2.5V threshold (0 or 255 for Duty Cycle)
+                digital_vals = [255 if x > 2.5 else 0 for x in current_vals]
 
                 msg_parts = []
                 for i, ch in enumerate(self.channels): # e.g., self.channels = ["D8", "D9"]
                     pin_num = ch.replace("D", "")      # Extracts "8"
-                    msg_parts.append(f"{pin_num}:{digital_vals[i]}") # Formats "8:1"
+                    msg_parts.append(f"{pin_num}:{digital_vals[i]}") # Formats "8:255"
 
                 msg = ",".join(msg_parts) + "\n"       # Creates "8:1,9:0\n"
 
@@ -380,12 +380,12 @@ class SendData(Base):
             self.acquisition_running = False
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
-                # Try to reset to 0
                 try:
-                    if n_channels > 1:
-                        self.ser.write((",".join(["0"]*n_channels) + "\n").encode())
-                    else:
-                        self.ser.write(b'0')
+                    stop_parts = []
+                    for ch in self.channels:
+                        pin_num = ch.replace("D", "")
+                        stop_parts.append(f"{pin_num}:0")
+                    self.ser.write((",".join(stop_parts) + "\n").encode())
                 except:
                     pass
                 self.ser.close()

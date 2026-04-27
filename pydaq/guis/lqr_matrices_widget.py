@@ -23,8 +23,8 @@ class Select_LQR_Matrices_Widget(QWidget, Ui_Select_LQR_Matrices_Widget):
 
         # Standard Matrices (Lookup Dictionary)
         self.default_matrices = {
-            'A': np.array([[0.988055, 0.006748], [0.061341, 0.876776]]),
-            'B': np.array([[0.00497, 0.000228], [0.000157, 0.061726]]),
+            'A': np.array([[0.976745, 0.012426], [0.124256, 0.749233]]),
+            'B': np.array([[0.009882, 0.000948], [0.000654, 0.125858]]),
             'C': np.eye(2),              # NEW
             'D': np.zeros((2, 2)),        # NEW
             'Q': np.eye(2), # Identity 2x2
