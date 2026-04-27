@@ -50,7 +50,7 @@ class BenchmarkingWidget(QWidget, Ui_Form):
             self.ser = serial.Serial(self.com_port, 115200, timeout=0.05)
             print(f"✅ Serial Port {self.com_port} opened successfully.")
         except serial.SerialException as e:
-            warnings.warn(f"⚠️ It was not possible to open the Serial Port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] ⚠️ It was not possible to open the Serial Port {self.com_port}: {e}")
             print("❌ Aborting benchmarking.")
             return  
 

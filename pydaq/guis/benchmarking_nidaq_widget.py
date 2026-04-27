@@ -28,7 +28,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
 
     if not NIDAQ_AVAILABLE:
         print("❌ NI-DAQmx drivers not found! Cannot run benchmark.")
-        warnings.warn("NI-DAQmx drivers not found. Please install NI-MAX.")
+        warnings.warn("[PYDAQ] NI-DAQmx drivers not found. Please install NI-MAX.")
         return
 
     print(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
@@ -55,7 +55,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
                 terminal_config=term_map[terminal_config]
             )
         except nidaqmx.errors.DaqError as e:
-            warnings.warn(f"❌ Failed to open NI-DAQ channel: {e}")
+            warnings.warn(f"[PYDAQ] ❌ Failed to open NI-DAQ channel: {e}")
             return
 
         while (time.perf_counter() - start) < duration_s:
@@ -64,7 +64,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
             try:
                 value = task.read()
             except nidaqmx.errors.DaqError as e:
-                warnings.warn(f"NI-DAQ read error: {e}")
+                warnings.warn(f"[PYDAQ] NI-DAQ read error: {e}")
                 continue
 
             t1 = time.perf_counter()

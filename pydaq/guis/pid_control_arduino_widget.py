@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, Q
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, ClickableLineEdit
 from .error_window_gui import Error_window
 
 from ..uis.ui_PyDAQ_pid_control_Arduino_widget import Ui_Arduino_PID_Control
@@ -219,7 +219,7 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
                         tester.ser.close()
 
                 if not firmware_ok:
-                    raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+                    raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
                 
             # 5. Remaining Parameters
             self.numerator = self.lineEdit_numerator.text()
@@ -284,10 +284,17 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
 
     def _setup_ai_selector(self):
         self.ai_channel_combo.setEditable(True)
-        self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ai_menu) 
+        
+        self.ai_channel_combo.setLineEdit(clickable_line)
         self.ai_menu = QMenu(self)
         self.ai_actions = []
+        
         for ch in self.available_ai_channels:
             action = QAction(ch, self)
             action.setCheckable(True)
@@ -324,10 +331,17 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
     
     def _setup_ao_selector(self):
         self.ao_channel_combo.setEditable(True)
-        self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ao_menu) 
+        
+        self.ao_channel_combo.setLineEdit(clickable_line)
         self.ao_menu = QMenu(self)
         self.ao_actions = []
+
         for ch in self.available_ao_channels:
             action = QAction(ch, self)
             action.setCheckable(True)

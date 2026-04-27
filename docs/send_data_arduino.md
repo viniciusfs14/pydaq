@@ -74,3 +74,7 @@ s.send_data_arduino()
 If you choose to plot you can see the data sent on screen, i.e:
 
 ![](img/sending_data_arduino.png)
+
+You can see more detailed bellow:
+
+![](img/senddata_arduino.gif)

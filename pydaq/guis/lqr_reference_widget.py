@@ -145,7 +145,7 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
             elif current_tab == 1:
                 # TAB 2: FILES
                 if not self.path_x_ref.text():
-                    raise ValueError("The X_ref file is mandatory in file mode.")
+                    raise ValueError("[PYDAQ] The X_ref file is mandatory in file mode.")
 
                 X, is_traj_x, steps_x = self.process_file(self.path_x_ref.text(), self.n_states)
                 U, is_traj_u, steps_u = self.process_file(self.path_u_eq.text(), self.n_inputs)
@@ -165,12 +165,17 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
             self.close()
 
         except Exception as e:
-            # Calls your existing error window
             import warnings
             err_msg = str(e)
+            
             warnings.warn(f"[PYDAQ] Reference Configuration Error: {err_msg}")
             
             error_w = Error_window()
-            if hasattr(error_w.ui, 'confirm'):
-                error_w.ui.confirm.setText(err_msg)
+            
+            if "columns, expected" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The reference file columns do not match the system dimensions (n or m).")
+            elif "mandatory" in err_msg:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure the reference file path is properly defined.")
+            else:
+                error_w.ui.confirm.setText("Reference configuration error: Please check your input data.")
             error_w.exec()

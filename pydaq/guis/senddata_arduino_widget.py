@@ -6,6 +6,7 @@ import numpy as np
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu   
 from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, ClickableLineEdit
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from ..uis.ui_PyDAQ_send_data_Arduino_widget import Ui_Arduino_SendData_W
@@ -184,9 +185,15 @@ class SendData_Arduino_Widget(QWidget, Ui_Arduino_SendData_W):
 
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
-        self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
 
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_channel_menu) 
+    
+        self.channel_combo.setLineEdit(clickable_line)
+        
         self.channel_menu = QMenu(self)
         self.channel_actions = []
 

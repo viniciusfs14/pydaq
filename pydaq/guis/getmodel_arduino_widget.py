@@ -6,6 +6,7 @@ from sysidentpy.parameter_estimation import estimators
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
+from pydaq.utils.base import Base, ClickableLineEdit
 
 from ..uis.ui_PyDAQ_get_model_Arduino_widget import Ui_Arduino_GetModel_W
 from .error_window_gui import Error_window
@@ -167,7 +168,7 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
                 raise ValueError(
                     f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(g.channels)}) does not match the number of selected AO channels ({len(g.ao_channels)})."
                 )
-            
+
             # 3. Config Validation: COM Port
             try:
                 g.com_port = serial.tools.list_ports.comports()[
@@ -231,12 +232,11 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
 
             # Dynamic GUI Message routing
             if "Dimension mismatch" in err_msg:
-                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
             elif "Firmware" in err_msg:
                 error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
             else:
                 error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
-            
             error_w.exec()
             
             # Use locals() check in case 'g' failed to instantiate
@@ -250,12 +250,19 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             g.get_model_arduino()
 
     def _setup_ai_selector(self):
-        self.ai_channel_combo.setEditable(True)
-        self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
+        self.ai_channel_combo.setEditable(True)
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ai_menu) 
+        
+        self.ai_channel_combo.setLineEdit(clickable_line)
         self.ai_menu = QMenu(self)
         self.ai_actions = []
+
         for ch in self.available_ai_channels:
             action = QAction(ch, self)
             action.setCheckable(True)
@@ -291,11 +298,19 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
         return selected if selected else [self.available_ai_channels[0]]
     
     def _setup_ao_selector(self):
+
         self.ao_channel_combo.setEditable(True)
-        self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ao_menu) 
+        
+        self.ao_channel_combo.setLineEdit(clickable_line)
         self.ao_menu = QMenu(self)
         self.ao_actions = []
+        
         for ch in self.available_ao_channels:
             action = QAction(ch, self)
             action.setCheckable(True)

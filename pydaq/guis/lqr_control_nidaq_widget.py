@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtCore import Qt
 from pydaq.utils.signals import GuiSignals
-from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System, ClickableLineEdit
 
 from ..uis.ui_PyDAQ_lqr_control_NIDAQ_widget import Ui_NIDAQ_LQR_Control
 from ..guis.lqr_reference_widget import Select_LQR_Reference_Widget
@@ -176,10 +176,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             # Input and output range
             selected_ao = self.get_selected_ao()
             selected_ai = self.get_selected_ai()
-
-            if not selected_ao or not selected_ai:
-                raise ValueError("Select at least one AO and one AI channel")
-
+            
             l.device = selected_ao[0].split("/")[0]
             l.channels = [ch.split("/")[1] for ch in selected_ai]
             l.ao_channels = [ch.split("/")[1] for ch in selected_ao]
@@ -197,7 +194,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             # Check matrix B: rows must match AI channels, cols must match AO channels
             if B_arr.ndim != 2 or B_arr.shape[0] != n_states or B_arr.shape[1] != n_inputs:
                 raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
-
+            
             l.terminal = l.term_map[self.terminal_config_combo.currentText()]
 
             l.lqr_control_nidaq()
@@ -322,12 +319,17 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
 
     def _setup_ao_selector(self):
         self.ao_channel_combo.setEditable(True)
-        self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ao_menu) 
+        
+        self.ao_channel_combo.setLineEdit(clickable_line)
         self.ao_menu = QMenu(self)
         self.ao_actions = []
-
+        
         for ch in self.available_ao_channels:
             action = QAction(ch, self)
             action.setCheckable(True)
@@ -366,9 +368,14 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
     
     def _setup_ai_selector(self):
         self.ai_channel_combo.setEditable(True)
-        self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
 
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ai_menu) 
+        
+        self.ai_channel_combo.setLineEdit(clickable_line)
         self.ai_menu = QMenu(self)
         self.ai_actions = []
 

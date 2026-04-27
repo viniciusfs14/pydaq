@@ -22,6 +22,21 @@ except (ImportError, OSError, Exception):
         RSE = "RSE"
         NRSE = "NRSE"
 
+from PySide6.QtWidgets import QLineEdit
+from PySide6.QtCore import Signal, Qt
+
+class ClickableLineEdit(QLineEdit):
+    """
+    Custom QLineEdit that emits a signal when clicked, 
+    used to trigger ComboBox menus in PYDAQ.
+    """
+    clicked = Signal()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
+
 class Base:
     """
     Base class for data acquisition and to send data.
@@ -127,7 +142,7 @@ class Base:
         # Set title, labels, and grid again after clearing (matplotlib quirk)
         self.ax.set_title(self.title if hasattr(self, 'title') and self.title else "Data Acquisition")
         self.ax.set_xlabel("Time (s)") # Ensure labels are set again after clear
-        self.ax.set_ylabel("Amplitude") # Ensure labels are set again after clear
+        self.ax.set_ylabel("Voltage (V)") # Ensure labels are set again after clear
         self.ax.grid(True)
 
         # ==========================
@@ -299,7 +314,8 @@ class Base:
         self.ax_u.set_ylabel("Control Effort (u)")
         self.ax_u.grid(True)
 
-        self.fig.tight_layout()
+        self.fig.tight_layout(rect=[0, 0, 1, 0.96])
+        self.fig.subplots_adjust(left=0.10)
         plt.show(block=False)
 
     def _update_plot_lqr(self, time_values, y_values, x_state_values, u_values):

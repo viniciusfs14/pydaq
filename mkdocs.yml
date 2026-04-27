@@ -34,6 +34,7 @@ nav:
       - Arduino: lqr_control_arduino.md
   - Benchmarking: benchmarking.md
   - Arduino Firmware: arduino_firmware.md
+  - Error Dictionary: error_dictionary.md
   - Jupyter Notebooks: jupyter_notebooks.md
   
 

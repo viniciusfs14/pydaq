@@ -262,7 +262,7 @@ class StepResponse(Base):
         acquisition_thread.start()
 
         if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Step Response (Arduino), Port: {self.com_port}"
+            self.title = f"PYDAQ - Step Response (Arduino), Port: {self.com_port}."
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
@@ -542,7 +542,7 @@ class StepResponse(Base):
         acquisition_thread.start()
 
         if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}, Channels: {self.channels}"
+            self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}."
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 

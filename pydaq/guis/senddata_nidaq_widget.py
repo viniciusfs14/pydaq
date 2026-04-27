@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from pydaq.utils.signals import GuiSignals
-from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System, ClickableLineEdit
 
 from ..uis.ui_PyDAQ_send_data_NIDAQ_widget import Ui_NIDAQ_SendData_W
 from .error_window_gui import Error_window
@@ -112,7 +112,7 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
 
             # Dynamic GUI Message routing
             if "Dimension mismatch" in err_msg:
-                error_w.ui.confirm.setText("Dimension mismatch: The number of selected channels does not match the data structure.")
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
             else:
                 error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and data path are properly defined.")
 
@@ -222,9 +222,6 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
         raw_data = np.loadtxt(path)
         n_channels = len(selected_channels)
 
-        if n_channels == 0:
-            raise ValueError("No channel selected")
-
         # -----------------------------
         # Case 1: 1D
         # -----------------------------
@@ -258,9 +255,15 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
 
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
-        self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
 
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_channel_menu) 
+        
+        self.channel_combo.setLineEdit(clickable_line)
+        
         self.channel_menu = QMenu(self)
         self.channel_actions = []
 

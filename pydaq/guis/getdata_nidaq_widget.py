@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
-from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System, ClickableLineEdit
 
 from pydaq.utils.signals import GuiSignals
 from scipy.signal import firwin, lfilter, freqz
@@ -73,8 +73,14 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
-        self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_channel_menu) 
+        
+        self.channel_combo.setLineEdit(clickable_line)
 
         self.channel_menu = QMenu(self)
         self.channel_actions = []

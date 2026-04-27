@@ -113,6 +113,14 @@ Instructions on **how to upload and configure the unified firmware** are availab
 
 ---
 
+## Error Dictionary
+
+A centralized **Error Dictionary** is available to help users quickly diagnose and resolve common issues in PYDAQ. It provides concise mappings between GUI messages, terminal outputs, and recommended fixes, making troubleshooting faster and more consistent across workflows.
+
+You can access it here:
+* [Error Dictionary](error_dictionary.md)
+
+--- 
 ## Examples
 
 This section provides Jupyter Notebook examples demonstrating PYDAQ functionalities for both:
@@ -152,4 +160,3 @@ This is the **seminal publication** of the PYDAQ project and **must be cited** i
 }
 ```
 Additional related publications that contributed to the development of PYDAQ are available in the [`papers`](https://github.com/samirmartins/pydaq/tree/main/papers) directory.
-

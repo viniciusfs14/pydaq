@@ -261,9 +261,8 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    # Padronizado com a nossa matriz de erros
                     warnings.warn(
-                        "[PYDAQ] Timing warning: Acquisition cycle exceeded sample period (ts). The 'time.dat' vector may be inaccurate."
+                        "[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat"
                     )
 
                 self.k += 1

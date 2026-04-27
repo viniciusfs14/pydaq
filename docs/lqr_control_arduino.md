@@ -8,6 +8,8 @@
 
 **NOTE 4**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form ($A_d$, $B_d$, $C_d$, $D_d$). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
 
+**NOTE 5**: The PYDAQ LQR interface allows users to define state references ($X_{ref}$) and equilibrium inputs ($U_{eq}$) for setpoint tracking through a dedicated widget. Within this interface, users can choose whether the reference will be a fixed point or a dynamic trajectory using a tabbed menu. The first tab allows manual data entry into tables, which applies a fixed reference throughout the acquisition. Alternatively, the second tab allows users to load `.dat` or `.txt` files. When using files, the system's logic automatically determines the mode: a file with a single row of data is treated as a fixed reference, while a file with multiple rows is processed step-by-step as a time-varying trajectory.
+
 ## LQR Control using Graphical User Interface (GUI)
 
 Using the GUI for LQR control is really straightforward and requires only two LOC (lines of code):
@@ -70,4 +72,4 @@ l.lqr_control_arduino()
 
 If you choose to plot, you can see the system states and the control effort sent on screen, i.e:
 
-![](img/lqr_control_arduino.pdf)
+![](img/lqrcontrol_arduino.gif)

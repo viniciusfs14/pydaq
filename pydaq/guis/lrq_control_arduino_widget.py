@@ -6,7 +6,7 @@ import numpy as np
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
-
+from pydaq.utils.base import Base, ClickableLineEdit
 from pydaq.utils.signals import GuiSignals
 
 from ..uis.ui_PyDAQ_lqr_control_Arduino_widget import Ui_Arduino_LQR_Control
@@ -247,8 +247,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             elif "Matrices are not defined" in err_msg:
                 error_w.ui.confirm.setText("Missing configuration: LQR Matrices (A, B, Q, R) must be defined before running.")
             elif "Trajectory File Mismatch" in err_msg:
-                # --- NEW: Catching the specific trajectory duration error ---
-                error_w.ui.confirm.setText(err_msg.replace("[PYDAQ] ", ""))
+                error_w.ui.confirm.setText("Trajectory File Mismatch: Session duration must match the uploaded trajectory file.")
             else:
                 error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
 
@@ -256,10 +255,17 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
 
     def _setup_ai_selector(self):
         self.ai_channel_combo.setEditable(True)
-        self.ai_channel_combo.lineEdit().setReadOnly(True)
-        self.ai_channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ai_menu) 
+        
+        self.ai_channel_combo.setLineEdit(clickable_line)
         self.ai_menu = QMenu(self)
         self.ai_actions = []
+        
         for ch in self.available_ai_channels:
             action = QAction(ch, self)
             action.setCheckable(True)
@@ -296,10 +302,17 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
     
     def _setup_ao_selector(self):
         self.ao_channel_combo.setEditable(True)
-        self.ao_channel_combo.lineEdit().setReadOnly(True)
-        self.ao_channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_ao_menu) 
+        
+        self.ao_channel_combo.setLineEdit(clickable_line)
         self.ao_menu = QMenu(self)
         self.ao_actions = []
+
         for ch in self.available_ao_channels:
             action = QAction(ch, self)
             action.setCheckable(True)
@@ -382,11 +395,9 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         """
         Triggered when the user toggles the Reference Tracking Radio Group.
         """
-        # Use o argumento 'checked' que o sinal envia automaticamente
         if checked:
             # Safety check: ensure A and B are defined so we know the dimensions
             if self.A is None or self.B is None:
-                # Bloqueia sinais temporariamente para não abrir a janela no setChecked
                 self.no_reference_radio.blockSignals(True)
                 self.no_reference_radio.setChecked(True) 
                 self.no_reference_radio.blockSignals(False)

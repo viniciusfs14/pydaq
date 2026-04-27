@@ -131,8 +131,8 @@ class GetData(Base):
                 if n_channels == 1:
                     temp = [temp]
 
-                for i, ch in enumerate(self.channels):
-                    data_queue.put((time_now, ch, temp[i]))
+                ch_data = {ch: temp[i] for i, ch in enumerate(self.channels)}
+                data_queue.put((time_now, ch_data))
 
                 num_cycles_performed += 1
 
@@ -227,18 +227,19 @@ class GetData(Base):
 
                 if item is None:
                     self.acquisition_running = False
-                    # Flushes the queue to ensure all data is processed
                     while not data_queue.empty():
-                        remaining_item = data_queue.get_nowait()
-                        if remaining_item is not None:
-                            timestamp, value = remaining_item
-                            self.time_var.append(timestamp)
-                            self.data.append(value)
+                        remaining = data_queue.get_nowait()
+                        if remaining is not None:
+                            timestamp, ch_data = remaining
+                            for ch, val in ch_data.items():
+                                self.time_var[ch].append(timestamp)
+                                self.data[ch].append(val)
                     break
 
-                timestamp, channel, value = item
-                self.time_var[channel].append(timestamp)
-                self.data[channel].append(value)
+                timestamp, ch_data = item
+                for ch, value in ch_data.items():
+                    self.time_var[ch].append(timestamp)
+                    self.data[ch].append(value)
 
                 now = time.perf_counter()
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
@@ -371,16 +372,12 @@ class GetData(Base):
                     time_now = time.perf_counter() - st_worker
 
                     # Take only what interests you!
-                    for ch in self.channels: # Ex: self.channels = ['A0', 'A2']
-
-                        # Extracts the channel number (e.g., 'A2' becomes the integer 2)
+                    ch_data = {}
+                    for ch in self.channels: 
                         idx = int(ch.replace("A", "")) 
-                        # Take the value at the exact index
-                        value = values[idx] * self.ard_vpb 
-                        data_queue.put((time_now, ch, value))
-
-                    #scaled_values = [v * self.ard_vpb for v in values[:n_channels]]
-                    #data_queue.put((time_now, channels, digital_val * 5.0, scaled_values))
+                        ch_data[ch] = values[idx] * self.ard_vpb 
+                        
+                    data_queue.put((time_now, ch_data))
 
                     num_cycles_performed += 1
 
@@ -469,11 +466,20 @@ class GetData(Base):
 
                 if item is None:
                     self.acquisition_running = False
+
+                    while not data_queue.empty():
+                        remaining = data_queue.get_nowait()
+                        if remaining is not None:
+                            timestamp, ch_data = remaining
+                            for ch, val in ch_data.items():
+                                self.time_var[ch].append(timestamp)
+                                self.data[ch].append(val)
                     break
 
-                timestamp, channel, value = item
-                self.time_var[channel].append(timestamp)
-                self.data[channel].append(value)
+                timestamp, ch_data = item
+                for ch, value in ch_data.items():
+                    self.time_var[ch].append(timestamp)
+                    self.data[ch].append(value)
 
                 now = time.perf_counter()
 

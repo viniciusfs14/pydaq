@@ -6,7 +6,7 @@ import serial.tools.list_ports
 from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
-
+from pydaq.utils.base import Base, ClickableLineEdit
 from pydaq.utils.signals import GuiSignals
 import scipy.signal as signal
 
@@ -145,7 +145,7 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
                     g.ser.close()
 
             if not firmware_ok:
-                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
 
             g.ts = self.Ts_in.value()
             g.session_duration = self.sesh_dur_in.value()
@@ -377,8 +377,14 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
     
     def _setup_channel_selector(self):
         self.channel_combo.setEditable(True)
-        self.channel_combo.lineEdit().setReadOnly(True)
-        self.channel_combo.lineEdit().setPlaceholderText("No channels available")
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_channel_menu) 
+        
+        self.channel_combo.setLineEdit(clickable_line)
 
         self.channel_menu = QMenu(self)
         self.channel_actions = []
