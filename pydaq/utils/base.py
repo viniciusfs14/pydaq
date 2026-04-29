@@ -403,10 +403,17 @@ class Base:
                     self.ax_map['u'].step(time_values, u_values[ch_key], where='post', marker='o', linestyle='-', color=color, markersize=3, linewidth=2, label=f"Input/PWM ({ch_key})")
 
         # Autoscale and Legend
-        for ax in self.ax_map.values():
+        for key, ax in self.ax_map.items():
             ax.relim()
             ax.autoscale_view()
             ax.legend(loc="upper right", fontsize='small')
+
+            # --- NEW: Synchronize the PWM axis (0-255) with the voltage ---
+            if key == 'u' and hasattr(self, 'ax_u_pwm'):
+                # Get the current limits of the stress axis (left)
+                y_min, y_max = ax.get_ylim()
+                # The theoretical conversion is: 5V -> 255 (Factor of 51.0)
+                self.ax_u_pwm.set_ylim(y_min * 51.0, y_max * 51.0)
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
