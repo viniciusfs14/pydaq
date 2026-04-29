@@ -50,10 +50,10 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         self.canvas.setMinimumHeight(400)
 
         self.k = 0
-        self.system_values = {}
-        self.errors = {}
-        self.setpoints = {}
-        self.controls = {}
+        self.system_values = []
+        self.errors = []
+        self.setpoints = []
+        self.controls = []
         self.time_var = []
         self.elapsed_time = 0.0
         
@@ -161,10 +161,8 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
             self.pid.Kp = 0
         if self.doubleSpinBox_KiDialog.isEnabled():
             self.ki = self.doubleSpinBox_KiDialog.value()
-            # Reseta o integral de todos os canais sem quebrar o dicionário
             if self.pid:
-                for ch in self.pid.channels:
-                    self.pid.integral[ch] = 0.0
+                self.pid.integral = 0.0
             self.pid.Ki = self.ki
         else:
             self.ki = None
@@ -215,11 +213,11 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
  # Inicializate variables and start controling 
     def start_control(self):
         try:
-            # Initialize dictionaries using channels
-            self.system_values = {ch: [] for ch in self.channels}
-            self.errors = {ch: [] for ch in self.channels}
-            self.setpoints = {ch: [] for ch in self.channels}
-            self.controls = {ch: [] for ch in self.channels}
+            # Initialize lists
+            self.system_values = []
+            self.errors = []
+            self.setpoints = []
+            self.controls = []
 
             self.pid = PIDControl(
                 self.kp, self.ki, self.kd, self.setpoint,
@@ -305,10 +303,9 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         # =========================
         # UPDATE LINES
         # =========================
-        for ch in self.channels:
-            self.lines_output[ch].set_data(self.time_var, self.system_values[ch])
-            self.lines_setpoint[ch].set_data(self.time_var, self.setpoints[ch])
-            self.lines_error[ch].set_data(self.time_var, self.errors[ch])
+        self.line_output.set_data(self.time_var, self.system_values)
+        self.line_setpoint.set_data(self.time_var, self.setpoints)
+        self.line_error.set_data(self.time_var, self.errors)
 
         # X axis
         self.ax1.set_xlim(0, max(self.time_var))
@@ -316,18 +313,10 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         # =========================
         # Y SCALE (OUTPUT + SETPOINT)
         # =========================
-        all_outputs = []
-        all_setpoints = []
-
-        for ch in self.channels:
-            if self.system_values[ch]:
-                all_outputs.extend(self.system_values[ch])
-            if self.setpoints[ch]:
-                all_setpoints.extend(self.setpoints[ch])
-
-        if all_outputs:
-            y_min = min(all_outputs + all_setpoints)
-            y_max = max(all_outputs + all_setpoints)
+        if self.system_values or self.setpoints:
+            all_vals = self.system_values + self.setpoints
+            y_min = min(all_vals)
+            y_max = max(all_vals)
 
             y_range = y_max - y_min
             if y_range == 0:
@@ -339,15 +328,9 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
         # =========================
         # Y SCALE (ERROR)
         # =========================
-        all_errors = []
-
-        for ch in self.channels:
-            if self.errors[ch]:
-                all_errors.extend(self.errors[ch])
-
-        if all_errors:
-            e_min = min(all_errors)
-            e_max = max(all_errors)
+        if self.errors:
+            e_min = min(self.errors)
+            e_max = max(self.errors)
 
             e_range = e_max - e_min
             if e_range == 0:
@@ -414,8 +397,6 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
 
     def init_plot(self):
         
-        is_single_channel = len(self.channels) == 1
-
         # Clear and create subplots
         self.figure.clear()
         self.ax1 = self.figure.add_subplot(211)
@@ -438,59 +419,38 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
                 spine.set_color('white')
 
         # =========================
-        # LINES (MULTICHANNEL)
+        # LINES
         # =========================
-        self.lines_output = {}
-        self.lines_setpoint = {}
-        self.lines_error = {}
+        # Output
+        self.line_output, = self.ax1.plot(
+            [], [],
+            color='tab:blue',
+            marker='o',
+            linestyle='-',
+            markersize=3,
+            linewidth=1,
+            label='Output'
+        )
 
-        colors = plt.cm.Set1.colors  # good contrast
+        # Setpoint
+        self.line_setpoint, = self.ax1.plot(
+            [], [],
+            linestyle='--',
+            color='tab:orange',
+            linewidth=1.5,
+            label='Setpoint'
+        )
 
-        for i, ch in enumerate(self.channels):
-            if is_single_channel:
-                color_out = 'tab:blue'
-                color_sp  = 'tab:orange'
-                color_err = 'tab:red'
-            else:
-                base_color = plt.cm.Set1.colors[i % len(plt.cm.Set1.colors)]
-                color_out = base_color
-                color_sp  = base_color
-                color_err = base_color
-
-            # Output
-            line_out, = self.ax1.plot(
-                [], [],
-                color=color_out,
-                marker='o',
-                linestyle='-',
-                markersize=3,
-                linewidth=1,
-                label=f'Output ({ch})'
-            )
-
-            # Setpoint
-            line_sp, = self.ax1.plot(
-                [], [],
-                linestyle='--',
-                color=color_sp,
-                linewidth=1.5,
-                label=f'Setpoint ({ch})'
-            )
-
-            # Error
-            line_err, = self.ax2.plot(
-                [], [],
-                marker='o',
-                linestyle='-',
-                color=color_err,
-                markersize=3,
-                linewidth=1,
-                label=f'Error ({ch})'
-            )
-
-            self.lines_output[ch] = line_out
-            self.lines_setpoint[ch] = line_sp
-            self.lines_error[ch] = line_err
+        # Error
+        self.line_error, = self.ax2.plot(
+            [], [],
+            marker='o',
+            linestyle='-',
+            color='tab:red',
+            markersize=3,
+            linewidth=1,
+            label='Error'
+        )
 
         # =========================
         # LABELS & GRID
@@ -537,27 +497,13 @@ class PID_Control_Window_Dialog(QDialog, Ui_Dialog_Plot_PID_Window, Base):
                 item = self.data_queue.get(timeout=0.05)
             except queue.Empty:
                 continue
-            t, outputs, errors, setpoints, controls = item
+            t, output, error, setpoint, control = item
             self.time_var.append(t)
 
-            # --- MULTICHANNEL MOD ---
-            for ch in self.channels:
-                if ch not in self.system_values:
-                    self.system_values[ch] = []
-
-                if ch not in self.errors:
-                    self.errors[ch] = []
-
-                if ch not in self.setpoints:
-                    self.setpoints[ch] = []
-
-                if ch not in self.controls:
-                    self.controls[ch] = []
-
-                self.system_values[ch].append(outputs[ch])
-                self.errors[ch].append(errors[ch])
-                self.setpoints[ch].append(setpoints[ch])
-                self.controls[ch].append(controls[ch])
+            self.system_values.append(output)
+            self.errors.append(error)
+            self.setpoints.append(setpoint)
+            self.controls.append(control)
 
     def _update_plot_gui_safe(self):
         with self.lock:

@@ -92,14 +92,17 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
                 raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
             s.path = self.path_line_edit.text()
 
+            s.calculate_pid = True if self.pid_radio_group.checkedId() == -2 else False
+
             # 2. Config Validation: Channels & Dimensions
             selected_ao = self.get_selected_ao()
             selected_ai = self.get_selected_ai()
 
-            if len(selected_ai) != len(selected_ao):
-                raise ValueError(
-                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(selected_ai)}) does not match the number of selected AO channels ({len(selected_ao)})."
-                )
+            if s.calculate_pid:
+                if len(selected_ai) != 1 or len(selected_ao) != 1:
+                    raise ValueError(
+                        "[PYDAQ] Dimension mismatch: PID tuning requires exactly 1 AI channel and 1 AO channel (SISO)."
+                    )
             
             # 3. Config Validation: COM Port
             if selected_ao and selected_ai:
@@ -124,7 +127,6 @@ class StepResponse_NIDAQ_Widget(QWidget, Ui_NIDAQ_StepResponse_W):
                 s.plot_mode = 'no'
 
             s.save = True if self.save_radio_group.checkedId() == -2 else False
-            s.calculate_pid = True if self.pid_radio_group.checkedId() == -2 else False
             s.sintony_type =  self.sintony_type
             
             # Restarting variables

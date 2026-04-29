@@ -88,10 +88,13 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
             s.channels = self.get_selected_ai()
             s.ao_channels = self.get_selected_ao()
 
-            if len(s.channels) != len(s.ao_channels):
-                raise ValueError(
-                    f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(s.channels)}) does not match the number of selected AO channels ({len(s.ao_channels)})."
-                )
+            s.calculate_pid = True if self.pid_radio_group.checkedId() == -2 else False
+
+            if s.calculate_pid:
+                if len(s.channels) != 1 or len(s.ao_channels) != 1:
+                    raise ValueError(
+                        "[PYDAQ] Dimension mismatch: PID tuning requires exactly 1 AI channel and 1 AO channel (SISO)."
+                    )
 
             # 3. Config Validation: COM Port
             try:
@@ -113,7 +116,7 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
                     s.ser.close()
 
             if not firmware_ok:
-                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
             
             # 5. Remaining Parameters
             s.ts = self.Ts_in.value()
@@ -127,7 +130,6 @@ class StepResponse_Arduino_Widget(QWidget, Ui_Arduino_StepResponse_W):
                 s.plot_mode = 'no'
             s.save = True if self.save_radio_group.checkedId() == -2 else False
 
-            s.calculate_pid = True if self.pid_radio_group.checkedId() == -2 else False
             s.sintony_type =  self.sintony_type
 
             # Restarting variables

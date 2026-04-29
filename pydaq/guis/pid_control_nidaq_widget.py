@@ -60,9 +60,12 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
         except BaseException:
             self.available_ai_channels = []
 
-        # Setup multichannel selectors
-        self._setup_ao_selector()
-        self._setup_ai_selector()
+        # Setup channel selectors for single channel
+        self.ao_channel_combo.clear()
+        self.ai_channel_combo.clear()
+        self.ao_channel_combo.addItems(self.available_ao_channels)
+        self.ai_channel_combo.addItems(self.available_ai_channels)
+        
         self.terminal_config_combo.addItems(["Diff", "RSE", "NRSE"])
 
     def on_unit_change(self): # Condiction to show the line edit equation and unit
@@ -194,21 +197,16 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
                 self.ao_channels = [" "]
                 self.device = None
             else:
-                selected_ao = self.get_selected_ao()
-                selected_ai = self.get_selected_ai()
+                ao_ch = self.ao_channel_combo.currentText()
+                ai_ch = self.ai_channel_combo.currentText()
                 
-                try:
-                    self.channels = [ch.split("/")[1] for ch in selected_ai]
-                    self.ao_channels = [ch.split("/")[1] for ch in selected_ao]
-                    self.device = selected_ao[0].split("/")[0] if selected_ao else None
-                except IndexError:
-                    raise ValueError("[PYDAQ] Missing configuration: Invalid channel format selected.")
-
-                # 3. Config Validation: Dimensions
-                if len(self.channels) != len(self.ao_channels):
-                    raise ValueError(
-                        f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(self.channels)}) does not match the number of selected AO channels ({len(self.ao_channels)})."
-                    )
+                if not ao_ch or not ai_ch:
+                    raise ValueError("[PYDAQ] Dimension mismatch: Invalid channel format selected.")
+                
+                # Formatting channels for the core module
+                self.channels = [ai_ch.split("/")[1]]
+                self.ao_channels = [ao_ch.split("/")[1]]
+                self.device = ao_ch.split("/")[0]
 
             # 4. Remaining Parameters
             self.numerator = self.lineEdit_numerator.text()
@@ -239,12 +237,7 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
 
             error_w = Error_window()
 
-            # Dynamic GUI Message routing
-            if "Dimension mismatch" in err_msg:
-                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
-            else:
-                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
-            
+            error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
             error_w.exec()
 
     def locate_path(self):  # Calling the Folder Browser Widget
@@ -308,37 +301,16 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
         self.available_ao_channels = new_ao
         self.available_ai_channels = new_ai
 
-        # Recreate AO menu
-        self.ao_menu.clear()
-        self.ao_actions = []
+        # Updating combo boxes for single channel selection
+        self.ao_channel_combo.clear()
+        self.ai_channel_combo.clear()
+        self.ao_channel_combo.addItems(self.available_ao_channels)
+        self.ai_channel_combo.addItems(self.available_ai_channels)
 
-        for ch in self.available_ao_channels:
-            action = QAction(ch, self)
-            action.setCheckable(True)
-            action.toggled.connect(self._update_ao_text)
-            self.ao_menu.addAction(action)
-            self.ao_actions.append(action)
-
-        if self.ao_actions:
-            self.ao_actions[0].setChecked(True)
-        else:
-            self.ao_channel_combo.lineEdit().clear()
-
-        # Recreate AI menu
-        self.ai_menu.clear()
-        self.ai_actions = []
-
-        for ch in self.available_ai_channels:
-            action = QAction(ch, self)
-            action.setCheckable(True)
-            action.toggled.connect(self._update_ai_text)
-            self.ai_menu.addAction(action)
-            self.ai_actions.append(action)
-
-        if self.ai_actions:
-            self.ai_actions[0].setChecked(True)
-        else:
-            self.ai_channel_combo.lineEdit().clear()
+        if self.available_ao_channels:
+            self.ao_channel_combo.setCurrentIndex(0)
+        if self.available_ai_channels:
+            self.ai_channel_combo.setCurrentIndex(0)
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
@@ -347,102 +319,3 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
         self.device_combo.clear() # Updating items on combo box
         self.device_combo.addItems(self.device_type)
         self.device_combo.currentIndexChanged.connect(self.update_channels)  # Reconnecting the signal
-    
-    def _setup_ao_selector(self):
-        self.ao_channel_combo.setEditable(True)
-
-        clickable_line = ClickableLineEdit()
-        clickable_line.setReadOnly(True)
-        clickable_line.setPlaceholderText("No channels available")
-        
-        clickable_line.clicked.connect(self._show_ao_menu) 
-        
-        self.ao_channel_combo.setLineEdit(clickable_line)
-        self.ao_menu = QMenu(self)
-        self.ao_actions = []
-
-        for ch in self.available_ao_channels:
-            action = QAction(ch, self)
-            action.setCheckable(True)
-            action.toggled.connect(self._update_ao_text)
-            self.ao_menu.addAction(action)
-            self.ao_actions.append(action)
-
-        self.ao_channel_combo.showPopup = self._show_ao_menu
-
-        if self.ao_actions:
-            self.ao_actions[0].setChecked(True)
-        else:
-            self.ao_channel_combo.lineEdit().clear()
-
-
-    def _show_ao_menu(self):
-        self.ao_menu.exec(
-            self.ao_channel_combo.mapToGlobal(
-                self.ao_channel_combo.rect().bottomLeft()
-            )
-        )
-
-
-    def _update_ao_text(self):
-        selected = self.get_selected_ao()
-
-        if not any(a.isChecked() for a in self.ao_actions) and self.ao_actions:
-            self.ao_actions[0].setChecked(True)
-            selected = [self.ao_actions[0].text()]
-
-        self.ao_channel_combo.lineEdit().setText(", ".join(selected))
-
-
-    def get_selected_ao(self):
-        selected = [a.text() for a in self.ao_actions if a.isChecked()]
-        return selected if selected else (self.available_ao_channels[:1] if self.available_ao_channels else [])
-    
-    def _setup_ai_selector(self):
-        self.ai_channel_combo.setEditable(True)
-
-        clickable_line = ClickableLineEdit()
-        clickable_line.setReadOnly(True)
-        clickable_line.setPlaceholderText("No channels available")
-        
-        clickable_line.clicked.connect(self._show_ai_menu) 
-        
-        self.ai_channel_combo.setLineEdit(clickable_line)
-        self.ai_menu = QMenu(self)
-        self.ai_actions = []
-        
-        for ch in self.available_ai_channels:
-            action = QAction(ch, self)
-            action.setCheckable(True)
-            action.toggled.connect(self._update_ai_text)
-            self.ai_menu.addAction(action)
-            self.ai_actions.append(action)
-
-        self.ai_channel_combo.showPopup = self._show_ai_menu
-
-        if self.ai_actions:
-            self.ai_actions[0].setChecked(True)
-        else:
-            self.ai_channel_combo.lineEdit().clear()
-
-
-    def _show_ai_menu(self):
-        self.ai_menu.exec(
-            self.ai_channel_combo.mapToGlobal(
-                self.ai_channel_combo.rect().bottomLeft()
-            )
-        )
-
-    def _update_ai_text(self):
-        selected = self.get_selected_ai()
-
-        if not any(a.isChecked() for a in self.ai_actions) and self.ai_actions:
-            self.ai_actions[0].setChecked(True)
-            selected = [self.ai_actions[0].text()]
-
-        self.ai_channel_combo.lineEdit().setText(", ".join(selected))
-
-
-    def get_selected_ai(self):
-        selected = [a.text() for a in self.ai_actions if a.isChecked()]
-        return selected if selected else (self.available_ai_channels[:1] if self.available_ai_channels else [])

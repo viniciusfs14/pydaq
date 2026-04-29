@@ -227,15 +227,15 @@ class GetModel(Base):
         self.prbs_bits = prbs_bits
         self.prbs_seed = prbs_seed
         self.perc_value = perc_value
-        self.final_model = {}  # >>> CHANGE
-        self.theta = {}        # >>> CHANGE
-        self.n_terms = {}      # >>> CHANGE
+        
+        self.final_model = None  
+        self.theta = None        
+        self.n_terms = None      
         self.terminal = self.term_map[terminal]
 
-        # >>> CHANGE: storage per channel
-        self.out_read = {ch: [] for ch in self.channels}
-        self.inp_read = {ch: [] for ch in self.channels}
-        self.time_var = {ch: [] for ch in self.channels}
+        self.out_read = []
+        self.inp_read = []
+        self.time_var = []
 
         self.input_channels = []
         self.output_channels = []
@@ -278,7 +278,6 @@ class GetModel(Base):
         """Worker to send signal and acquire data with Arduino."""
         self.plot_ready_event.wait()
 
-        channels = self.channels
         st_worker = None
 
         try:
@@ -287,8 +286,8 @@ class GetModel(Base):
             if not self._verify_arduino_firmware():
                 self.ser.close()
                 warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
-
                 return 
+                
             # --- WARM-UP SECTION ---
             self.ser.write(b"0")
             self.ser.reset_input_buffer()
@@ -299,18 +298,16 @@ class GetModel(Base):
             st_worker = time.perf_counter()
             num_cycles_performed = 0
 
+            pin_num = self.ao_channels[0].replace("D", "")
+            idx = int(self.channels[0].replace("A", ""))
+
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
 
                 # Send signal
                 val_to_send = sent_data_bytes[k] # It directly retrieves the calculated Duty Cycle (e.g., "255")
-                msg_parts = []
-                for ch in self.ao_channels: 
-                    pin_num = ch.replace("D", "")
-                    msg_parts.append(f"{pin_num}:{val_to_send}")
-                
-                msg = ",".join(msg_parts) + "\n"
+                msg = f"{pin_num}:{val_to_send}\n"
                 self.ser.write(msg.encode())
 
                 self.ser.reset_input_buffer()
@@ -327,10 +324,8 @@ class GetModel(Base):
                     time_now = time.perf_counter() - st_worker
                     sent_value = signal_to_send[k]
 
-                    for ch in channels:
-                        idx = int(ch.replace("A", "")) 
-                        value = values[idx] * self.ard_vpb
-                        data_queue.put((time_now, ch, sent_value, value))
+                    value = values[idx] * self.ard_vpb
+                    data_queue.put((time_now, sent_value, value))
                 
                     num_cycles_performed += 1
 
@@ -348,11 +343,8 @@ class GetModel(Base):
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
                 try:
-                    stop_parts = []
-                    for ch in self.ao_channels:
-                        pin_num = ch.replace("D", "")
-                        stop_parts.append(f"{pin_num}:0")
-                    self.ser.write((",".join(stop_parts) + "\n").encode())
+                    stop_msg = f"{pin_num}:0\n"
+                    self.ser.write(stop_msg.encode())
                 except:
                     pass
                 self.ser.close()
@@ -371,7 +363,7 @@ class GetModel(Base):
                 else:
                     print("\n[PYDAQ] Thread finished. No data cycles acquired.")
             else:
-                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")    
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")
 
     def _acquisition_worker_nidaq(self, data_queue, signal_to_send):
         """Worker to send signal and acquire data with NI-DAQ."""
@@ -383,15 +375,15 @@ class GetModel(Base):
 
         try:
             num_cycles_performed = 0
-            # === MODIFIED === multi-channel configuration
-            ao_str = ",".join([f"{self.device}/{ch}" for ch in self.ao_channels])  # === MODIFIED ===
-            ai_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])  # === MODIFIED ===
+            
+            ao_str = f"{self.device}/{self.ao_channels[0]}"
+            ai_str = f"{self.device}/{self.channels[0]}"
 
-            task_ao.ao_channels.add_ao_voltage_chan(ao_str, min_val=self.ao_min, max_val=self.ao_max)  # === MODIFIED ===
-            task_ai.ai_channels.add_ai_voltage_chan(ai_str, terminal_config=self.terminal)  # === MODIFIED ===
+            task_ao.ao_channels.add_ao_voltage_chan(ao_str, min_val=self.ao_min, max_val=self.ao_max) 
+            task_ai.ai_channels.add_ai_voltage_chan(ai_str, terminal_config=self.terminal) 
             
             # Zero the output before starting
-            task_ao.write([self.ao_min] * len(self.ao_channels))
+            task_ao.write(self.ao_min)
 
             # Start the clock AFTER hardware setup
             st_worker = time.perf_counter()
@@ -402,17 +394,12 @@ class GetModel(Base):
 
                 # Send signal and read response
                 sent_value = signal_to_send[k]
-                task_ao.write([sent_value] * len(self.ao_channels))
-                read_values = task_ai.read(number_of_samples_per_channel=1)
-                
-                # Calculate timestamp and put data in the queue
-                if len(self.channels) == 1:  # === NEW ===
-                    read_values = [read_values]  # === NEW ===
+                task_ao.write(sent_value)
+                read_value = task_ai.read()
                 
                 time_now = time.perf_counter() - st_worker
 
-                for i, ch in enumerate(self.channels):  # === NEW ===
-                    data_queue.put((time_now, ch, sent_value, read_values[i]))  # === NEW ===
+                data_queue.put((time_now, sent_value, read_value)) 
 
                 num_cycles_performed += 1
                 # Wait to maintain the sampling period
@@ -424,7 +411,7 @@ class GetModel(Base):
                     warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         finally:
             # Ensure tasks are safely closed
-            task_ao.write([self.ao_min] * len(self.ao_channels))
+            task_ao.write(self.ao_min)
             task_ao.close()
             task_ai.close()
 
@@ -447,10 +434,10 @@ class GetModel(Base):
 
     def _orchestrate_acquisition(self, worker_target, worker_args):
         """General-purpose orchestrator for data acquisition and plotting."""
-        # === MODIFIED === reset dict storage
-        self.time_var = {ch: [] for ch in self.channels}  # === MODIFIED ===
-        self.inp_read = {ch: [] for ch in self.channels}  # === MODIFIED ===
-        self.out_read = {ch: [] for ch in self.channels}  # === MODIFIED ===
+        
+        self.time_var = [] 
+        self.inp_read = [] 
+        self.out_read = [] 
 
         data_queue = queue.Queue()
         self.acquisition_running = True
@@ -483,46 +470,37 @@ class GetModel(Base):
                 if item is None:
                     break # Worker has finished
                 
-                timestamp, ch, input_val, output_val = item  # === MODIFIED ===
-                self.time_var[ch].append(timestamp)  # === MODIFIED ===
-                self.inp_read[ch].append(input_val)  # === MODIFIED ===
-                self.out_read[ch].append(output_val)  # === MODIFIED ===
+                timestamp, input_val, output_val = item 
+                self.time_var.append(timestamp) 
+                self.inp_read.append(input_val) 
+                self.out_read.append(output_val) 
 
                 now = time.perf_counter()
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
                     # Apply alignment only for Arduino acquisitions
-                    aligned_time = {}
-                    aligned_out = {}
-                    aligned_in = {}
                     if 'Arduino' in self.title:
-                        for ch in self.channels:  # >>> CHANGE
-                            aligned_time[ch] = self.time_var[ch][:-1]
-                            aligned_out[ch] = self.out_read[ch][1:]
-                            aligned_in[ch] = self.inp_read[ch][:-1]
+                        aligned_time = self.time_var[:-1]
+                        aligned_out = self.out_read[1:]
+                        aligned_in = self.inp_read[:-1]
 
-                        self._update_plot(       # >>> CHANGE
+                        self._update_plot(       
                             aligned_time,
                             aligned_out,
                             y2_values=aligned_in,
                             y1_label="Output",
-                            y2_label="Input",
-                            channel_names=self.channels,        # Ex: ["A0", "A1"]
-                            y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
+                            y2_label="Input"
                         )
                     else:
-                        for ch in self.channels:  # >>> CHANGE
-                            aligned_time[ch] = self.time_var[ch]
-                            aligned_out[ch] = self.out_read[ch]
-                            aligned_in[ch] = self.inp_read[ch]
+                        aligned_time = self.time_var
+                        aligned_out = self.out_read
+                        aligned_in = self.inp_read
 
-                        self._update_plot(       # >>> CHANGE
+                        self._update_plot(       
                             aligned_time,
                             aligned_out,
                             y2_values=aligned_in,
                             y1_label="Output",
-                            y2_label="Input",
-                            channel_names=self.channels,        # Ex: ["A0", "A1"]
-                            y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
+                            y2_label="Input"
                         )
                     last_plot_update_time = now
             except queue.Empty:
@@ -559,157 +537,149 @@ class GetModel(Base):
         self._orchestrate_acquisition(self._acquisition_worker_arduino, (signal_finale, sent_data_bytes))
 
         # Plot at the end if requested
-        if self.plot_mode == 'end' and any(len(self.time_var[ch]) > 0 for ch in self.channels):  # === MODIFIED === explicit non-empty check
+        if self.plot_mode == 'end' and len(self.time_var) > 0:
             self._start_updatable_plot(title_str=self.title)
-            aligned_time = {}
-            aligned_out = {}
-            aligned_in = {}
-
-            for ch in self.channels:
-                aligned_time[ch] = self.time_var[ch][:-1]
-                aligned_out[ch] = self.out_read[ch][1:]
-                aligned_in[ch] = self.inp_read[ch][:-1]
+            
+            aligned_time = self.time_var[:-1]
+            aligned_out = self.out_read[1:]
+            aligned_in = self.inp_read[:-1]
 
             self._update_plot(
                 aligned_time,
                 aligned_out,
                 y2_values=aligned_in,
                 y1_label="Output",
-                y2_label="Input",
-                channel_names=self.channels,        # Ex: ["A0", "A1"]
-                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
+                y2_label="Input"
             )
             plt.show(block=True)
 
         if self.save:  # Adjusting data, since no last data is acquired by arduino
             print("\n[PYDAQ] Saving data ...")
             # Saving time_var and data
-            sliced_time_var = {ch: self.time_var[ch][:-1] for ch in self.channels}
-            sliced_input = {ch: self.inp_read[ch][:-1] for ch in self.channels}
-            sliced_output = {ch: self.out_read[ch][1:] for ch in self.channels}
+            sliced_time_var = self.time_var[:-1]
+            sliced_input = self.inp_read[:-1]
+            sliced_output = self.out_read[1:]
 
             self._save_data(sliced_time_var, "time.dat")
             self._save_data(sliced_input, "input.dat")
             self._save_data(sliced_output, "output.dat")
             print("\n[PYDAQ] Data saved ...")
 
-        self.acquired_model = {}
-        self.final_model = {}
-        self.theta = {}
-        self.n_terms = {}
+        self.acquired_model = None
+        self.final_model = None
+        self.theta = None
+        self.n_terms = None
 
         # adapts the time at which data starts to be saved to obtain the model
         time_save = int(self.start_save_time / self.ts)
 
-        for ch in self.channels:
+        print(f"\n[PYDAQ] Identifying model...")
+        data_x = np.array(self.inp_read[:-1])   # input (discard last)
+        data_y = np.array(self.out_read[1:])    # output (discard first)
+        
+        # Ensure arrays are the same length (extra security)
+        min_len = min(len(data_x), len(data_y))
+        data_x = data_x[:min_len]
+        data_y = data_y[:min_len]
 
-            print(f"\n[PYDAQ] Identifying model for channel: {ch}")
-            data_x = np.array(self.inp_read[ch][:-1])   # input (discard last)
-            data_y = np.array(self.out_read[ch][1:])    # output (discard first)
-            
-            # Ensure arrays are the same length (extra security)
-            min_len = min(len(data_x), len(data_y))
-            data_x = data_x[:min_len]
-            data_y = data_y[:min_len]
+        perc_index = floor(data_x.shape[0] - data_x.shape[0] * (self.perc_value / 100))
 
-            perc_index = floor(data_x.shape[0] - data_x.shape[0] * (self.perc_value / 100))
+        x_train, x_valid = (
+            data_x[time_save:perc_index].reshape(-1, 1),
+            data_x[perc_index:].reshape(-1, 1),
+        )
+        y_train, y_valid = (
+            data_y[time_save:perc_index].reshape(-1, 1),
+            data_y[perc_index:].reshape(-1, 1),
+        )
 
-            x_train, x_valid = (
-                data_x[time_save:perc_index].reshape(-1, 1),
-                data_x[perc_index:].reshape(-1, 1),
-            )
-            y_train, y_valid = (
-                data_y[time_save:perc_index].reshape(-1, 1),
-                data_y[perc_index:].reshape(-1, 1),
-            )
+        basis_function = Polynomial(degree=self.degree)
 
-            basis_function = Polynomial(degree=self.degree)
+        if self.ext_lsq:
+            self.estimator = LeastSquares(unbiased=True)
+        elif self.estimator is None or isinstance(self.estimator, str):
+            self.estimator = LeastSquares(unbiased=False)
 
-            if self.ext_lsq:
-                self.estimator = LeastSquares(unbiased=True)
-            elif self.estimator is None or isinstance(self.estimator, str):
-                self.estimator = LeastSquares(unbiased=False)
+        model = FROLS(
+            order_selection=True,
+            n_info_values=self.num_info_val,
+            # The extended_least_squares parameter no longer goes here; it's defined by the estimator above.
+            ylag=[i + 1 for i in range(self.inp_lag)],
+            xlag=[i + 1 for i in range(self.out_lag)],
+            info_criteria="aic",
+            estimator=self.estimator,
+            basis_function=basis_function,
+        )
+        model.fit(X=x_train, y=y_train)
+        yhat = model.predict(X=x_valid, y=y_valid)
+        rrse = root_relative_squared_error(y_valid, yhat)
+        print(f"\n[PYDAQ] Root relative squared error: {rrse}")
 
-            model = FROLS(
-                order_selection=True,
-                n_info_values=self.num_info_val,
-                # The extended_least_squares parameter no longer goes here; it's defined by the estimator above.
-                ylag=[i + 1 for i in range(self.inp_lag)],
-                xlag=[i + 1 for i in range(self.out_lag)],
-                info_criteria="aic",
-                estimator=self.estimator,
-                basis_function=basis_function,
-            )
-            model.fit(X=x_train, y=y_train)
-            yhat = model.predict(X=x_valid, y=y_valid)
-            rrse = root_relative_squared_error(y_valid, yhat)
-            print(f"\n[PYDAQ] Channel {ch}: Root relative squared error: {rrse}")
+        results_data = results(
+            model.final_model,
+            model.theta,
+            model.err,
+            model.n_terms,
+            err_precision=8,
+            dtype="sci",
+        )
 
-            results_data = results(
-                model.final_model,
-                model.theta,
-                model.err,
-                model.n_terms,
-                err_precision=8,
-                dtype="sci",
-            )
+        results_data.insert(0, ["Regressors", "Parameters", "ERR"])
 
-            results_data.insert(0, ["Regressors", "Parameters", "ERR"])
+        display_formated_results(results_data)
 
-            display_formated_results(results_data)
+        self.acquired_model = model
+        self.final_model = model.final_model
+        self.theta = model.theta
+        self.n_terms = model.n_terms
 
-            self.acquired_model[ch] = model
-            self.final_model[ch] = model.final_model
-            self.theta[ch] = model.theta
-            self.n_terms[ch] = model.n_terms
+        ee = compute_residues_autocorrelation(y_valid, yhat)
+        x1e = compute_cross_correlation(y_valid, yhat, x_valid)
 
-            ee = compute_residues_autocorrelation(y_valid, yhat)
-            x1e = compute_cross_correlation(y_valid, yhat, x_valid)
+        metrics_namelist = []
+        metrics_vallist = []
 
-            metrics_namelist = []
-            metrics_vallist = []
+        for name in dir(metrics):
+            if name.startswith("_"):
+                continue
 
-            for name in dir(metrics):
-                if name.startswith("_"):
+            func = getattr(metrics, name)
+
+            if callable(func):
+                try:
+                    value = func(y_valid, yhat)
+
+                    # Ensure value is scalar
+                    if isinstance(value, (int, float, np.number)):
+                        metrics_namelist.append(
+                            Base.get_acronym(Base.adjust_string(name))
+                        )
+                        metrics_vallist.append(f"{value:.4f}")
+
+                except Exception:
                     continue
 
-                func = getattr(metrics, name)
-
-                if callable(func):
-                    try:
-                        value = func(y_valid, yhat)
-
-                        # Ensure value is scalar
-                        if isinstance(value, (int, float, np.number)):
-                            metrics_namelist.append(
-                                Base.get_acronym(Base.adjust_string(name))
-                            )
-                            metrics_vallist.append(f"{value:.4f}")
-
-                    except Exception:
-                        continue
-
-            plot_combined_results_with_metrics(
-                y=y_valid,
-                yhat=yhat,
-                residuals=ee,
-                cross_corr=x1e,
-                title_main=f"Free run simulation - {ch}",
-                title_residuals="Residues",
-                title_cross_corr="Residues",
-                xlabel_main="Samples",
-                ylabel_main=r"y, $\hat{y}$",
-                ylabel_residuals="$e^2$",
-                ylabel_cross_corr="$x_1e$",
-                data_color="#1f77b4",
-                model_color="#ff7f0e",
-                marker="o",
-                model_marker="*",
-                linewidth=1.5,
-                metrics_namelist=metrics_namelist,
-                metrics_vallist=metrics_vallist,
-            )
-            self.show_results(results_data,ch)
+        plot_combined_results_with_metrics(
+            y=y_valid,
+            yhat=yhat,
+            residuals=ee,
+            cross_corr=x1e,
+            title_main=f"Free run simulation",
+            title_residuals="Residues",
+            title_cross_corr="Residues",
+            xlabel_main="Samples",
+            ylabel_main=r"y, $\hat{y}$",
+            ylabel_residuals="$e^2$",
+            ylabel_cross_corr="$x_1e$",
+            data_color="#1f77b4",
+            model_color="#ff7f0e",
+            marker="o",
+            model_marker="*",
+            linewidth=1.5,
+            metrics_namelist=metrics_namelist,
+            metrics_vallist=metrics_vallist,
+        )
+        self.show_results(results_data)
 
     def get_model_nidaq(self):
         
@@ -727,25 +697,19 @@ class GetModel(Base):
         self._orchestrate_acquisition(self._acquisition_worker_nidaq, (signal_finale,))
         
         # Plot at the end if requested
-        if self.plot_mode == 'end' and any(self.time_var[ch] for ch in self.channels):
+        if self.plot_mode == 'end' and len(self.time_var) > 0:
             self._start_updatable_plot(title_str=self.title)
-            aligned_time = {}
-            aligned_out = {}
-            aligned_in = {}
-
-            for ch in self.channels:
-                aligned_time[ch] = self.time_var[ch]
-                aligned_out[ch] = self.out_read[ch]
-                aligned_in[ch] = self.inp_read[ch]
+            
+            aligned_time = self.time_var
+            aligned_out = self.out_read
+            aligned_in = self.inp_read
 
             self._update_plot(
                 aligned_time,
                 aligned_out,
                 y2_values=aligned_in,
                 y1_label="Output",
-                y2_label="Input",
-                channel_names=self.channels,        # Ex: ["A0", "A1"]
-                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
+                y2_label="Input"
             )
             plt.show(block=True)
 
@@ -757,123 +721,121 @@ class GetModel(Base):
             self._save_data(self.out_read, "output.dat")
             print("\n[PYDAQ] Data saved ...")
 
-        self.acquired_model = {}
-        self.final_model = {}
-        self.theta = {}
-        self.n_terms = {}
+        self.acquired_model = None
+        self.final_model = None
+        self.theta = None
+        self.n_terms = None
 
         # adapts the time at which data starts to be saved to obtain the model
         time_save = int(self.start_save_time / self.ts)
         
-        for ch in self.channels:
-                
-            print(f"\n[PYDAQ] Identifying model for channel: {ch}")
+        print(f"\n[PYDAQ] Identifying model...")
 
-            data_x = np.array(self.inp_read[ch])
-            data_y = np.array(self.out_read[ch])
+        data_x = np.array(self.inp_read)
+        data_y = np.array(self.out_read)
 
-            perc_index = floor(data_x.shape[0] - data_x.shape[0] * (self.perc_value / 100))
+        perc_index = floor(data_x.shape[0] - data_x.shape[0] * (self.perc_value / 100))
 
-            x_train, x_valid = (
-                data_x[time_save:perc_index].reshape(-1, 1),
-                data_x[perc_index:].reshape(-1, 1),
-            )
-            y_train, y_valid = (
-                data_y[time_save:perc_index].reshape(-1, 1),
-                data_y[perc_index:].reshape(-1, 1),
-            )
+        x_train, x_valid = (
+            data_x[time_save:perc_index].reshape(-1, 1),
+            data_x[perc_index:].reshape(-1, 1),
+        )
+        y_train, y_valid = (
+            data_y[time_save:perc_index].reshape(-1, 1),
+            data_y[perc_index:].reshape(-1, 1),
+        )
 
-            basis_function = Polynomial(degree=self.degree)
+        basis_function = Polynomial(degree=self.degree)
 
-            if self.ext_lsq:
-                self.estimator = LeastSquares(unbiased=True)
-            elif self.estimator is None or isinstance(self.estimator, str):
-                self.estimator = LeastSquares(unbiased=False)
+        if self.ext_lsq:
+            self.estimator = LeastSquares(unbiased=True)
+        elif self.estimator is None or isinstance(self.estimator, str):
+            self.estimator = LeastSquares(unbiased=False)
 
-            model = FROLS(
-                order_selection=True,
-                n_info_values=self.num_info_val,
-                # The extended_least_squares parameter no longer goes here; it's defined by the estimator above.
-                ylag=[i + 1 for i in range(self.inp_lag)],
-                xlag=[i + 1 for i in range(self.out_lag)],
-                info_criteria="aic",
-                estimator=self.estimator,
-                basis_function=basis_function,
-            )
-            model.fit(X=x_train, y=y_train)
-            yhat = model.predict(X=x_valid, y=y_valid)
-            rrse = root_relative_squared_error(y_valid, yhat)
-            print(f"\n[PYDAQ] Channel {ch}: Root relative squared error: {rrse}")
+        model = FROLS(
+            order_selection=True,
+            n_info_values=self.num_info_val,
+            # The extended_least_squares parameter no longer goes here; it's defined by the estimator above.
+            ylag=[i + 1 for i in range(self.inp_lag)],
+            xlag=[i + 1 for i in range(self.out_lag)],
+            info_criteria="aic",
+            estimator=self.estimator,
+            basis_function=basis_function,
+        )
+        model.fit(X=x_train, y=y_train)
+        yhat = model.predict(X=x_valid, y=y_valid)
+        rrse = root_relative_squared_error(y_valid, yhat)
+        print(f"\n[PYDAQ] Root relative squared error: {rrse}")
 
-            results_data = results(
-                model.final_model,
-                model.theta,
-                model.err,
-                model.n_terms,
-                err_precision=8,
-                dtype="sci",
-            )
-            results_data.insert(0, ["Regressors", "Parameters", "ERR"])
+        results_data = results(
+            model.final_model,
+            model.theta,
+            model.err,
+            model.n_terms,
+            err_precision=8,
+            dtype="sci",
+        )
+        results_data.insert(0, ["Regressors", "Parameters", "ERR"])
 
-            display_formated_results(results_data)
+        display_formated_results(results_data)
 
-            self.acquired_model[ch] = model
-            self.final_model[ch] = model.final_model
-            self.theta[ch] = model.theta
-            self.n_terms[ch] = model.n_terms
+        self.acquired_model = model
+        self.final_model = model.final_model
+        self.theta = model.theta
+        self.n_terms = model.n_terms
 
-            ee = compute_residues_autocorrelation(y_valid, yhat)
-            x1e = compute_cross_correlation(y_valid, yhat, x_valid)
+        ee = compute_residues_autocorrelation(y_valid, yhat)
+        x1e = compute_cross_correlation(y_valid, yhat, x_valid)
 
-            metrics_namelist = []
-            metrics_vallist = []
+        metrics_namelist = []
+        metrics_vallist = []
 
-            for name in dir(metrics):
-                if name.startswith("_"):
+        for name in dir(metrics):
+            if name.startswith("_"):
+                continue
+
+            func = getattr(metrics, name)
+
+            if callable(func):
+                try:
+                    value = func(y_valid, yhat)
+
+                    # Ensure value is scalar
+                    if isinstance(value, (int, float, np.number)):
+                        metrics_namelist.append(
+                            Base.get_acronym(Base.adjust_string(name))
+                        )
+                        metrics_vallist.append(f"{value:.4f}")
+
+                except Exception:
                     continue
 
-                func = getattr(metrics, name)
+        plot_combined_results_with_metrics(
+            y=y_valid,
+            yhat=yhat,
+            residuals=ee,
+            cross_corr=x1e,
+            title_main=f"Free run simulation",
+            title_residuals="Residues",
+            title_cross_corr="Residues",
+            xlabel_main="Samples",
+            ylabel_main=r"y, $\hat{y}$",
+            ylabel_residuals="$e^2$",
+            ylabel_cross_corr="$x_1e$",
+            data_color="#1f77b4",
+            model_color="#ff7f0e",
+            marker="o",
+            model_marker="*",
+            linewidth=1.5,
+            metrics_namelist=metrics_namelist,
+            metrics_vallist=metrics_vallist,
+        )
 
-                if callable(func):
-                    try:
-                        value = func(y_valid, yhat)
+        self.show_results(results_data)
 
-                        # Ensure value is scalar
-                        if isinstance(value, (int, float, np.number)):
-                            metrics_namelist.append(
-                                Base.get_acronym(Base.adjust_string(name))
-                            )
-                            metrics_vallist.append(f"{value:.4f}")
+    def show_results(self, results):
 
-                    except Exception:
-                        continue
-
-            plot_combined_results_with_metrics(
-                y=y_valid,
-                yhat=yhat,
-                residuals=ee,
-                cross_corr=x1e,
-                title_main=f"Free run simulation - {ch}",
-                title_residuals="Residues",
-                title_cross_corr="Residues",
-                xlabel_main="Samples",
-                ylabel_main=r"y, $\hat{y}$",
-                ylabel_residuals="$e^2$",
-                ylabel_cross_corr="$x_1e$",
-                data_color="#1f77b4",
-                model_color="#ff7f0e",
-                marker="o",
-                model_marker="*",
-                linewidth=1.5,
-                metrics_namelist=metrics_namelist,
-                metrics_vallist=metrics_vallist,
-            )
-
-            self.show_results(results_data, ch)
-
-    def show_results(self, results, ch):
-
-        model = self.acquired_model[ch]
+        model = self.acquired_model
 
         r = np.array(results[1:], dtype="U50")
         model_string = "y_k = "
@@ -906,7 +868,7 @@ class GetModel(Base):
         aux_pos = 0
         fig.patch.set_facecolor("#404040") 
         ax.axis("off")
-        ax.text(0.5, 1, f"Mathematical Model (Channel {ch})", fontsize=18, ha="center", color="white")
+        ax.text(0.5, 1, f"Mathematical Model", fontsize=18, ha="center", color="white")
         plt.axhline(y=0.96, color="#044c04", linestyle="-")
 
         if (

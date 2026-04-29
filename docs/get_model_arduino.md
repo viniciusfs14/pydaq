@@ -3,7 +3,7 @@
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device
 
 **NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
-at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
+at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. This firmware handles communication via serial CSV. To maintain theoretical rigor in System Identification, the Get Model module operates strictly as a Single-Input Single-Output (SISO) system. Therefore, you must select exactly one analog input channel (e.g., A0) and one digital PWM output channel (e.g., D0).
 
 **NOTE 3:** PYDAQ is programmed to use 10 bits as an ADC resolution, and 0V and 5V as the input range.
 To change this, the user can alter the following variables:
@@ -62,7 +62,8 @@ from pydaq.get_model import GetModel
 
 # Defining parameters
 com_port_arduino = 'COM7'
-ao_channels = ['D0']
+# Single-Input Single-Output (SISO) configuration
+ao_channels = ['D0'] 
 ai_channels = ['A0']
 session_duration_in_s = 100
 sample_period_in_s = 0.5

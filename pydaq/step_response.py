@@ -237,12 +237,10 @@ class StepResponse(Base):
 
         """
 
-        #if hasattr(self, "channels") and self.channels:
-        #    self.channels = self.channels  # use selected input channels
-
-        #if hasattr(self, "ao_channels") and self.ao_channels:
-        #    self.ao_channels = self.ao_channels  # use selected output channels
-
+        # --- SISO SAFETY LOCK FOR PID TUNING ---
+        if self.calculate_pid and (len(self.channels) != 1 or len(self.ao_channels) != 1):
+            raise ValueError("[PYDAQ] Dimension mismatch: PID tuning requires exactly 1 AI and 1 AO channel (SISO).")
+        
         # --- Start of placeholder implementation ---
         
         self.time_var = {ch: [] for ch in self.channels}
@@ -524,6 +522,10 @@ class StepResponse(Base):
         # --- NIDAQ SAFETY LOCK ---
         if not self._check_nidaq_availability():
             return
+        
+        # --- SISO SAFETY LOCK FOR PID TUNING ---
+        if self.calculate_pid and (len(self.channels) != 1 or len(self.ao_channels) != 1):
+            raise ValueError("[PYDAQ] Dimension mismatch: PID tuning requires exactly 1 AI and 1 AO channel (SISO).")
         
         self.time_var = {ch: [] for ch in self.channels}
         self.input = {ch: [] for ch in self.channels}

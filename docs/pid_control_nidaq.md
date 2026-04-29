@@ -54,7 +54,7 @@ A disturbance input can also be simulated during real-time control. It acts as a
 
 ## Example GIF
 
-![](img/Getmodel_NIDAQ_gif.gif)
+![](img/pidcontrol_nidaq.gif)
 
 # Control PID with NIDAQ (GUI via code)
 
@@ -101,7 +101,7 @@ plot_window.exec()
 This method injects the hardware configuration into the PyDAQ window.
 * **`board`**: Type of board (`'nidaq'` or `'arduino'`).
 * **`hardware_id`**: The name of the NI-DAQ device configured in NI MAX (e.g., `'Dev1'`, `'Dev2'`).
-* **`ai` / `ao`**: Lists defining the Analog Input channels (Sensors) and Analog Output channels (Actuators). For NI-DAQ, these are usually formatted like `['ai0', 'ai1']` and `['ao0', 'ao1']`. *Note: The number of AI and AO channels must match.*
+* **`ai` / `ao`**: Lists containing exactly one element defining the Analog Input channel (Sensor) and Analog Output channel (Actuator). For NI-DAQ, these are strictly formatted as single-element lists, like `ai=['ai0']` and `ao=['ao0']`.
 * **`terminal`**: The terminal configuration for the NI-DAQ inputs (e.g., `'RSE'`, `'Diff'`, or `'NRSE'`).
 * **`simulate`**: Set to `True` to run a mathematical simulation without hardware.
 

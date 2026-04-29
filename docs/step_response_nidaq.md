@@ -27,6 +27,10 @@ Step range and sample period can be adjusted along with session duration.
 Step will be applied in the defined time. Also, the user will define if
 the data will or not be plotted and saved.
 
+Additionally, the user can choose to **Calculate PID** tuning parameters (P, PI, or PID) based on the step response curve.
+
+**NOTE 2:** The standard Step Response supports arbitrary MIMO (Multiple-Input Multiple-Output) configurations (e.g., selecting 2 inputs and 1 output). However, if the **Calculate PID** option is enabled, the system requires a strictly Single-Input Single-Output (SISO) configuration (exactly 1 AI and 1 AO channel).
+
 ## Step Response using command line
 
 It will be presented how to use StepResponse (and step_response_nidaq) to

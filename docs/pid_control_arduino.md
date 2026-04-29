@@ -3,7 +3,7 @@
 **NOTE 1**: Before working with PYDAQ, the device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
 
 **NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
-at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
+at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. This firmware handles communication via serial CSV. To maintain theoretical rigor in classical control theory, the PID Control module operates strictly as a Single-Input Single-Output (SISO) system. Therefore, you must select exactly one analog input channel (e.g., A0) and one digital PWM output channel (e.g., D0).
 
 **NOTE 3**: PYDAQ is programmed to use 10 bits as ADC resolution and 0V to 5V as the input range.  
 To change this, the user can alter the following variables:
@@ -84,8 +84,8 @@ plot_window = PID_Control_Window_Dialog()
 plot_window.check_board(
     board="arduino", 
     hardware_id="COM7", 
-    ao=['D0', 'D1'], 
-    ai=['A0', 'A1'], 
+    ao=['D0'], # Single-Input Single-Output (SISO) configuration
+    ai=['A0'], 
     terminal=None, 
     simulate=False
 )
@@ -109,7 +109,7 @@ plot_window.exec()
 This method injects the hardware configuration into the PyDAQ window.
 * **`board`**: Type of board (`'arduino'` or `'nidaq'`).
 * **`hardware_id`**: The communication port (e.g., `'COM7'` on Windows, `'/dev/ttyUSB0'` on Linux).
-* **`ai` / `ao`**: Lists defining the Analog Inputs (Sensors) and Digital/PWM Outputs (Actuators). *Note: The number of AI and AO channels must match.*
+* **`ai` / `ao`**: Lists containing exactly one element defining the Analog Input (Sensor) and Digital/PWM Output (Actuator). Example: `ai=['A0']` and `ao=['D0']`.
 * **`simulate`**: Set to `True` to run a mathematical simulation without hardware.
 
 #### `set_parameters()`

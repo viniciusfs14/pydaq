@@ -23,7 +23,7 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         super(PID_Control_Arduino_Widget, self).__init__()
         self.setupUi(self)
 
-# Calling the functions
+        # Calling the functions
         self.update_com_ports()
         self.setWindowTitle("PYDAQ - PID Control Arduino")
         self.reload_devices.clicked.connect(self.update_com_ports)
@@ -47,8 +47,11 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         self.available_ai_channels = [f"A{i}" for i in range(6)]
         self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
 
-        self._setup_ai_selector()
-        self._setup_ao_selector()
+        # Updating combo boxes for single channel selection
+        self.ai_channel_combo.clear()
+        self.ao_channel_combo.clear()
+        self.ai_channel_combo.addItems(self.available_ai_channels)
+        self.ao_channel_combo.addItems(self.available_ao_channels)
 
     def update_com_ports(self):  # Updating com ports
         self.com_ports = [i.description for i in serial.tools.list_ports.comports()]
@@ -189,14 +192,12 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
                 self.ao_channels = [" "]
                 self.com_port = None
             else:
-                self.channels = self.get_selected_ai()
-                self.ao_channels = self.get_selected_ao()
+                # Single Channel Acquisition logic
+                self.channels = [self.ai_channel_combo.currentText()]
+                self.ao_channels = [self.ao_channel_combo.currentText()]
 
-                # 2. Config Validation: Dimensions
-                if len(self.channels) != len(self.ao_channels):
-                    raise ValueError(
-                        f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(self.channels)}) does not match the number of selected AO channels ({len(self.ao_channels)})."
-                    )
+                if not self.channels[0] or not self.ao_channels[0]:
+                     raise ValueError("[PYDAQ] Dimension mismatch: Please ensure device and channel are properly defined.")
                 
                 # 3. Config Validation: COM Port
                 try:
@@ -251,9 +252,7 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             error_w = Error_window()
 
             # Dynamic GUI Message routing
-            if "Dimension mismatch" in err_msg:
-                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
-            elif "Firmware" in err_msg:
+            if "Firmware" in err_msg:
                 error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
             else:
                 error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
@@ -281,97 +280,3 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             self.unit = self.comboBox_setpoint.currentText()
         else:
             self.unit = self.lineEdit_unit.text()
-
-    def _setup_ai_selector(self):
-        self.ai_channel_combo.setEditable(True)
-
-        clickable_line = ClickableLineEdit()
-        clickable_line.setReadOnly(True)
-        clickable_line.setPlaceholderText("No channels available")
-        
-        clickable_line.clicked.connect(self._show_ai_menu) 
-        
-        self.ai_channel_combo.setLineEdit(clickable_line)
-        self.ai_menu = QMenu(self)
-        self.ai_actions = []
-        
-        for ch in self.available_ai_channels:
-            action = QAction(ch, self)
-            action.setCheckable(True)
-            action.toggled.connect(self._update_ai_text)
-            self.ai_menu.addAction(action)
-            self.ai_actions.append(action)
-
-        self.ai_channel_combo.showPopup = self._show_ai_menu
-
-        if self.ai_actions:
-            self.ai_actions[0].setChecked(True)
-        else:
-            self.ai_channel_combo.lineEdit().clear()
-
-    def _show_ai_menu(self):
-        self.ai_menu.exec(
-            self.ai_channel_combo.mapToGlobal(
-                self.ai_channel_combo.rect().bottomLeft()
-            )
-        )
-
-    def _update_ai_text(self):
-        selected = self.get_selected_ai()
-
-        if not any(a.isChecked() for a in self.ai_actions):
-            self.ai_actions[0].setChecked(True)
-            selected = [self.ai_actions[0].text()]
-
-        self.ai_channel_combo.lineEdit().setText(", ".join(selected))
-
-    def get_selected_ai(self):
-        selected = [a.text() for a in self.ai_actions if a.isChecked()]
-        return selected if selected else [self.available_ai_channels[0]]
-    
-    def _setup_ao_selector(self):
-        self.ao_channel_combo.setEditable(True)
-
-        clickable_line = ClickableLineEdit()
-        clickable_line.setReadOnly(True)
-        clickable_line.setPlaceholderText("No channels available")
-        
-        clickable_line.clicked.connect(self._show_ao_menu) 
-        
-        self.ao_channel_combo.setLineEdit(clickable_line)
-        self.ao_menu = QMenu(self)
-        self.ao_actions = []
-
-        for ch in self.available_ao_channels:
-            action = QAction(ch, self)
-            action.setCheckable(True)
-            action.toggled.connect(self._update_ao_text)
-            self.ao_menu.addAction(action)
-            self.ao_actions.append(action)
-
-        self.ao_channel_combo.showPopup = self._show_ao_menu
-
-        if self.ao_actions:
-            self.ao_actions[0].setChecked(True)
-        else:
-            self.ao_channel_combo.lineEdit().clear()
-
-    def _show_ao_menu(self):
-        self.ao_menu.exec(
-            self.ao_channel_combo.mapToGlobal(
-                self.ao_channel_combo.rect().bottomLeft()
-            )
-        )
-
-    def _update_ao_text(self):
-        selected = self.get_selected_ao()
-
-        if not any(a.isChecked() for a in self.ao_actions):
-            self.ao_actions[0].setChecked(True)
-            selected = [self.ao_actions[0].text()]
-
-        self.ao_channel_combo.lineEdit().setText(", ".join(selected))
-
-    def get_selected_ao(self):
-        selected = [a.text() for a in self.ao_actions if a.isChecked()]
-        return selected if selected else [self.available_ao_channels[0]]

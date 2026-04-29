@@ -54,6 +54,7 @@ from pydaq.get_model import GetModel
 
 # Defining parameters
 device_name = "Dev1"
+# Single-Input Single-Output (SISO) configuration
 ao_channels = ['ao0']
 ai_channels = ['ai0']
 terminal = "Diff"
