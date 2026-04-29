@@ -190,7 +190,7 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             selected = self.get_selected_channels() 
 
             # Checking if a path was set
-            if self.path_line_edit.text() == "":
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
                 raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
 
             g.path = self.path_line_edit.text()

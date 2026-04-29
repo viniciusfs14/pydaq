@@ -182,7 +182,7 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             g = GetModel()
 
             # 1. Config Validation: Path
-            if self.path_line_edit.text() == "":
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
                 raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
             g.path = self.path_line_edit.text()
 

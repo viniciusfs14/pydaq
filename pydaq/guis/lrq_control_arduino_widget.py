@@ -29,6 +29,8 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
         self.plot_radio_group.buttonToggled.connect(self._update_warning_label)
         self.insert_matrices.released.connect(self.openMatricesWindow)
         self.simulate_radio_group.buttonToggled.connect(self.on_simulate_change)
+        self.plot_radio_group.buttonToggled.connect(self._update_plot_options)
+        self._update_plot_options()
         self.on_simulate_change()
         self.signals = GuiSignals()
 
@@ -146,7 +148,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
                 raise ValueError("[PYDAQ] Missing configuration: Matrices are not defined. Cannot simulate or run control.")
 
             # 2. Config Validation: Path
-            if self.path_line_edit.text() == "":
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
                 raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
             
             l.path = self.path_line_edit.text()
@@ -154,7 +156,18 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             # Common LQR parameters for both Simulation and Hardware
             l.A, l.B, l.C, l.D = self.A, self.B, self.C, self.D
             l.Q, l.R = self.Q, self.R
-
+            
+            l.plot_prefs = {
+                'y': self.chk_plot_y.isChecked(),
+                'x': self.chk_plot_x.isChecked(),
+                'e': self.chk_plot_e.isChecked(),
+                'u': self.chk_plot_u.isChecked()
+            }
+            
+            if self.yes_rt_plot_radio.isChecked() or self.yes_ate_plot_radio.isChecked():
+                if not any(l.plot_prefs.values()):
+                    raise ValueError("[PYDAQ] Missing configuration: Please select at least one axis (y, x, e, or u) to plot.")
+                
             # --- NEW: Validation for Trajectory Duration ---
             if self.yes_reference_radio.isChecked():
                 if self.X_ref is None or self.U_eq is None:
@@ -207,6 +220,16 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             if B_arr.ndim != 2 or B_arr.shape[0] != n_states or B_arr.shape[1] != n_inputs:
                 raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
 
+            if self.yes_reference_radio.isChecked():
+                X_arr = np.array(self.X_ref, ndmin=2)
+                U_arr = np.array(self.U_eq, ndmin=2)
+                
+                if X_arr.shape[1] != n_states:
+                    raise ValueError(f"[PYDAQ] Dimension mismatch: Reference X_ref must have {n_states} columns (states) to match Matrix A / AI channels!")
+                    
+                if U_arr.shape[1] != n_inputs:
+                    raise ValueError(f"[PYDAQ] Dimension mismatch: Reference U_eq must have {n_inputs} columns (inputs) to match Matrix B / AO channels!")
+                
             # 4. Config Validation: COM Port
             try:
                 l.com_port = serial.tools.list_ports.comports()[
@@ -390,6 +413,7 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             self.widget_output.show()
             self.widget_plot.hide()
             self.label_plot.hide()
+        self._update_plot_options()
 
     def on_reference_change(self, checked): # Adicione o argumento 'checked'
         """
@@ -438,3 +462,13 @@ class LQRControl_Arduino_Widget(QWidget, Ui_Arduino_LQR_Control):
             self.auto_update_duration()
             
         print(f"\n[PYDAQ] LQR Reference states updated. Trajectory mode: {self.is_trajectory}")
+    
+    def _update_plot_options(self):
+        simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+        # Show axes selection only if real-time or at-the-end plotting is selected
+        if simulate or self.yes_rt_plot_radio.isChecked() or self.yes_ate_plot_radio.isChecked():
+            self.widget_axes.show()
+            self.label_axes.show()
+        else:
+            self.widget_axes.hide()
+            self.label_axes.hide()

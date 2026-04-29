@@ -121,7 +121,7 @@ class GetData_Arduino_Widget(QWidget, Ui_Arduino_GetData_W):
             g = GetData()
 
             # Checking if a path was set
-            if self.path_line_edit.text() == "":
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
                 raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
 
             g.path = self.path_line_edit.text()

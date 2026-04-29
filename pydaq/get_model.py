@@ -304,7 +304,7 @@ class GetModel(Base):
                     break
 
                 # Send signal
-                val_to_send = 1 if signal_to_send[k] == self.ao_max else 0
+                val_to_send = sent_data_bytes[k] # It directly retrieves the calculated Duty Cycle (e.g., "255")
                 msg_parts = []
                 for ch in self.ao_channels: 
                     pin_num = ch.replace("D", "")
@@ -552,8 +552,8 @@ class GetModel(Base):
         signal_generator = Signal(self.prbs_bits, self.prbs_seed, self.var_tb)
         signal_finale = signal_generator.prbs_final(cycles=self.cycles, ao_max=self.ao_max)
         
-        # Arduino expects bytes for digital output
-        sent_data_bytes = [b"1" if v == self.ao_max else b"0" for v in signal_finale]
+        # Convert Volts (ao_max/ao_min) to PWM Duty Cycle (0-255) for the unified firmware
+        sent_data_bytes = [str(int((v / 5.0) * 255)) for v in signal_finale]
         
         self.title = f"PYDAQ - Data Collection for Model (Arduino)"
         self._orchestrate_acquisition(self._acquisition_worker_arduino, (signal_finale, sent_data_bytes))

@@ -367,7 +367,7 @@ class SendData(Base):
 
                 time_now = time.perf_counter() - st_worker
 
-                plot_vals = [5 if x == 1 else 0 for x in digital_vals]
+                plot_vals = [5.0 if x == 255 else 0.0 for x in digital_vals]
                 progress_queue.put((time_now, plot_vals))
 
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()

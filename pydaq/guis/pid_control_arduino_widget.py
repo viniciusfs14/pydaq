@@ -180,7 +180,7 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         try:
             self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
             # 1. Config Validation: Path
-            if self.path_line_edit.text() == "":
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
                 raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
             self.path = self.path_line_edit.text()
 

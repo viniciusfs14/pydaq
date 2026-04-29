@@ -290,96 +290,120 @@ class Base:
                     oupt += string[i]
             return oupt.upper()
 
-    def _start_updatable_plot_lqr(self, title_str="PYDAQ - LQR Control"):
+    def _start_updatable_plot_lqr(self, title_str="PYDAQ - LQR Control", show_pwm_axis=False):
         """
-        Initializes a matplotlib figure with 2 subplots (vertically stacked)
-        specifically for LQR/Control visualization.
-        ax1: System Response (y)
-        ax2: Control Effort (u)
+        Initializes a matplotlib figure with 4 subplots (vertically stacked)
+        ax_y: System Response (y)
+        ax_x: States (x)
+        ax_e: State Error (e)
+        ax_u: Control Effort (u)
         """
         plt.ion()
-        # sharex=True guarantees synchronized zooming across all 3 plots
-        self.fig, (self.ax_y, self.ax_x, self.ax_u) = plt.subplots(3, 1, figsize=(9, 9), sharex=True)
         
+        # Filter active plots based on preferences (default all True if not set)
+        if not hasattr(self, 'plot_prefs'):
+            self.plot_prefs = {'y': True, 'x': True, 'e': True, 'u': True}
+
+        self.active_plots = [key for key, is_active in self.plot_prefs.items() if is_active]
+        n_axes = len(self.active_plots)
+        
+        if n_axes == 0:
+            self.fig = None
+            return
+            
+        # Height scales dynamically (e.g., 2.5 inches per plot)
+        self.fig, axes = plt.subplots(n_axes, 1, figsize=(9, 2.5 * n_axes), sharex=True)
         self.title = title_str
         self.fig.suptitle(self.title, fontsize=14)
-
-        self.ax_y.set_ylabel("Outputs (y)")
-        self.ax_y.grid(True)
-
-        self.ax_x.set_ylabel("States (x)")
-        self.ax_x.grid(True)
-
-        self.ax_u.set_xlabel("Time (s)")
-        self.ax_u.set_ylabel("Control Effort (u)")
-        self.ax_u.grid(True)
-
+        
+        # Normalize to a list if only 1 plot was selected
+        if n_axes == 1:
+            axes = [axes]
+            
+        # Map the active keys to their respective axis objects
+        self.ax_map = {key: ax for key, ax in zip(self.active_plots, axes)}
+        
+        # Configure labels
+        if 'y' in self.ax_map:
+            self.ax_map['y'].set_ylabel("Outputs (y)")
+        if 'x' in self.ax_map:
+            self.ax_map['x'].set_ylabel("States (x)")
+        if 'e' in self.ax_map:
+            self.ax_map['e'].set_ylabel("State Error (e)")
+        
+        # --- MODIFIED: Conditional PWM Axis ---
+        if 'u' in self.ax_map:
+            self.ax_map['u'].set_ylabel("Control Effort (u) [V]")
+            if show_pwm_axis:
+                self.ax_u_pwm = self.ax_map['u'].twinx()
+                self.ax_u_pwm.set_ylabel("PWM Duty Cycle")
+            
+        # The last axis always gets the Time label
+        axes[-1].set_xlabel("Time (s)")
+        
+        for ax in axes:
+            ax.grid(True)
+            
         self.fig.tight_layout(rect=[0, 0, 1, 0.96])
         self.fig.subplots_adjust(left=0.10)
         plt.show(block=False)
 
-    def _update_plot_lqr(self, time_values, y_values, x_state_values, u_values):
-        """
-        Updates the LQR 3-axis subplots.
-        ax_y plots time vs y_values (Outputs)
-        ax_x plots time vs x_state_values (States)
-        ax_u plots time vs u_values (Control Effort)
-        """
-        if self.fig is None or not hasattr(self, 'ax_y'):
-            warnings.warn("LQR Plot not initialized. Call _start_updatable_plot_lqr first.")
+    def _update_plot_lqr(self, time_values, y_values, x_state_values, e_values, u_values):
+        """Updates only the dynamically selected LQR subplots."""
+        if self.fig is None or not hasattr(self, 'ax_map'):
             return
 
-        # Clear all axes
-        self.ax_y.clear()
-        self.ax_x.clear()
-        self.ax_u.clear()
+        # Clear and restyle active axes
+        if 'y' in self.ax_map:
+            self.ax_map['y'].clear()
+            self.ax_map['y'].set_ylabel("Outputs (y)")
+            self.ax_map['y'].grid(True)
+        if 'x' in self.ax_map:
+            self.ax_map['x'].clear()
+            self.ax_map['x'].set_ylabel("States (x)")
+            self.ax_map['x'].grid(True)
+        if 'e' in self.ax_map:
+            self.ax_map['e'].clear()
+            self.ax_map['e'].set_ylabel("State Error (e)")
+            self.ax_map['e'].grid(True)
+        if 'u' in self.ax_map:
+            self.ax_map['u'].clear()
+            self.ax_map['u'].set_ylabel("Control Effort (u)")
+            self.ax_map['u'].grid(True)
 
-        # Re-apply styling (clearing removes grid and labels)
-        self.ax_y.set_ylabel("Outputs (y)")
-        self.ax_y.grid(True)
-        self.ax_x.set_ylabel("States (x)")
-        self.ax_x.grid(True)
-        self.ax_u.set_xlabel("Time (s)")
-        self.ax_u.set_ylabel("Control Effort (u)")
-        self.ax_u.grid(True)
+        # Ensure x-label stays on the last plot
+        list(self.ax_map.values())[-1].set_xlabel("Time (s)")
 
         # Plot Outputs (y)
-        for i, ch_key in enumerate(y_values.keys()):
-            if len(y_values[ch_key]) > 0:
-                color = plt.cm.tab10(i % 10) 
-                self.ax_y.plot(
-                    time_values, y_values[ch_key],
-                    marker='o', linestyle='-', color=color, markersize=3,
-                    label=f"Output ({ch_key})"
-                )
+        if 'y' in self.ax_map:
+            for i, ch_key in enumerate(y_values.keys()):
+                if len(y_values[ch_key]) > 0:
+                    color = plt.cm.tab10(i % 10) 
+                    self.ax_map['y'].plot(time_values, y_values[ch_key], marker='o', linestyle='-', color=color, markersize=3, label=f"Output ({ch_key})")
 
         # Plot States (x)
-        for i, ch_key in enumerate(x_state_values.keys()):
-            if len(x_state_values[ch_key]) > 0:
-                color = plt.cm.tab10(i % 10) 
-                self.ax_x.plot(
-                    time_values, x_state_values[ch_key],
-                    marker='o', linestyle='-', color=color, markersize=3,
-                    label=f"State ({ch_key})"
-                )
+        if 'x' in self.ax_map:
+            for i, ch_key in enumerate(x_state_values.keys()):
+                if len(x_state_values[ch_key]) > 0:
+                    color = plt.cm.tab10(i % 10) 
+                    self.ax_map['x'].plot(time_values, x_state_values[ch_key], marker='o', linestyle='-', color=color, markersize=3, label=f"State ({ch_key})")
 
-        # Plot Control Effort (u) using step for discrete representation
-        for i, ch_key in enumerate(u_values.keys()):
-            if len(u_values[ch_key]) > 0:
-                color = plt.cm.tab10(i % 10) 
-                # Use .step instead of .plot
-                self.ax_u.step(
-                    time_values, u_values[ch_key],
-                    where='post',  # Holds the value after the time step
-                    marker='o', linestyle='-',
-                    color=color, 
-                    markersize=3,
-                    linewidth=2,
-                    label=f"Input/PWM ({ch_key})"
-                )
+        # Plot Error (e)
+        if 'e' in self.ax_map:
+            for i, ch_key in enumerate(e_values.keys()):
+                if len(e_values[ch_key]) > 0:
+                    color = plt.cm.tab10(i % 10) 
+                    self.ax_map['e'].plot(time_values, e_values[ch_key], marker='o', linestyle='-', color=color, markersize=3, label=f"Error ({ch_key})")
+
+        # Plot Control Effort (u)
+        if 'u' in self.ax_map:
+            for i, ch_key in enumerate(u_values.keys()):
+                if len(u_values[ch_key]) > 0:
+                    color = plt.cm.tab10(i % 10) 
+                    self.ax_map['u'].step(time_values, u_values[ch_key], where='post', marker='o', linestyle='-', color=color, markersize=3, linewidth=2, label=f"Input/PWM ({ch_key})")
 
         # Autoscale and Legend
-        for ax in [self.ax_y, self.ax_x, self.ax_u]:
+        for ax in self.ax_map.values():
             ax.relim()
             ax.autoscale_view()
             ax.legend(loc="upper right", fontsize='small')

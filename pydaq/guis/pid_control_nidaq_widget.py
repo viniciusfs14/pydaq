@@ -169,10 +169,9 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
             widget_to_remove.setParent(None)
         self.image_layout.addWidget(canvas)
 
-# Create the pid control window
+    # Create the pid control window
     def show_graph_window(self):
-        self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
-        
+
         # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
         if not self.simulate and not NIDAQ_AVAILABLE:
             warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
@@ -180,36 +179,73 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
             error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
             error_w.exec()
             return
-        
-        self.numerator = self.lineEdit_numerator.text()
-        self.denominator = self.lineEdit_denominator.text()
-        if self.simulate:
-            self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
-            self.ao_channels = [" "]
-        else:
-            selected_ao = self.get_selected_ao()
-            selected_ai = self.get_selected_ai()
-            self.channels = [ch.split("/")[1] for ch in selected_ai]
-            self.ao_channels = [ch.split("/")[1] for ch in selected_ao]
-        self.index = self.comboBox_type.currentIndex()
-        self.setpoint = self.doubleSpinBox_setpoint.value()
-        self.getunit()
-        self.equationvu = self.lineEdit_equationvu.text()
-        self.equationuv = self.lineEdit_equationuv.text()
-        self.period = self.doubleSpinBox_period.value()
-        self.path = self.path_line_edit.text()
-        self.save = True if self.save_radio_group.checkedId() == -2 else False
-        self.board = 'nidaq'
+            
+        try:
+            self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+            
+            # 1. Config Validation: Path
+            if hasattr(self, 'yes_save_radio') and self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            self.path = self.path_line_edit.text()
 
-        self.device = self.ao_channel_combo.currentText().split("/")[0]
-        
-        self.terminal = self.terminal_config_combo.currentText()
+            # 2. Simulate vs Real Mode Config
+            if self.simulate:
+                self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
+                self.ao_channels = [" "]
+                self.device = None
+            else:
+                selected_ao = self.get_selected_ao()
+                selected_ai = self.get_selected_ai()
+                
+                try:
+                    self.channels = [ch.split("/")[1] for ch in selected_ai]
+                    self.ao_channels = [ch.split("/")[1] for ch in selected_ao]
+                    self.device = selected_ao[0].split("/")[0] if selected_ao else None
+                except IndexError:
+                    raise ValueError("[PYDAQ] Missing configuration: Invalid channel format selected.")
 
-        plot_window = PID_Control_Window_Dialog()
-        plot_window.check_board(self.board, self.device, self.ao_channels, self.channels, self.terminal, self.simulate)
-        plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
-        plot_window.send_values.connect(self.update_values)
-        plot_window.exec()
+                # 3. Config Validation: Dimensions
+                if len(self.channels) != len(self.ao_channels):
+                    raise ValueError(
+                        f"[PYDAQ] Dimension mismatch: The number of selected AI channels ({len(self.channels)}) does not match the number of selected AO channels ({len(self.ao_channels)})."
+                    )
+
+            # 4. Remaining Parameters
+            self.numerator = self.lineEdit_numerator.text()
+            self.denominator = self.lineEdit_denominator.text()
+            self.index = self.comboBox_type.currentIndex()
+            self.setpoint = self.doubleSpinBox_setpoint.value()
+            self.getunit()
+            self.equationvu = self.lineEdit_equationvu.text()
+            self.equationuv = self.lineEdit_equationuv.text()
+            self.period = self.doubleSpinBox_period.value()
+            self.save = True if self.save_radio_group.checkedId() == -2 else False
+            self.board = 'nidaq'
+            self.terminal = self.terminal_config_combo.currentText()
+
+            print(f"\n[PYDAQ] Opening PID Control Dialog ...")
+            plot_window = PID_Control_Window_Dialog()
+            plot_window.check_board(self.board, self.device, self.ao_channels, self.channels, self.terminal, self.simulate)
+            plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
+            plot_window.send_values.connect(self.update_values)
+            plot_window.exec()
+
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: The number of selected AI channels does not match the number of selected AO channels.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            
+            error_w.exec()
 
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory( # To locate the data path to armazenate
@@ -219,7 +255,7 @@ class PID_Control_NIDAQ_Widget(QWidget, Ui_NIDAQ_PID_Control):
             pass
         else:
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
-
+            
     def update_values(self, value1, value2, value3, value4, value5):
         self.doubleSpinBox_kp.setValue(value1)
         self.doubleSpinBox_ki.setValue(value2)
