@@ -2,11 +2,11 @@
 
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
 
-**NOTE 2**: LQR (Linear Quadratic Regulator) control requires defining the state-space matrices ($A$, $B$, $C$, $D$) of your system, as well as the weight matrices ($Q$ and $R$) to calculate the optimal gain matrix $K$. Analog output ranges should be configured according to your system hardware limits.
+**NOTE 2**: LQR (Linear Quadratic Regulator) control requires defining the state-space matrices (A, B, C, D) of your system, as well as the weight matrices (Q and R) to calculate the optimal gain matrix $K$. Analog output ranges should be configured according to your system hardware limits.
 
-**NOTE 3**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form ($A_d$, $B_d$, $C_d$, $D_d$). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
+**NOTE 3**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form (A_d, B_d, C_d, D_d). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
 
-**NOTE 4**: The PYDAQ LQR interface allows users to define state references ($X_{ref}$) and equilibrium inputs ($U_{eq}$) for setpoint tracking through a dedicated widget. Within this interface, users can choose whether the reference will be a fixed point or a dynamic trajectory using a tabbed menu. The first tab allows manual data entry into tables, which applies a fixed reference throughout the acquisition. Alternatively, the second tab allows users to load `.dat` or `.txt` files. When using files, the system's logic automatically determines the mode: a file with a single row of data is treated as a fixed reference, while a file with multiple rows is processed step-by-step as a time-varying trajectory.
+**NOTE 4**: The PYDAQ LQR interface allows users to define state references (X_ref) and equilibrium inputs (U_eq) for setpoint tracking through a dedicated widget. Within this interface, users can choose whether the reference will be a fixed point or a dynamic trajectory using a tabbed menu. The first tab allows manual data entry into tables, which applies a fixed reference throughout the acquisition. Alternatively, the second tab allows users to load `.dat` or `.txt` files. When using files, the system's logic automatically determines the mode: a file with a single row of data is treated as a fixed reference, while a file with multiple rows is processed step-by-step as a time-varying trajectory. For a formatting example, check the `trajectory_test.txt` file located in the `examples/` folder on our GitHub repository.
 
 ## LQR Control using Graphical User Interface (GUI)
 
@@ -23,7 +23,7 @@ After this command, the graphical user interface screen will show up, where the 
 
 ![](img/lqr_control_nidaq_gui.png)
 
-The user is now able to select the desired NIDAQ device, analog input and analog output channels, as well as the analog input terminal configuration (e.g., Differential, RSE, NRSE). The user can also input the system matrices and tuning weights ($Q$ and $R$), and adjust the sample period. Also, the user will define if the data will or not be plotted and saved.
+The user is now able to select the desired NIDAQ device, analog input and analog output channels, as well as the analog input terminal configuration (e.g., Differential, RSE, NRSE). The user can also input the system matrices and tuning weights (Q and R), and adjust the sample period. Also, the user will define if the data will or not be plotted and saved.
 
 ## LQR Control using command line
 

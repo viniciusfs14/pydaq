@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from PySide6.QtWidgets import QWidget, QTableWidgetItem, QHeaderView, QFileDialog
 from PySide6.QtCore import Signal
