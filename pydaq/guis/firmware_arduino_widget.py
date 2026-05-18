@@ -1,7 +1,12 @@
 import os
+import sys
 import subprocess
 import serial.tools.list_ports
-from importlib.resources import files
+# --- MUDANÇA PARA SUPORTE AO PYTHON 3.8 ---
+if sys.version_info < (3, 9):
+    from importlib_resources import files
+else:
+    from importlib.resources import files
 from PySide6.QtWidgets import QWidget, QMessageBox
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QThread, Signal, QTimer
