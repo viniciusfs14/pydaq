@@ -24,10 +24,11 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
         self.n_states = n_states
         self.n_inputs = n_inputs
 
-        # Standard Reference Matrices (Lookup Dictionary for persistence)
+        # Standard Reference Matrices formatted as row vectors (1 x n) 
+        # to match the time-series trajectory format expected by the control loop
         self.default_matrices = {
-            'X': np.zeros((self.n_states, 1)),
-            'U': np.zeros((self.n_inputs, 1))
+            'X': np.zeros((1, self.n_states)),
+            'U': np.zeros((1, self.n_inputs))
         }
 
         # UI Updates: Using labels with the new names provided
@@ -40,13 +41,13 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
         # Connections
         self.select_button.clicked.connect(self.send_data)
 
-        # --- NEW: Connections for the Browse buttons ---
+        # Connections for the Browse buttons
         if hasattr(self, 'btn_browse_x'):
             self.btn_browse_x.clicked.connect(lambda: self.browse_file(self.path_x_ref))
         if hasattr(self, 'btn_browse_u'):
             self.btn_browse_u.clicked.connect(lambda: self.browse_file(self.path_u_eq))
 
-        # Initial table setup - This will populate with default_matrices values
+        # Initial table setup
         self.update_sizes()
 
     def update_sizes(self):
@@ -66,13 +67,17 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         for i in range(rows):
-            for j in range(cols):
+            for j in range(cols): # j is always 0 visually
                 val = "0.0"
                 if matrix_key in self.default_matrices:
                     m = self.default_matrices[matrix_key]
-                    if i < m.shape[0] and j < m.shape[1]:
-                        # Default display using dot
-                        val = str(m[i, j])
+                    
+                    # Robust check: if m is (1, n) or (steps, n), we take the first step
+                    if m.ndim == 2 and m.shape[1] == rows:
+                        val = str(m[0, i])
+                    # Fallback if m is (n, 1) from older persistence logic
+                    elif m.shape == (rows, 1):
+                        val = str(m[i, 0])
 
                 if table.item(i, j) is None:
                     table.setItem(i, j, QTableWidgetItem(val))
@@ -81,22 +86,25 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
 
     def read_matrix(self, table):
         rows = table.rowCount()
-        cols = table.columnCount()
-        M = np.zeros((rows, cols))
+        
+        # The table visually has n rows and 1 column. 
+        # We must return it transposed as (1, n_states) so shape[1] matches n_states
+        # during the dimension validation in the main widget.
+        M = np.zeros((1, rows))
 
         for i in range(rows):
-            for j in range(cols):
-                item = table.item(i, j)
-                if item is None or item.text() == "":
-                    value = 0.0
-                else:
-                    # Robust reading for both decimal separators
-                    raw_text = item.text().replace(',', '.')
-                    try:
-                        value = float(raw_text)
-                    except ValueError:
-                        value = 0.0 
-                M[i, j] = value
+            item = table.item(i, 0)
+            if item is None or item.text() == "":
+                value = 0.0
+            else:
+                # Robust reading for both decimal separators
+                raw_text = item.text().replace(',', '.')
+                try:
+                    value = float(raw_text)
+                except ValueError:
+                    value = 0.0 
+            M[0, i] = value
+            
         return M
 
     # --- NEW: Browse file method ---
@@ -109,22 +117,24 @@ class Select_LQR_Reference_Widget(QWidget, Ui_Select_LQR_References):
     def process_file(self, path, expected_cols):
         """Professor's logic: 1 row = Fixed | N rows = Trajectory"""
         if not path:
-            # If no file was passed (e.g., U_eq left blank), assume fixed zero
-            return np.zeros((expected_cols, 1)), False, 1
+            # If no file was passed (e.g., U_eq left blank), assume fixed zero as (1, n)
+            return np.zeros((1, expected_cols)), False, 1
 
+        # ndmin=2 guarantees the array is at least 2D
         raw_data = np.loadtxt(path, ndmin=2)
 
         if raw_data.ndim == 1:
-            # CASE 1: Only 1 row
-            if len(raw_data) != expected_cols and expected_cols != 1:
-                raise ValueError(f"File has {len(raw_data)} columns, expected {expected_cols}.")
-            return raw_data.reshape(expected_cols, 1), False, 1
+            # Fallback (though ndmin=2 usually prevents this)
+            return raw_data.reshape(1, expected_cols), False, 1
             
         elif raw_data.ndim == 2:
-            # CASE 2: Trajectory (Multiple rows)
+            # CASE 1: Single row (1, n) or CASE 2: Trajectory (steps, n)
             if raw_data.shape[1] != expected_cols:
-                raise ValueError(f"File has {raw_data.shape[1]} columns, expected {expected_cols}.")
-            return raw_data, True, raw_data.shape[0]
+                raise ValueError(f"File has {raw_data.shape[1]} columns, expected {expected_cols} (states/inputs).")
+            
+            # If it's just 1 row, we don't treat it as a trajectory to avoid messing with session duration
+            is_trajectory = True if raw_data.shape[0] > 1 else False
+            return raw_data, is_trajectory, raw_data.shape[0]
 
     def send_data(self):
         """

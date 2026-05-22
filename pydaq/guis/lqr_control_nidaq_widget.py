@@ -150,7 +150,7 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
                 if not any(l.plot_prefs.values()):
                     raise ValueError("[PYDAQ] Missing configuration: Please select at least one axis (y, x, e, or u) to plot.")
                 
-            # --- NEW: Pass Reference Tracking variables & Duration Validation ---
+            # --- Pass Reference Tracking variables & Duration Validation ---
             if self.yes_reference_radio.isChecked():
                 if self.X_ref is None or self.U_eq is None:
                     raise ValueError("[PYDAQ] Missing configuration: Reference Tracking is enabled but X_ref or U_eq are empty.")
@@ -180,33 +180,35 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
             else: # self.No_radio.isChecked()
                 l.plot_mode = 'no'
 
-            # --- SIMULATION MODE ---
-            if simulate:
-                l.simulate_lqr()
-
-                return  # IMPORTANT: stop here
-
-            # Input and output range
-            selected_ao = self.get_selected_ao()
-            selected_ai = self.get_selected_ai()
-            
-            l.device = selected_ao[0].split("/")[0]
-            l.channels = [ch.split("/")[1] for ch in selected_ai]
-            l.ao_channels = [ch.split("/")[1] for ch in selected_ao]
-
             A_arr = np.array(self.A)
             B_arr = np.array(self.B)
 
-            n_states = len(l.channels)      # Number of AI channels
-            n_inputs = len(l.ao_channels)   # Number of AO channels
+            # Determine number of states and inputs based on mode
+            if simulate:
+                n_states = self.n_states
+                n_inputs = self.n_inputs
+            else:
+                # Input and output range for hardware
+                selected_ao = self.get_selected_ao()
+                selected_ai = self.get_selected_ai()
+                
+                if not selected_ai or not selected_ao:
+                    raise ValueError("[PYDAQ] Missing configuration: No AI or AO channels selected for hardware control.")
 
-            # Check matrix A: must be square and match the number of AI channels
+                l.device = selected_ao[0].split("/")[0]
+                l.channels = [ch.split("/")[1] for ch in selected_ai]
+                l.ao_channels = [ch.split("/")[1] for ch in selected_ao]
+
+                n_states = len(l.channels)      # Number of AI channels
+                n_inputs = len(l.ao_channels)   # Number of AO channels
+
+            # Check matrix A: must be square and match the number of states
             if A_arr.ndim != 2 or A_arr.shape[0] != A_arr.shape[1] or A_arr.shape[0] != n_states:
-                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix A must be {n_states}x{n_states} to match AI channels!")
+                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix A must be {n_states}x{n_states} to match system states!")
 
-            # Check matrix B: rows must match AI channels, cols must match AO channels
+            # Check matrix B: rows must match states, cols must match inputs
             if B_arr.ndim != 2 or B_arr.shape[0] != n_states or B_arr.shape[1] != n_inputs:
-                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix B must be {n_states}x{n_inputs} to match AI and AO channels!")
+                raise ValueError(f"[PYDAQ] Dimension mismatch: Matrix B must be {n_states}x{n_inputs} to match system inputs!")
             
             if self.yes_reference_radio.isChecked():
                 X_arr = np.array(self.X_ref, ndmin=2)
@@ -218,6 +220,12 @@ class LQRControl_NIDAQ_Widget(QWidget, Ui_NIDAQ_LQR_Control):
                 if U_arr.shape[1] != n_inputs:
                     raise ValueError(f"[PYDAQ] Dimension mismatch: Reference U_eq must have {n_inputs} columns (inputs) to match Matrix B / AO channels!")
 
+            # --- SIMULATION MODE ---
+            if simulate:
+                l.simulate_lqr()
+                return  # IMPORTANT: stop here
+
+            # --- HARDWARE MODE ---
             l.terminal = l.term_map[self.terminal_config_combo.currentText()]
 
             l.lqr_control_nidaq()

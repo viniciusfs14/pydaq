@@ -386,13 +386,13 @@ class LQRControl(Base):
         acquisition_thread.join()
 
         if self.plot_mode == 'end' and self.time_var:
-            self.title = f"PYDAQ - Final Step Response: Arduino, Port: {self.com_port}"
-            self._start_updatable_plot_lqr(title_str=self.title, show_pwm_axis=True)
+            self.title = f"PYDAQ - Final Step Response (NIDAQ)"
+            self._start_updatable_plot_lqr(title_str=self.title)
             self._update_plot_lqr(
                 time_values=self.time_var,
                 y_values=self.output_h,
                 x_state_values=self.state_h,
-                e_values=self.error_h,
+                e_values=self.error_h, 
                 u_values=self.input_h
             )
             plt.show(block=True)
@@ -630,6 +630,7 @@ class LQRControl(Base):
                 time_values=self.time_var,
                 y_values=self.output_h,
                 x_state_values=self.state_h,
+                e_values=self.error_h,  
                 u_values=self.input_h
             )
             plt.show(block=True)

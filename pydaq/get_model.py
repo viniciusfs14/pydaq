@@ -65,7 +65,7 @@ def display_formated_results(results_array):
             else:
                 formatted_item = item.rjust(
                     int_width + dec_width + 1
-                )  # Caso não tenha ponto decimal
+                )  
             formatted_row.append(formatted_item)
         print("  ".join(formatted_row))
 
