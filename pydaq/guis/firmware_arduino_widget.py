@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 import serial.tools.list_ports
-# --- MUDANÇA PARA SUPORTE AO PYTHON 3.8 ---
+# --- CHANGE TO PYTHON 3.8 SUPPORT ---
 if sys.version_info < (3, 9):
     from importlib_resources import files
 else:
@@ -73,14 +73,19 @@ class FirmwareUploadWorker(QThread):
                 err_msg = res_compile.stderr.decode('utf-8', errors='replace')
                 self.finished_upload.emit(False, f"Compilation failed: {err_msg}")
                 return
-            self.step_reached.emit(85)
+            self.step_reached.emit(84)
 
             # --- STEP 4: Upload (Target: 100%) ---
             self.status_update.emit(f"Uploading to {self.com_port}...")
             res_upload = subprocess.run([cli_path, "upload", "-p", self.com_port, "--fqbn", self.fqbn, sketch_path], capture_output=True, creationflags=flags)
             if res_upload.returncode != 0:
                 err_msg = res_upload.stderr.decode('utf-8', errors='replace')
-                self.finished_upload.emit(False, f"Upload failed: {err_msg}")
+                
+                # --- NEW: User-friendly treatment for locked doors ---
+                if "Acesso negado" in err_msg or "Access is denied" in err_msg:
+                    self.finished_upload.emit(False, f"Port {self.com_port} is blocked! Please close MATLAB, Serial Monitors, or other scripts using this port and try again.")
+                else:
+                    self.finished_upload.emit(False, f"Upload failed: {err_msg}")
                 return
 
             self.step_reached.emit(100)
@@ -95,6 +100,20 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
         self.setupUi(self)
         self.setWindowTitle("PyDAQ - Firmware Manager")
         self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
+
+        # --- NEW FEATURE: Supported Boards Dictionary ---
+        self.supported_boards = {
+            "Arduino Uno": "arduino:avr:uno",
+            "Arduino Mega 2560": "arduino:avr:mega:cpu=atmega2560",
+            "Arduino Mega (ATmega1280)": "arduino:avr:mega:cpu=atmega1280",
+            "Arduino Nano (Old Bootloader)": "arduino:avr:nano:cpu=atmega328old",
+            "Arduino Nano (New Bootloader)": "arduino:avr:nano",
+            "Arduino Leonardo": "arduino:avr:leonardo"
+        }
+
+        # Populate the board selection combobox if it exists in the UI
+        if hasattr(self, 'board_combo'):
+            self.board_combo.addItems(self.supported_boards.keys())
         
         # Internal state for smooth progress animation
         self.current_display_value = 0
@@ -131,9 +150,18 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
         selected_index = self.device_combo.currentIndex()
         com_port = serial.tools.list_ports.comports()[selected_index].name
 
+        # --- NEW FEATURE: Retrieve selected FQBN ---
+        selected_fqbn = "arduino:avr:uno" # Fallback default
+        if hasattr(self, 'board_combo'):
+            selected_board_name = self.board_combo.currentText()
+            selected_fqbn = self.supported_boards[selected_board_name]
+
         # Lock UI and reset progress state
         self.upload_button.setEnabled(False)
         self.reload_devices.setEnabled(False)
+        if hasattr(self, 'board_combo'):
+            self.board_combo.setEnabled(False) # Lock board selection during upload
+
         self.current_display_value = 0
         self.target_step_value = 15 # Initial fake progress while starting
         self.progressBar.setValue(0)
@@ -141,8 +169,8 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
         # Start the animation timer (100ms interval)
         self.smooth_timer.start(100)
 
-        # Setup and start background worker
-        self.worker = FirmwareUploadWorker(com_port)
+        # Setup and start background worker with the dynamic FQBN
+        self.worker = FirmwareUploadWorker(com_port, fqbn=selected_fqbn)
         self.worker.step_reached.connect(self._on_step_reached)
         self.worker.finished_upload.connect(self.upload_finished)
         self.worker.start()
@@ -166,6 +194,8 @@ class FirmwareUploadWidget(QWidget, Ui_Firmware):
         self.smooth_timer.stop()
         self.upload_button.setEnabled(True)
         self.reload_devices.setEnabled(True)
+        if hasattr(self, 'board_combo'):
+            self.board_combo.setEnabled(True) # Unlock board selection after completion
         
         if success:
             self.progressBar.setValue(100)

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>602</width>
+    <width>617</width>
     <height>617</height>
    </rect>
   </property>
@@ -333,7 +333,7 @@ QScrollArea{
 </string>
   </property>
   <property name="locale">
-   <locale language="English" country="World"/>
+   <locale language="English" country="UnitedStates"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -357,9 +357,6 @@ QScrollArea{
      </property>
      <property name="text">
       <string>Firmware Arduino</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="wordWrap">
       <bool>false</bool>
@@ -393,8 +390,21 @@ QScrollArea{
    </item>
    <item row="2" column="0">
     <widget class="QWidget" name="device_widget" native="true">
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="2">
+       <widget class="QPushButton" name="reload_devices">
+        <property name="maximumSize">
+         <size>
+          <width>25</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
        <widget class="QLabel" name="label_device">
         <property name="maximumSize">
          <size>
@@ -407,21 +417,18 @@ QScrollArea{
         </property>
        </widget>
       </item>
-      <item>
+      <item row="0" column="1">
        <widget class="QComboBox" name="device_combo"/>
       </item>
-      <item>
-       <widget class="QPushButton" name="reload_devices">
-        <property name="maximumSize">
-         <size>
-          <width>25</width>
-          <height>16777215</height>
-         </size>
-        </property>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string/>
+         <string>Board:</string>
         </property>
        </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="board_combo"/>
       </item>
      </layout>
     </widget>
@@ -460,9 +467,6 @@ This configures the Arduino perfectly for continuous analog reading (A0-A5) and 
      </property>
      <property name="textFormat">
       <enum>Qt::TextFormat::PlainText</enum>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignJustify|Qt::AlignmentFlag::AlignTop</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
