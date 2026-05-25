@@ -148,7 +148,6 @@ class LQRControl(Base):
         n_outputs = C_mat.shape[0]
         D_mat = np.array(self.D) if self.D is not None else np.zeros((n_outputs, n_ao))
 
-        st_worker = None
         try:
             self._open_serial()
 
@@ -156,15 +155,6 @@ class LQRControl(Base):
                 self.ser.close()
                 warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
                 return 
-
-            # Wake up the Arduino
-            self.ser.write(b"0")
-            self.ser.reset_input_buffer()
-            _ = self.ser.readline()
-
-            num_cycles_performed = 0
-            st_worker = time.perf_counter()
-            self.st_worker = st_worker
 
             # Prepare Reference Logic (Fixed or Trajectory)
             if self.use_reference and self.x_ref is not None and self.u_eq is not None:
@@ -180,6 +170,15 @@ class LQRControl(Base):
                 traj_x = False
                 traj_u = False
 
+            # Wake up the Arduino
+            time.sleep(0.05)
+            self.ser.write(b"0")
+            self.ser.reset_input_buffer()
+            _ = self.ser.readline()
+
+            num_cycles_performed = 0
+            st_worker = None
+
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
@@ -188,11 +187,16 @@ class LQRControl(Base):
                     self.ser.readline()
                     
                     raw = self.ser.readline()
+
                     try:
                         values = list(map(int, raw.decode("utf-8").strip().split(",")))
                     except (ValueError, UnicodeDecodeError):
                         warnings.warn(f"[PYDAQ] Data parsing error...")
                         continue
+
+                    if st_worker is None:
+                        st_worker = time.perf_counter()
+                        self.st_worker = st_worker
 
                     time_now = time.perf_counter() - st_worker
 
@@ -386,7 +390,7 @@ class LQRControl(Base):
         acquisition_thread.join()
 
         if self.plot_mode == 'end' and self.time_var:
-            self.title = f"PYDAQ - Final Step Response (NIDAQ)"
+            self.title = f"PYDAQ - Final LQR Control (Arduino)"
             self._start_updatable_plot_lqr(title_str=self.title)
             self._update_plot_lqr(
                 time_values=self.time_var,
@@ -489,7 +493,7 @@ class LQRControl(Base):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 else:
-                    warnings.warn("[PYDAQ] Time spent to update interface was greater than ts.")
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         
         finally:
             try:
@@ -557,7 +561,7 @@ class LQRControl(Base):
         acquisition_thread.start()
 
         if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}, Channels: {self.channels}"
+            self.title = f"PYDAQ - LQR Control (NIDAQ). {self.device}, Channels: {self.channels}"
             self._start_updatable_plot_lqr(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
