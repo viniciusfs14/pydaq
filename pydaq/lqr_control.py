@@ -628,7 +628,7 @@ class LQRControl(Base):
         acquisition_thread.join()
 
         if self.plot_mode == 'end' and self.time_var:
-            self.title = f"PYDAQ - Final Step Response (NIDAQ)"
+            self.title = f"PYDAQ - Final LQR Control (NIDAQ)"
             self._start_updatable_plot_lqr(title_str=self.title)
             self._update_plot_lqr(
                 time_values=self.time_var,

@@ -290,7 +290,7 @@ class GetData(Base):
         # NEW BLOCK: Logic to plot at the end
         if self.plot_mode == 'end' and self.time_var:
             print("\n[PYDAQ] Generating plot at the end of acquisition...")
-            self.title = f"PYDAQ - Final Acquisition: {self.device}, {self.channel}"
+            self.title = f"PYDAQ - Final Acquisition: {self.device}, {self.channels}"
             self._start_updatable_plot(title_str=self.title)
             self._update_plot(
                 self.time_var,
