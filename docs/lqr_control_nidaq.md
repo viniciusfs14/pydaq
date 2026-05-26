@@ -6,7 +6,19 @@
 
 **NOTE 3**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form (A_d, B_d, C_d, D_d). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
 
-**NOTE 4**: The PYDAQ LQR interface allows users to define state references (X_ref) and equilibrium inputs (U_eq) for setpoint tracking through a dedicated widget. Within this interface, users can choose whether the reference will be a fixed point or a dynamic trajectory using a tabbed menu. The first tab allows manual data entry into tables, which applies a fixed reference throughout the acquisition. Alternatively, the second tab allows users to load `.dat` or `.txt` files. When using files, the system's logic automatically determines the mode: a file with a single row of data is treated as a fixed reference, while a file with multiple rows is processed step-by-step as a time-varying trajectory. For a formatting example, check the `trajectory_test.txt` file located in the `examples/` folder on our GitHub repository.
+**NOTE 4**: The PYDAQ LQR interface allows users to define state references ($x_{ref}$) and equilibrium inputs ($u_{eq}$) for setpoint tracking through a dedicated widget. Within this interface, users can choose whether the reference will be a fixed point or a dynamic trajectory using a tabbed menu. The first tab allows manual data entry into tables, which applies a fixed reference throughout the acquisition. Alternatively, the second tab allows users to load `.dat` or `.txt` files. When using files, the system's logic automatically determines the mode: a file with a single row of data is treated as a fixed reference, while a file with multiple rows is processed step-by-step as a time-varying trajectory. For a formatting example, check the `trajectory_test.txt` file located in the `examples/` folder on our GitHub repository.
+
+Regardless of whether a fixed setpoint or a dynamic trajectory is selected, the regulator actively computes the following state-space control equations at each sampling period:
+
+1. **State Error Vector Calculation ($e$):**
+   Defines the deviation of the current measured state vector ($x$) acquired from the NI-DAQ analog input channels from the desired reference vector ($x_{ref\_vec}$):
+   $$e = x - x_{ref\_vec}$$
+
+2. **Optimal Control Effort ($u$):**
+   Computes the multi-input optimal control action to be sent to the plant via the NI-DAQ analog output channels. It combines the optimal state-feedback gains ($K$) with the feedforward equilibrium input vector ($u_{eq\_vec}$) to track trajectories with zero steady-state error:
+   $$u = -K \cdot e + u_{eq\_vec}$$
+
+*Note: The calculated control effort $u$ is automatically clipped/saturated between the minimum and maximum voltage constraints configured in the interface (typically 0V to 5V) before being written directly to the National Instruments analog output task.*
 
 ## LQR Control using Graphical User Interface (GUI)
 

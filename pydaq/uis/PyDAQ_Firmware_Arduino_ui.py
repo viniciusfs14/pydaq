@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_Firmware_Arduino.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.11.0
+## Created by: Qt User Interface Compiler version 6.6.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -23,7 +23,7 @@ class Ui_Firmware(object):
     def setupUi(self, Firmware):
         if not Firmware.objectName():
             Firmware.setObjectName(u"Firmware")
-        Firmware.resize(602, 617)
+        Firmware.resize(617, 617)
         Firmware.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -348,7 +348,7 @@ class Ui_Firmware(object):
 "	border: none;\n"
 "}\n"
 "")
-        Firmware.setLocale(QLocale(QLocale.English, QLocale.World))
+        Firmware.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(Firmware)
         self.gridLayout.setObjectName(u"gridLayout")
         self.label = QLabel(Firmware)
@@ -360,7 +360,6 @@ class Ui_Firmware(object):
         font.setItalic(False)
         self.label.setFont(font)
         self.label.setStyleSheet(u"font-size: 24px;")
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setWordWrap(False)
 
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
@@ -381,24 +380,34 @@ class Ui_Firmware(object):
 
         self.device_widget = QWidget(Firmware)
         self.device_widget.setObjectName(u"device_widget")
-        self.horizontalLayout_2 = QHBoxLayout(self.device_widget)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_device = QLabel(self.device_widget)
-        self.label_device.setObjectName(u"label_device")
-        self.label_device.setMaximumSize(QSize(50, 16777215))
-
-        self.horizontalLayout_2.addWidget(self.label_device)
-
-        self.device_combo = QComboBox(self.device_widget)
-        self.device_combo.setObjectName(u"device_combo")
-
-        self.horizontalLayout_2.addWidget(self.device_combo)
-
+        self.gridLayout_2 = QGridLayout(self.device_widget)
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.reload_devices = QPushButton(self.device_widget)
         self.reload_devices.setObjectName(u"reload_devices")
         self.reload_devices.setMaximumSize(QSize(25, 16777215))
 
-        self.horizontalLayout_2.addWidget(self.reload_devices)
+        self.gridLayout_2.addWidget(self.reload_devices, 0, 2, 1, 1)
+
+        self.label_device = QLabel(self.device_widget)
+        self.label_device.setObjectName(u"label_device")
+        self.label_device.setMaximumSize(QSize(50, 16777215))
+
+        self.gridLayout_2.addWidget(self.label_device, 0, 0, 1, 1)
+
+        self.device_combo = QComboBox(self.device_widget)
+        self.device_combo.setObjectName(u"device_combo")
+
+        self.gridLayout_2.addWidget(self.device_combo, 0, 1, 1, 1)
+
+        self.label_3 = QLabel(self.device_widget)
+        self.label_3.setObjectName(u"label_3")
+
+        self.gridLayout_2.addWidget(self.label_3, 1, 0, 1, 1)
+
+        self.board_combo = QComboBox(self.device_widget)
+        self.board_combo.setObjectName(u"board_combo")
+
+        self.gridLayout_2.addWidget(self.board_combo, 1, 1, 1, 1)
 
 
         self.gridLayout.addWidget(self.device_widget, 2, 0, 1, 1)
@@ -417,7 +426,6 @@ class Ui_Firmware(object):
         font1.setKerning(True)
         self.label_2.setFont(font1)
         self.label_2.setTextFormat(Qt.TextFormat.PlainText)
-        self.label_2.setAlignment(Qt.AlignmentFlag.AlignJustify|Qt.AlignmentFlag.AlignTop)
         self.label_2.setWordWrap(True)
 
         self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
@@ -445,8 +453,9 @@ class Ui_Firmware(object):
         Firmware.setWindowTitle(QCoreApplication.translate("Firmware", u"Form", None))
         self.label.setText(QCoreApplication.translate("Firmware", u"Firmware Arduino", None))
         self.upload_button.setText(QCoreApplication.translate("Firmware", u"Upload", None))
-        self.label_device.setText(QCoreApplication.translate("Firmware", u"Device: ", None))
         self.reload_devices.setText("")
+        self.label_device.setText(QCoreApplication.translate("Firmware", u"Device: ", None))
+        self.label_3.setText(QCoreApplication.translate("Firmware", u"Board:", None))
         self.label_2.setText(QCoreApplication.translate("Firmware", u"Upload the PyDAQ firmware to your Arduino board. \n"
 "\n"
 "This configures the Arduino perfectly for continuous analog reading (A0-A5) and dynamic digital/PWM writing (D0-D13), making it fully compatible with Get Data, Send Data, Step Response, Get Model, PID, and LQR Control functions, without needing to use the Arduino IDE.\n"

@@ -309,8 +309,21 @@ class GetData(Base):
             self._save_data(self.data, "data.dat")
             if any(self.data_filtered.values()):
                 self._save_data(self.data_filtered, "data_filtered.dat")
+            # === CORRECTION OF FILTER COEFFICIENT SAVING ===
             if len(self.coeffs) > 0:
-                self._save_data(self.coeffs, "filter_coeffs.dat")
+                # If it is a tuple (b, a) coming from an IIR filter (butter, etc.)
+                if isinstance(self.coeffs, tuple) and len(self.coeffs) == 2:
+                    b, a = self.coeffs
+                    coeffs_to_save = {
+                        "b_coeffs": np.array(b).tolist(),
+                        "a_coeffs": np.array(a).tolist()
+                    }
+                    self._save_data(coeffs_to_save, "filter_coeffs.dat")
+                else:
+                    # If it is just a vector of coefficients (FIR filter / firwin)
+                    coeffs_to_save = np.array(self.coeffs).tolist()
+                    # Since _save_data expects a mapped structure by channel or a list, we encapsulate it:
+                    self._save_data({"coeffs": coeffs_to_save}, "filter_coeffs.dat")
             print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and self.plot_closed_by_user:
@@ -554,8 +567,21 @@ class GetData(Base):
             self._save_data(self.data, "data.dat")
             if any(self.data_filtered.values()):
                 self._save_data(self.data_filtered, "data_filtered.dat")
+            # === CORRECTION OF FILTER COEFFICIENT SAVING ===
             if len(self.coeffs) > 0:
-                self._save_data(self.coeffs, "filter_coeffs.dat")
+                # If it is a tuple (b, a) coming from an IIR filter (butter, etc.)
+                if isinstance(self.coeffs, tuple) and len(self.coeffs) == 2:
+                    b, a = self.coeffs
+                    coeffs_to_save = {
+                        "b_coeffs": np.array(b).tolist(),
+                        "a_coeffs": np.array(a).tolist()
+                    }
+                    self._save_data(coeffs_to_save, "filter_coeffs.dat")
+                else:
+                    # If it is just a vector of coefficients (FIR filter / firwin)
+                    coeffs_to_save = np.array(self.coeffs).tolist()
+                    # Since _save_data expects a mapped structure by channel or a list, we encapsulate it:
+                    self._save_data({"coeffs": coeffs_to_save}, "filter_coeffs.dat")
             print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and self.plot_closed_by_user:

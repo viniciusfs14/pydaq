@@ -180,12 +180,13 @@ class StepResponse(Base):
 
                     time_now = time.perf_counter() - st_worker
 
-                    # === NEW: distribute per channel like get_data ===
+                    ch_values = {}
                     for ch in channels:
                         idx = int(ch.replace("A", ""))
-                        value = values[idx] * self.ard_vpb
-                        data_queue.put((time_now, ch, sent_val, value))
+                        ch_values[ch] = values[idx] * self.ard_vpb
 
+                    data_queue.put((time_now, ch_values, sent_val))
+                    
                     num_cycles_performed += 1
 
                 except (ValueError, UnicodeDecodeError):
@@ -289,26 +290,42 @@ class StepResponse(Base):
                     while not data_queue.empty():
                         remaining_item = data_queue.get_nowait()
                         if remaining_item is not None:
-                            timestamp, channel, input_val, output_val = remaining_item
-                            self.time_var[channel].append(timestamp)
-                            self.input[channel].append(input_val)
-                            self.output[channel].append(output_val)
+                            timestamp, ch_values, input_val = remaining_item
+                            for ch in self.channels:
+                                self.time_var[ch].append(timestamp)
+                                self.input[ch].append(input_val)
+                                self.output[ch].append(ch_values[ch])
                     break
 
-                timestamp, channel, input_val, output_val = item
+                timestamp, ch_values, input_val = item
 
-                self.time_var[channel].append(timestamp)
-                self.input[channel].append(input_val)
-                self.output[channel].append(output_val)
+                for ch in self.channels:
+                    self.time_var[ch].append(timestamp)
+                    self.input[ch].append(input_val)
+                    self.output[ch].append(ch_values[ch])
 
                 # Throttle plot updates for performance
                 now = time.perf_counter()
 
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
+
+                    time_rt, output_rt, input_rt = {}, {}, {}
+                    for ch in self.channels:
+                        n_points = len(self.time_var[ch])
+                        if n_points >= 2:
+                            time_rt[ch] = self.time_var[ch][0:-1]
+                            input_rt[ch] = self.input[ch][0:-1]
+                            output_rt[ch] = self.output[ch][1:]
+                        else:
+                            # If it's the first sample, send empty data or the raw data to avoid breaking the plot.
+                            time_rt[ch] = self.time_var[ch]
+                            input_rt[ch] = self.input[ch]
+                            output_rt[ch] = self.output[ch]
+                            
                     self._update_plot(
-                        self.time_var,
-                        self.output,
-                        y2_values=self.input,
+                        time_rt,
+                        output_rt,
+                        y2_values=input_rt,
                         y1_label="Output",
                         y2_label="Input",
                         channel_names=self.channels,        # Ex: ["A0", "A1"]
@@ -366,7 +383,7 @@ class StepResponse(Base):
                     plt.plot(
                         self.time_var[ch][0:-1],
                         self.input[ch][0:-1],
-                        label=f"Step Input - {ch}",
+                        label=f"Step Input - ({self.ao_channels[0]})", 
                         linewidth=2
                     )
 
@@ -386,12 +403,18 @@ class StepResponse(Base):
                     plt.show(block=False)
 
         if self.plot_mode == 'end' and self.time_var:
+
+            # Synchronizes the samples, discarding the first output and the last input/time.
+            time_aligned = {ch: self.time_var[ch][0:-1] for ch in self.channels}
+            output_aligned = {ch: self.output[ch][1:] for ch in self.channels}
+            input_aligned = {ch: self.input[ch][0:-1] for ch in self.channels}
+
             self.title = f"PYDAQ - Final Step Response: Arduino, Port: {self.com_port}"
             self._start_updatable_plot(title_str=self.title)
             self._update_plot(
-                self.time_var,
-                self.output,
-                y2_values=self.input,
+                time_aligned,
+                output_aligned,
+                y2_values=input_aligned,
                 y1_label="Output",
                 y2_label="Input",
                 channel_names=self.channels,        # Ex: ["A0", "A1"]
@@ -401,9 +424,14 @@ class StepResponse(Base):
 
         if self.save:
             print("\n[PYDAQ] Saving data ...")
-            self._save_data(self.time_var, "time.dat")
-            self._save_data(self.input, "input.dat")
-            self._save_data(self.output, "output.dat")
+
+            time_save = {ch: self.time_var[ch][0:-1] for ch in self.channels}
+            input_save = {ch: self.input[ch][0:-1] for ch in self.channels}
+            output_save = {ch: self.output[ch][1:] for ch in self.channels}
+            
+            self._save_data(time_save, "time.dat")
+            self._save_data(input_save, "input.dat")
+            self._save_data(output_save, "output.dat")
             print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
@@ -472,8 +500,11 @@ class StepResponse(Base):
 
                 num_cycles_performed += 1
                 # === NEW: queue per channel ===
+                ch_values = {}
                 for i, ch in enumerate(self.channels):
-                    data_queue.put((time_now, ch, input_vals[i], temp[i]))
+                    ch_values[ch] = temp[i]
+
+                data_queue.put((time_now, ch_values, sent_val))
 
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
                 if wait_time > 0:
@@ -575,17 +606,19 @@ class StepResponse(Base):
                     while not data_queue.empty():
                         remaining_item = data_queue.get_nowait()
                         if remaining_item is not None:
-                            timestamp, channel, input_val, output_val = remaining_item
-                            self.time_var[channel].append(timestamp)
-                            self.input[channel].append(input_val)
-                            self.output[channel].append(output_val)
+                            timestamp, ch_values, input_val = remaining_item
+                            for ch in self.channels:
+                                self.time_var[ch].append(timestamp)
+                                self.input[ch].append(input_val)
+                                self.output[ch].append(ch_values[ch])
                     break
 
-                timestamp, channel, input_val, output_val = item
+                timestamp, ch_values, input_val = item
 
-                self.time_var[channel].append(timestamp)
-                self.input[channel].append(input_val)
-                self.output[channel].append(output_val)
+                for ch in self.channels:
+                    self.time_var[ch].append(timestamp)
+                    self.input[ch].append(input_val)
+                    self.output[ch].append(ch_values[ch])
 
                 # Throttle plot updates for performance
                 now = time.perf_counter()
@@ -625,8 +658,8 @@ class StepResponse(Base):
                 channel_name  = ch  # === NEW: for better error messages ===
 
                 Kp, Ki, Kd, tangent_plot = self.get_parameters(
-                    self.time_var[ch][0:-1],
-                    self.output[ch][1:],
+                    self.time_var[ch],
+                    self.output[ch],
                     self.step_time,
                     self.sintony_type,
                     self.step_min,
@@ -639,9 +672,9 @@ class StepResponse(Base):
                 if self.plot_mode != 'no':
 
                     plt.figure(figsize=(10, 6))
-                    plt.plot(self.time_var[ch][0:-1], self.output[ch][1:], label=f"Output - {ch}", linewidth=2)
-                    plt.plot(self.time_var[ch][0:-1], self.input[ch][0:-1], label=f"Input - {ch}", linewidth=2)
-                    plt.plot(self.time_var[ch][0:-1], tangent_plot, '--', label="Tangent", linewidth=2)
+                    plt.plot(self.time_var[ch], self.output[ch], label=f"Output - {ch}", linewidth=2)
+                    plt.plot(self.time_var[ch], self.input[ch], label=f"Input - {self.ao_channels}", linewidth=2)
+                    plt.plot(self.time_var[ch], tangent_plot, '--', label="Tangent", linewidth=2)
 
                     plt.title(f"Ziegler-Nichols Tuning - {ch}", fontsize=16)
                     plt.xlabel("Time (s)", fontsize=14)
