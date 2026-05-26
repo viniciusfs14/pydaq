@@ -508,12 +508,19 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
             <widget class="QWidget" name="widget" native="true">
              <layout class="QGridLayout" name="gridLayout_4">
               <item row="0" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
                <widget class="QWidget" name="Matrix_X" native="true">
                 <layout class="QVBoxLayout" name="verticalLayout">
                  <item>
                   <widget class="QLabel" name="labelX">
                    <property name="text">
-                    <string>X_ref</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;State Reference Vector (&lt;span style=&quot; font-family:'Google Sans Text','sans-serif';&quot;&gt;x_ref&lt;/span&gt;): Defines the desired setpoint for each system state.&lt;br/&gt;X_ref&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                   </widget>
                  </item>
@@ -521,6 +528,13 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
                   <widget class="QTableWidget" name="tableX"/>
                  </item>
                 </layout>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="Line" name="line_header">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
                </widget>
               </item>
              </layout>
@@ -533,20 +547,13 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="Line" name="line_header">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
             <widget class="QWidget" name="Matrix_U" native="true">
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
                <widget class="QLabel" name="labelU">
                 <property name="text">
-                 <string>U_eq</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Equilibrium Input Vector (&lt;span style=&quot; font-family:'Google Sans Text','sans-serif';&quot;&gt;U_eq&lt;/span&gt;): Feedforward control action to maintain the system at the setpoint.&lt;br/&gt;U_eq:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>

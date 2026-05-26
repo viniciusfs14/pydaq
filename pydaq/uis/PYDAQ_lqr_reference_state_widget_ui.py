@@ -510,6 +510,11 @@ class Ui_Select_LQR_References(object):
         self.widget.setObjectName(u"widget")
         self.gridLayout_4 = QGridLayout(self.widget)
         self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.label_2 = QLabel(self.widget)
+        self.label_2.setObjectName(u"label_2")
+
+        self.gridLayout_4.addWidget(self.label_2, 0, 0, 1, 1)
+
         self.Matrix_X = QWidget(self.widget)
         self.Matrix_X.setObjectName(u"Matrix_X")
         self.verticalLayout = QVBoxLayout(self.Matrix_X)
@@ -525,7 +530,14 @@ class Ui_Select_LQR_References(object):
         self.verticalLayout.addWidget(self.tableX)
 
 
-        self.gridLayout_4.addWidget(self.Matrix_X, 0, 0, 1, 1)
+        self.gridLayout_4.addWidget(self.Matrix_X, 2, 0, 1, 1)
+
+        self.line_header = QFrame(self.widget)
+        self.line_header.setObjectName(u"line_header")
+        self.line_header.setFrameShape(QFrame.Shape.HLine)
+        self.line_header.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout_4.addWidget(self.line_header, 1, 0, 1, 1)
 
 
         self.gridLayout_2.addWidget(self.widget, 0, 0, 1, 1)
@@ -536,13 +548,6 @@ class Ui_Select_LQR_References(object):
         self.line_bottom.setFrameShadow(QFrame.Shadow.Sunken)
 
         self.gridLayout_2.addWidget(self.line_bottom, 4, 0, 1, 1)
-
-        self.line_header = QFrame(self.scrollAreaWidgetContents)
-        self.line_header.setObjectName(u"line_header")
-        self.line_header.setFrameShape(QFrame.Shape.HLine)
-        self.line_header.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout_2.addWidget(self.line_header, 2, 0, 1, 1)
 
         self.Matrix_U = QWidget(self.scrollAreaWidgetContents)
         self.Matrix_U.setObjectName(u"Matrix_U")
@@ -680,8 +685,9 @@ class Ui_Select_LQR_References(object):
         self.label_states.setText(QCoreApplication.translate("Select_LQR_References", u"States (n):", None))
         self.nl_states.setText(QCoreApplication.translate("Select_LQR_References", u"0", None))
         self.nl_inputs.setText(QCoreApplication.translate("Select_LQR_References", u"0", None))
-        self.labelX.setText(QCoreApplication.translate("Select_LQR_References", u"X_ref", None))
-        self.labelU.setText(QCoreApplication.translate("Select_LQR_References", u"U_eq", None))
+        self.label_2.setText(QCoreApplication.translate("Select_LQR_References", u"TextLabel", None))
+        self.labelX.setText(QCoreApplication.translate("Select_LQR_References", u"<html><head/><body><p>State Reference Vector (<span style=\" font-family:'Google Sans Text','sans-serif';\">x_ref</span>): Defines the desired setpoint for each system state.<br/>X_ref</p></body></html>", None))
+        self.labelU.setText(QCoreApplication.translate("Select_LQR_References", u"<html><head/><body><p>Equilibrium Input Vector (<span style=\" font-family:'Google Sans Text','sans-serif';\">U_eq</span>): Feedforward control action to maintain the system at the setpoint.<br/>U_eq:</p></body></html>", None))
         self.tabWidget_refs.setTabText(self.tabWidget_refs.indexOf(self.tab_manual), QCoreApplication.translate("Select_LQR_References", u"Fixed Values (Manual)", None))
         self.btn_browse_x.setText(QCoreApplication.translate("Select_LQR_References", u"BROWSE", None))
         self.label_x.setText(QCoreApplication.translate("Select_LQR_References", u"File path for X_ref (Mandatory):", None))

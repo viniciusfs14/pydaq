@@ -8,19 +8,19 @@
 
 **NOTE 4**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form (A_d, B_d, C_d, D_d). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
 
-**NOTE 5**: The PYDAQ LQR interface allows users to define state references ($x_{ref}$) and equilibrium inputs ($u_{eq}$) for setpoint tracking through a dedicated widget. Within the control loop, these parameters are actively processed to calculate the state error and compute the optimal control law at each sampling period. 
+**NOTE 5**: The PYDAQ LQR interface allows users to define state references (x_{ref}) and equilibrium inputs (u_{eq}) for setpoint tracking through a dedicated widget. Within the control loop, these parameters are actively processed to calculate the state error and compute the optimal control law at each sampling period. 
 
 Specifically, the regulator implements the following mathematical formulations:
 
-1. **State Error Vector Calculation ($e$):**
-   Defines the deviation of the current measured state vector ($x$) from the desired reference trajectory or setpoint ($x_{ref\_vec}$):
-   $$e = x - x_{ref\_vec}$$
+1. **State Error Vector Calculation (e):**
+   Defines the deviation of the current measured state vector (x) from the desired reference trajectory or setpoint (x_{ref\_vec}):
+   e = x - x_{ref\_vec}
 
-2. **Optimal Control Effort ($u$):**
-   Computes the multi-input control action applied to the system, combining the optimal state-feedback gains ($K$) with the feedforward equilibrium input vector ($u_{eq\_vec}$) to achieve zero steady-state error:
-   $$u = -K \cdot e + u_{eq\_vec}$$
+2. **Optimal Control Effort (u):**
+   Computes the multi-input control action applied to the system, combining the optimal state-feedback gains (K) with the feedforward equilibrium input vector (u_{eq\_vec}) to achieve zero steady-state error:
+   u = -K \cdot e + u_{eq\_vec}
 
-*Note: The generated control effort $u$ is automatically clipped/saturated between 0V and 5V before being converted to 8-bit Duty Cycle values (0-255) and transmitted to the Arduino digital pins.*
+*Note: The generated control effort u is automatically clipped/saturated between 0V and 5V before being converted to 8-bit Duty Cycle values (0-255) and transmitted to the Arduino digital pins.*
 
 ## LQR Control using Graphical User Interface (GUI)
 

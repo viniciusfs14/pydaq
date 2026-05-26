@@ -19,13 +19,33 @@ There are two ways to flash the firmware onto your Arduino board:
 ### Method 1: Automated Upload via PYDAQ GUI (Recommended)
 The easiest way to get your board ready is directly through the PYDAQ interface. The software has an embedded `arduino-cli` engine that automatically handles board indexing, core installations, compilation, and flashing.
 
+#### Uploading the Firmware using Graphical User Interface (GUI)
+Using the GUI to upload the firmware is really straightforward and requires only two lines of code:
+
+```python
+from pydaq.pydaq_global import PydaqGui
+
+# Launch the interface
+PydaqGui()
+```
+
+After this command, the graphical user interface screen will show up, where the user should go to the top menu bar, click on the **Arduino** option, and select **Firmware** to open the flashing interface.
+
+![](img/arduino_firmware_gui.png)
+
 > **⚠️ First-Time Setup Note:** If this is your first time using an Arduino on this computer, PYDAQ will need to download the essential core packages in the background. During this initial process, **Windows may show security prompts** asking for permission to install USB drivers or allow network access. Please click **"Yes"** or **"Install"** to ensure your board is properly recognized.
 
+#### Execution Steps:
 1. Connect your Arduino to the computer via USB.
 2. Launch the PYDAQ GUI using `PydaqGui()`.
 3. On the top menu bar, click on **Arduino - Firmware**.
 4. Select your board's COM port from the dropdown menu (use the reload button if it doesn't appear).
-5. Click **Upload**. Wait for the progress bar to complete and the success message to appear.
+5. Select your Arduino board model from the **Board** dropdown menu. The available boards are:
+   * Arduino Uno
+   * Arduino Mega
+   * Arduino Nano
+   * Arduino Leonardo
+6. Click **Upload**. Wait for the progress bar to complete and the success message to appear.
 
 ![](img/upload_firmware.gif)
 
@@ -38,4 +58,4 @@ If you prefer the traditional method or are facing USB permission issues on your
 4. Go to `Tools > Port` and select the port your board is connected to.
 5. Click the **Upload** button (right arrow icon) and wait for the "Done uploading" message.
 
-Once the upload is complete, your board is fully integrated with PYDAQ and ready to acquire or control data!
+Once the upload is complete, your board is fully ready to be used with any PYDAQ application!
