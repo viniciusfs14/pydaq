@@ -421,19 +421,21 @@ class Base:
     def _verify_arduino_firmware(self):
         """
         Reads samples from the Serial port to confirm that the PyDAQ firmware is running.
-        Reads up to 3 lines to avoid failing on partial data streams.
+        Reads up to 10 lines to avoid failing on partial data streams.
         Returns True if correct, or False if incorrect.
         """
         try:
             self.ser.reset_input_buffer() # Clear old junk
-            
+            self.ser.reset_output_buffer()
+            self.ser.write(b"0\n")
+
             # Save the original timeout and set a quick one
             original_timeout = self.ser.timeout
             self.ser.timeout = 0.5 # 0.5s is more than enough for a continuous stream
 
             try:
-                # Try reading up to 3 lines to catch at least one complete frame
-                for _ in range(3):
+                # Try reading up to 10 lines to catch at least one complete frame
+                for _ in range(10):
                     # Use errors='ignore' to prevent crashes with random serial noise
                     line = self.ser.readline().decode('utf-8', errors='ignore').strip()
                     
@@ -444,8 +446,11 @@ class Base:
 
                     # Check for the exact 6-channel structure defined in the .ino
                     if len(parts) == 6: 
-                        int(parts[0]) # Will raise ValueError if it's not a number
-                        return True   # Perfect frame found!
+                        try:
+                            int(parts[0]) # Will raise ValueError if it's not a number
+                            return True   # Perfect frame found!
+                        except ValueError:
+                            continue
 
                 # If the loop finishes and didn't find a 6-part line
                 return False
