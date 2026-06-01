@@ -2,9 +2,8 @@
 
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device
 
-**NOTE 2:** To get models with Arduino, [the code provided here](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code) 
-should be firstly uploaded in your Arduino board. Default input port is A0, and default output port is 13. Those ports can be changed 
-in the above-mentioned code. This code only works with digital output, since this is a limitation of Arduino Boards.
+**NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
+at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. This firmware handles communication via serial CSV. To maintain theoretical rigor in System Identification, the Get Model module operates strictly as a Single-Input Single-Output (SISO) system. Therefore, you must select exactly one analog input channel (e.g., A0) and one digital PWM output channel (e.g., D0).
 
 **NOTE 3:** PYDAQ is programmed to use 10 bits as an ADC resolution, and 0V and 5V as the input range.
 To change this, the user can alter the following variables:
@@ -32,13 +31,13 @@ screen the user is able to define parameters and start the experiment to adquire
 
 ## Parameters
 
- - **Choose your Arduino**: This option allows you to choose the Arduino you are going to use.
+ - **Device**: This option allows you to choose the Arduino you are going to use.
 
- - **Sample Period**: The user can change the sample period, i.e., time (in seconds) between samples.
+ - **Sample Period (s)**: The user can change the sample period, i.e., time (in seconds) between samples.
 
- - **Start saving data**: Choose when the data will start being recorded to obtain the model.
+ - **Start saving data (s)**: Choose when the data will start being recorded to obtain the model.
 
- - **Session duration**: The user can choose the session duration.
+ - **Session duration (s)**: The user can choose the session duration.
 
  - **Plot and Save data**: The user can choose whether to plot and save the data.
 
@@ -58,16 +57,18 @@ By pressing the **Get Model** button, the program will start and the model will 
 
 ## Run Get model from the command line
 ```python
-
 # Importing PYDAQ
 from pydaq.get_model import GetModel
 
 # Defining parameters
-com_port_arduino = 'COM3'
+com_port_arduino = 'COM7'
+# Single-Input Single-Output (SISO) configuration
+ao_channels = ['D0'] 
+ai_channels = ['A0']
 session_duration_in_s = 100
 sample_period_in_s = 0.5
 save_data = True
-plot_data = "no"
+plot_data = "realtime" # Can be realtime, end or no
 
 # system identification parameters
 degree = 2
@@ -87,6 +88,8 @@ var_tb = 1
 # Class GetModel
 g = GetModel(
     com= com_port_arduino,
+    ai_channels=ai_channels,
+    ao_channels=ao_channels,
     session_duration= session_duration_in_s,
     ts= sample_period_in_s,
     save= save_data,

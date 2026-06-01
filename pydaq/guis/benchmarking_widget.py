@@ -2,13 +2,12 @@ from PySide6.QtWidgets import QFileDialog, QWidget
 from pydaq.uis.ui_PyDAQ_Benchmarking import Ui_Form
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 import time
 import serial
 import serial.tools.list_ports
 import warnings
-import nidaqmx
 import matplotlib.pyplot as plt
-from nidaqmx.system import System
 
 ard_vpb = 1  
 
@@ -17,7 +16,7 @@ class BenchmarkingWidget(QWidget, Ui_Form):
         super(BenchmarkingWidget, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Arduino Benchmarking")
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
+        self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
         self.close_button.released.connect(self.close_window)
         self.start_button.released.connect(self.inicialize_benchmarking)
         self.reload_devices.released.connect(self.update_com_ports)
@@ -51,7 +50,7 @@ class BenchmarkingWidget(QWidget, Ui_Form):
             self.ser = serial.Serial(self.com_port, 115200, timeout=0.05)
             print(f"✅ Serial Port {self.com_port} opened successfully.")
         except serial.SerialException as e:
-            warnings.warn(f"⚠️ It was not possible to open the Serial Port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] ⚠️ It was not possible to open the Serial Port {self.com_port}: {e}")
             print("❌ Aborting benchmarking.")
             return  
 
@@ -72,11 +71,18 @@ class BenchmarkingWidget(QWidget, Ui_Form):
                 if now >= next_sample_time:
                     t0 = now
                     try:
+                        self.ser.reset_input_buffer()
                         line = self.ser.readline().decode("utf-8").strip()
-                        if line.isdigit():
-                            value = int(line) * ard_vpb
-                        else:
+                        if not line:
                             continue
+                        
+                        # --- MOD --- Checks if it's a valid CSV frame
+                        values = list(map(int, line.split(",")))
+                        value = values[0] * ard_vpb  # Just grab the first one if you need to use it for something.
+                        
+                    except ValueError:
+                        # If it fails to convert to int (e.g., corrupted message), ignore
+                        continue
                     except Exception as e:
                         print("Serial read error:", e)
                         continue
@@ -161,7 +167,7 @@ class BenchmarkingNIWidget(QWidget, Ui_Form):
         super().__init__(*args)
         self.setupUi(self)
         self.setWindowTitle("NI-DAQ Benchmarking")
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
+        self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
         self.close_button.released.connect(self.close_window)
         self.start_button.released.connect(self.inicialize_benchmarking)
         self.reload_devices.released.connect(self.update_nidaq_devices)
@@ -171,10 +177,15 @@ class BenchmarkingNIWidget(QWidget, Ui_Form):
         self.update_nidaq_devices()
 
     def update_nidaq_devices(self):
-        system = System.local()
+        
         selected = self.device_box.currentText()
         self.device_box.clear()
 
+        # --- SAFETY LOCK ---
+        if not NIDAQ_AVAILABLE:
+            return
+
+        system = System.local()
         for dev in system.devices:
             for chan in dev.ai_physical_chans:
                 text = f"{chan.name} - {dev.product_type}"
@@ -189,6 +200,13 @@ class BenchmarkingNIWidget(QWidget, Ui_Form):
         self.close()
 
     def inicialize_benchmarking(self, period_s=[1, 0.5, 0.2, 0.1, 0.01, 0.001, 0.0001, 0.00001], duration_s=5.0, allowed_delay_percent=25.0):
+        # --- SAFETY LOCK ---
+        if not NIDAQ_AVAILABLE:
+            print("❌ NI-DAQmx drivers not found! Cannot run benchmark.")
+            self.value_beench.appendPlainText("❌ NI-DAQmx drivers not found! Cannot run benchmark.\n")
+            QApplication.processEvents()
+            return
+        
         print(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
         self.value_beench.appendPlainText(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
         QApplication.processEvents()

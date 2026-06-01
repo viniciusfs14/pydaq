@@ -1,10 +1,12 @@
 import os
-import nidaqmx
-import serial
-import serial.tools.list_ports
+import warnings
+
 from sysidentpy.parameter_estimation import estimators
 
 from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtCore import Qt
+from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System
 
 from ..uis.ui_PyDAQ_get_model_NIDAQ_widget import Ui_Arduino_GetModel_W
 from .error_window_gui import Error_window
@@ -23,51 +25,33 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
         # Gathering nidaq info
         self._nidaq_info()
 
+        # Discover AO and AI channels
         try:
-            ao_chan = nidaqmx.system.device.Device(
-                self.device_names[-1]
+            self.available_ao_channels = nidaqmx.system.device.Device(
+                self.device_names[0]
             ).ao_physical_chans.channel_names
-            ao_def_chan = ao_chan[0]
-        except BaseException:
-            ao_chan = ""
-            ao_def_chan = "There is no analog output in this board"
-
-        try:
-            ai_chan = nidaqmx.system.device.Device(
-                self.device_names[-1]
+            self.available_ai_channels = nidaqmx.system.device.Device(
+                self.device_names[0]
             ).ai_physical_chans.channel_names
-            ai_def_chan = ai_chan[0]
         except BaseException:
-            ai_chan = ""
-            ai_def_chan = "There is no analog input in this board"
+            self.available_ao_channels = []
+            self.available_ai_channels = []
 
-        # Setting the starting values for some widgets
+        # Setting initial widget values
         self.device_combo.addItems(self.device_type)
+        
+        # Populate combo boxes with discovered channels
+        self.ao_channel_combo.addItems(self.available_ao_channels)
+        self.ai_channel_combo.addItems(self.available_ai_channels)
+
         self.path_line_edit.setText(
-            os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
+            os.path.join(os.path.expanduser("~"), "Desktop")
         )
-        self.ao_channel_combo.addItems(ao_chan)
-
-        ao_def_chan_index = self.ao_channel_combo.findText(ao_def_chan)
-
-        if ao_def_chan_index == -1:
-            pass
-        else:
-            self.ao_channel_combo.setCurrentIndex(ao_def_chan_index)
-
-        self.ai_channel_combo.addItems(ai_chan)
-
-        ai_def_chan_index = self.ai_channel_combo.findText(ai_def_chan)
-
-        if ai_def_chan_index == -1:
-            pass
-        else:
-            self.ai_channel_combo.setCurrentIndex(ai_def_chan_index)
-
+        
         self.terminal_config_combo.addItems(["Diff", "RSE", "NRSE"])
-
         self.inp_signal_combo.addItem("PRBS")
 
+        # Logic parameters
         self.signal_bits = 6
         self.signal_seed = 100
         self.signal_var_tb = 1
@@ -78,14 +62,6 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
         self.estimator = "least_squares"
         self.ext_lsq = False
         self.perc_value = 30
-        self.ao_channel = "ao0"
-        self.ai_channel = "ai0"
-
-        estimators_list = [i for i in estimators.__dict__.keys() if i[:1] != "_"]
-        self.estimators_handle_dict = dict()
-
-        for i in estimators_list:
-            self.estimators_handle_dict[" ".join(i.split("_")).capitalize()] = i
 
         # Connecting signals
         self.path_folder_browse.released.connect(self.locate_path)
@@ -172,15 +148,35 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
         self.perc_value = config.ui.perc_data_val_in.value()
 
     def start_func_get_model(self):  # Start getting model
+
+        if not NIDAQ_AVAILABLE:
+            error_w = Error_window()
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware acquisition.")
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Cannot start hardware acquisition.")
+            error_w.exec()
+            return
+        
         try:
             # Instantiating the GetModel class
             g = GetModel()
 
-            # Getting the values from the GUI
+            # 1. Config Validation: Path
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            g.path = self.path_line_edit.text()
 
-            g.device = self.ao_channel_combo.currentText().split("/")[0]
-            g.ao_channel = self.ao_channel_combo.currentText().split("/")[1]
-            g.ai_channel = self.ai_channel_combo.currentText().split("/")[1]
+            # Single Channel Acquisition logic
+            ao_ch = self.ao_channel_combo.currentText()
+            ai_ch = self.ai_channel_combo.currentText()
+
+            if not ao_ch or not ai_ch:
+                raise ValueError("[PYDAQ] Dimension mismatch: Please ensure device and channel are properly defined.")
+            
+            # Formatting channels for the core module (Expected as lists of 1 element for legacy support)
+            g.device = ao_ch.split("/")[0]
+            g.channels = [ai_ch.split("/")[1]]
+            g.ao_channels = [ao_ch.split("/")[1]]
+
             g.terminal = g.term_map[self.terminal_config_combo.currentText()]
             g.ts = self.Ts_in.value()
             g.start_save_time = self.save_time_in.value()
@@ -192,7 +188,6 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
 
             g.prbs_bits = self.signal_bits
             g.prbs_seed = self.signal_seed
@@ -206,19 +201,31 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             g.ext_lsq = self.ext_lsq
             g.perc_value = self.perc_value
 
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
-
             # Restarting variables
             g.data = []
             g.time_var = []
             g.out_read = []
             g.error_path = False
 
-        except BaseException:
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
             error_w.exec()
+            
+            # Use locals() check in case 'g' failed to instantiate
+            if 'g' in locals():
+                g.error_path = True
+            return # Exit function to prevent execution
 
         if not g.error_path:
             # Calling data aquisition method
@@ -226,11 +233,15 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
 
     def _nidaq_info(self):
         """Gathering NIDAQ info"""
-
+        
         # Getting all available devices
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
 
         for device in self.local_system.devices:
@@ -239,44 +250,35 @@ class GetModel_Nidaq_Widget(QWidget, Ui_Arduino_GetModel_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        # Changing availables channels if device changes
-
-        new_ao_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ao_physical_chans.channel_names
-        new_ai_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ai_physical_chans.channel_names
-
-        # Default channel
         try:
-            default_ao_channel = new_ao_channels[0]
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            if NIDAQ_AVAILABLE:
+                new_ao = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+                new_ai = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+            else:
+                new_ao = []
+                new_ai = []
         except BaseException:
-            default_ao_channel = "There is no analog output in this board"
-        try:
-            default_ai_channel = new_ai_channels[0]
-        except BaseException:
-            default_ai_channel = "There is no analog input in this board"
+            new_ao = []
+            new_ai = []
 
-        # Rewriting new ai channels into the right place
+        self.available_ao_channels = new_ao
+        self.available_ai_channels = new_ai
+
+        # Updating combo boxes for single channel selection
         self.ao_channel_combo.clear()
         self.ai_channel_combo.clear()
-        self.ao_channel_combo.addItems(new_ao_channels)
-        self.ai_channel_combo.addItems(new_ai_channels)
+        
+        self.ao_channel_combo.addItems(self.available_ao_channels)
+        self.ai_channel_combo.addItems(self.available_ai_channels)
 
-        ao_defchan_index = self.ao_channel_combo.findText(default_ao_channel)
-
-        if ao_defchan_index == -1:
-            pass
-        else:
-            self.ao_channel_combo.setCurrentIndex(ao_defchan_index)
-
-        ai_defchan_index = self.ai_channel_combo.findText(default_ai_channel)
-
-        if ai_defchan_index == -1:
-            pass
-        else:
-            self.ai_channel_combo.setCurrentIndex(ai_defchan_index)
+        # Setting default indices if channels exist
+        if self.available_ao_channels:
+            self.ao_channel_combo.setCurrentIndex(0)
+        if self.available_ai_channels:
+            self.ai_channel_combo.setCurrentIndex(0)
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""

@@ -4,6 +4,7 @@ import serial.tools.list_ports
 from sysidentpy.parameter_estimation import estimators
 
 from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtCore import Qt
 
 from ..uis.ui_PyDAQ_get_model_Arduino_widget import Ui_Arduino_GetModel_W
 from .error_window_gui import Error_window
@@ -27,10 +28,10 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
         self.start_get_model.released.connect(self.start_func_get_model)
         self.label_warning.hide()
         self.plot_radio_group.buttonToggled.connect(self._update_warning_label)
-        
 
         self.inp_signal_combo.addItem("PRBS")
 
+        # Logic parameters
         self.signal_bits = 6
         self.signal_seed = 100
         self.signal_var_tb = 1
@@ -50,8 +51,19 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
 
         self.update_com_ports()
         self.path_line_edit.setText(
-            os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
+            os.path.join(os.path.expanduser("~"), "Desktop")
         )
+
+        # Available channels (Arduino logic)
+        self.available_ai_channels = [f"A{i}" for i in range(6)]
+        self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
+
+        # Updating combo boxes for single channel selection
+        self.ao_channel_combo.clear()
+        self.ai_channel_combo.clear()
+        
+        self.ao_channel_combo.addItems(self.available_ao_channels)
+        self.ai_channel_combo.addItems(self.available_ai_channels)
 
     def _update_warning_label(self):
         if self.yes_rt_plot_radio.isChecked():
@@ -145,10 +157,45 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             # Instantiating the GetModel class
             g = GetModel()
 
-            # Getting the values from the GUI
-            g.com_port = serial.tools.list_ports.comports()[
-                self.com_ports.index(self.device_combo.currentText())
-            ].name
+            # 1. Config Validation: Path
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            
+            # 2. Single Channel Acquisition logic
+            ao_ch = self.ao_channel_combo.currentText()
+            ai_ch = self.ai_channel_combo.currentText()
+
+            g.path = self.path_line_edit.text()
+
+            g.channels = [ai_ch]
+            g.ao_channels = [ao_ch]
+            
+            if not ao_ch or not ai_ch:
+                raise ValueError("[PYDAQ] Dimension mismatch: Please ensure device and channel are properly defined.")
+
+            # 3. Config Validation: COM Port
+            try:
+                g.com_port = serial.tools.list_ports.comports()[
+                    self.com_ports.index(self.device_combo.currentText())
+                ].name
+                #s.com_port = serial.tools.list_ports.comports()[999].name # Test Error
+            except (ValueError, IndexError):
+                raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+            
+            # 4. GUI-Level Firmware Verification (Fail Fast)
+            try:
+                g._open_serial()
+                firmware_ok = g._verify_arduino_firmware()
+                g.ser.close() # CRITICAL: Release the port for the actual acquisition thread!
+            except Exception:
+                firmware_ok = False
+                if hasattr(g, 'ser') and g.ser.is_open:
+                    g.ser.close()
+
+            if not firmware_ok:
+                raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            
+            # 5. Remaining Parameters
             g.ts = self.Ts_in.value()
             g.start_save_time = self.save_time_in.value()
             g.session_duration = self.sesh_dur_in.value()
@@ -159,7 +206,6 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
 
             g.prbs_bits = self.signal_bits
             g.prbs_seed = self.signal_seed
@@ -173,21 +219,36 @@ class GetModel_Arduino_Widget(QWidget, Ui_Arduino_GetModel_W):
             g.ext_lsq = self.ext_lsq
             g.perc_value = self.perc_value
 
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
-
             # Restarting variables
             g.data = []
             g.time_var = []
             g.out_read = []
             g.error_path = False
 
-        except BaseException:
-            error_w = Error_window()
-            error_w.exec()
-            g.error_path = True
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
 
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
+            elif "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            error_w.exec()
+            
+            # Use locals() check in case 'g' failed to instantiate
+            if 'g' in locals():
+                g.error_path = True
+            return # Exit function to prevent execution
+
+        # Execute
         if not g.error_path:
             # Calling data aquisition method
             g.get_model_arduino()

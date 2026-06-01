@@ -38,12 +38,12 @@ from pydaq.send_data import SendData
 
 # Defining parameters
 device_name = "Dev1"
-channel_used = "ao0"
+channel_used = ['ao0','ao1']
 sample_period_in_seconds = 1
 data = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]  # It can be either a list or a numpy array
 ao_min = 0  # Minimum allowed analog output value
 ao_max = 5  # Maximum allowed analog output value
-will_plot = "no" # Can be realtime, end or no
+will_plot = "realtime" # Can be realtime, end or no
 ```
 
 Then, instantiate a class with defined parametes and send the data
@@ -52,7 +52,7 @@ Then, instantiate a class with defined parametes and send the data
 # Class SendData
 s = SendData(data=data,
              device=device_name,
-             channel=channel_used,
+             channels=channel_used,
              ts=sample_period_in_seconds,
              ao_min=ao_min,
              ao_max=ao_max,
@@ -65,3 +65,7 @@ s.send_data_nidaq()
 If you choose to plot you can see the data sent on screen, i.e:
 
 ![](img/sending_data_nidaq.png)
+
+You can see more detailed bellow:
+
+![](img/senddata_nidaq.gif)

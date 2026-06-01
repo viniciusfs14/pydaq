@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_pid_control_window_dialogMvepvP.ui'
+## Form generated from reading UI file 'PyDAQ_pid_control_window_dialogWqEXfl.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -24,7 +24,7 @@ class Ui_Dialog_Plot_PID_Window(object):
     def setupUi(self, Dialog_Plot_PID_Window):
         if not Dialog_Plot_PID_Window.objectName():
             Dialog_Plot_PID_Window.setObjectName(u"Dialog_Plot_PID_Window")
-        Dialog_Plot_PID_Window.resize(631, 804)
+        Dialog_Plot_PID_Window.resize(837, 833)
         Dialog_Plot_PID_Window.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -333,7 +333,122 @@ class Ui_Dialog_Plot_PID_Window(object):
 "	background-color: rgb(0, 50, 0);\n"
 "}\n"
 "\n"
+"QScrollBar:vertical {\n"
+"     border: 1px solid rgb(140, 140, 140);\n"
+"     background: rgb(140, 140, 140);\n"
+"     width: 17px;\n"
+"     margin: 17px 0 17px 0;\n"
+" }\n"
+"QScrollBar::handle:vertical {\n"
+"     background: rgb(0, 79, 0);\n"
+"     min-height: 20px;\n"
+" }\n"
+"QScrollBar::add-line:vertical {\n"
+"	image: url(:/imgs/imgs/drop_down_arrow.png);\n"
+"     border: 1px solid rgb(140, 140, 140);\n"
+"     background: rgb(0, 79, 0);\n"
+"     height: 15px;\n"
+"     subcontrol-position: bottom;\n"
+"     subcontrol-origin: margin;\n"
+" }\n"
+"\n"
+"QScrollBar::sub-line:vertical {\n"
+"	image: url(:/imgs/imgs/drop_up_arrow.png);\n"
+"     border: 1px solid rgb(140, 140, 140);\n"
+"     background: rgb(0, 79, 0);\n"
+"     height: 15px;\n"
+"     subcontrol-position: top;\n"
+"     "
+                        "subcontrol-origin: margin;\n"
+" }\n"
+"\n"
+"QScrollBar::add-line:vertical:pressed {\n"
+"    border: 1px solid rgb(255, 255, 255);\n"
+"	background: rgb(0, 79, 0)\n"
+" }\n"
+"\n"
+"QScrollBar::sub-line:vertical:pressed {\n"
+"	border: 1px solid rgb(255, 255, 255);\n"
+"	background: rgb(0, 79, 0)\n"
+" }\n"
+"\n"
+"QScrollBar::add-line:vertical:hover {\n"
+"     background-color: rgb(0, 50, 0);\n"
+" }\n"
+"\n"
+"QScrollBar::sub-line:vertical:hover {\n"
+"    background-color: rgb(0, 50, 0);\n"
+" }\n"
+"\n"
+"QScrollBar::handle:vertical:pressed {\n"
+"    border: 1px solid rgb(255, 255, 255);\n"
+"	background: rgb(0, 79, 0)\n"
+" }\n"
+"\n"
+"QScrollBar::handle:vertical:hover {\n"
+"    background-color: rgb(0, 50, 0);\n"
+" }\n"
+"\n"
+"QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {\n"
+"     background: none;\n"
+" }\n"
+"\n"
+"QScrollArea{\n"
+"	border: none;\n"
+"}\n"
+"\n"
+"QScrollBar:horizontal {\n"
+"    border: 1px solid rgb(140, 140, 140);\n"
+"    background: rgb(140, 140, 140);\n"
+"    height: 17px; /* Era width na ver"
+                        "tical */\n"
+"    margin: 0 17px 0 17px; /* Margens laterais agora */\n"
+"}\n"
+"\n"
+"/* O \"pegador\" (slider) */\n"
+"QScrollBar::handle:horizontal {\n"
+"    background: rgb(0, 79, 0);\n"
+"    min-width: 20px; /* Era min-height */\n"
+"}\n"
+"\n"
+"/* Bot\u00e3o da direita (Add line) */\n"
+"QScrollBar::add-line:horizontal {\n"
+"    image: url(:/imgs/imgs/drop_right_arrow.png); /* Ideal trocar para uma seta \u00e0 direita */\n"
+"    border: 1px solid rgb(140, 140, 140);\n"
+"    background: rgb(0, 79, 0);\n"
+"    width: 15px;\n"
+"    subcontrol-position: right;\n"
+"    subcontrol-origin: margin;\n"
+"}\n"
+"\n"
+"/* Bot\u00e3o da esquerda (Sub line) */\n"
+"QScrollBar::sub-line:horizontal {\n"
+"    image: url(:/imgs/imgs/drop_left_arrow.png); /* Ideal trocar para uma seta \u00e0 esquerda */\n"
+"    border: 1px solid rgb(140, 140, 140);\n"
+"    background: rgb(0, 79, 0);\n"
+"    width: 15px;\n"
+"    subcontrol-position: left;\n"
+"    subcontrol-origin: margin;\n"
+"}\n"
+"\n"
+"/* Estados de Intera\u00e7\u00e3o (Hover e Pre"
+                        "ssed) */\n"
+"QScrollBar::add-line:horizontal:pressed, QScrollBar::sub-line:horizontal:pressed, QScrollBar::handle:horizontal:pressed {\n"
+"    border: 1px solid rgb(255, 255, 255);\n"
+"    background: rgb(0, 79, 0);\n"
+"}\n"
+"\n"
+"QScrollBar::add-line:horizontal:hover, QScrollBar::sub-line:horizontal:hover, QScrollBar::handle:horizontal:hover {\n"
+"    background-color: rgb(0, 50, 0);\n"
+"}\n"
+"\n"
+"/* \u00c1rea de clique para pular p\u00e1gina */\n"
+"QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {\n"
+"    background: none;\n"
+"}\n"
+"\n"
 "")
+        Dialog_Plot_PID_Window.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.verticalLayout = QVBoxLayout(Dialog_Plot_PID_Window)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.scrollArea = QScrollArea(Dialog_Plot_PID_Window)
@@ -341,7 +456,7 @@ class Ui_Dialog_Plot_PID_Window(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 611, 784))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 802, 944))
         self.gridLayout_2 = QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.widget = QWidget(self.scrollAreaWidgetContents)
@@ -523,7 +638,7 @@ class Ui_Dialog_Plot_PID_Window(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.widget_image = QWidget(self.frame_image)
         self.widget_image.setObjectName(u"widget_image")
-        self.widget_image.setMinimumSize(QSize(550, 325))
+        self.widget_image.setMinimumSize(QSize(550, 500))
         self.image_layout = QHBoxLayout(self.widget_image)
         self.image_layout.setObjectName(u"image_layout")
 

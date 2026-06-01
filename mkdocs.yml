@@ -10,7 +10,6 @@ copyright: Copyright &copy; 2025 - Samir Martins
 
 nav:
   - Home: index.md
-  - Bechmarking: benchmarking.md
   - Data Acquisition:
       - NIDAQ: 
           - Get Data: get_data_nidaq.md
@@ -30,6 +29,12 @@ nav:
   - PID Control:
       - NIDAQ: pid_control_nidaq.md
       - Arduino: pid_control_arduino.md
+  - LQR Control:
+      - NIDAQ: lqr_control_nidaq.md
+      - Arduino: lqr_control_arduino.md
+  - Benchmarking: benchmarking.md
+  - Arduino Firmware: arduino_firmware.md
+  - Error Dictionary: error_dictionary.md
   - Jupyter Notebooks: jupyter_notebooks.md
   
 

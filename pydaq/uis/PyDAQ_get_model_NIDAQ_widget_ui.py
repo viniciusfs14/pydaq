@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_get_model_NIDAQ_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.2
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -653,12 +653,12 @@ class Ui_Arduino_GetModel_W(object):
         self.label_6.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Plot data?", None))
         self.label_7.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Save data?", None))
         self.label_5.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Session duration (s):", None))
-        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Channel ai:", None))
+        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AI channels:", None))
         self.system_settings_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" ADVANCED SETTINGS ", None))
         self.reload_devices.setText("")
         self.label_4.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Sample period (s):", None))
         self.config_signal_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" CONFIG SIGNAL ", None))
-        self.label_12.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Channel ao:", None))
+        self.label_12.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AO channels:", None))
         self.start_get_model.setText(QCoreApplication.translate("Arduino_GetModel_W", u" GET MODEL ", None))
     # retranslateUi
 

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_send_data_NIDAQ_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.2
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -467,7 +467,7 @@ class Ui_NIDAQ_SendData_W(object):
     def retranslateUi(self, NIDAQ_SendData_W):
         NIDAQ_SendData_W.setWindowTitle(QCoreApplication.translate("NIDAQ_SendData_W", u"Form", None))
         self.reload_devices.setText("")
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_SendData_W", u"Channel:", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_SendData_W", u"AO channels:", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("NIDAQ_SendData_W", u"Real time", None))
 #if QT_CONFIG(tooltip)
         self.label_warning.setToolTip(QCoreApplication.translate("NIDAQ_SendData_W", u"<html><head/><body><p><span style=\" font-size:16pt;\">Selecting Real Time may reduce your acquisition performance if you need to collect data at high frequencies ( sample period &lt; 0.05 s ). We suggest plotting at the end of the acquisition if you don't want to be affected.</span></p></body></html>", None))

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PYDAQ_Digital_filterss_NIDAQ_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.2
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -24,7 +24,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
     def setupUi(self, Digitalfilters_NIDAQ_widget):
         if not Digitalfilters_NIDAQ_widget.objectName():
             Digitalfilters_NIDAQ_widget.setObjectName(u"Digitalfilters_NIDAQ_widget")
-        Digitalfilters_NIDAQ_widget.resize(537, 520)
+        Digitalfilters_NIDAQ_widget.resize(537, 723)
         Digitalfilters_NIDAQ_widget.setMinimumSize(QSize(537, 520))
         Digitalfilters_NIDAQ_widget.setMaximumSize(QSize(537, 800))
         Digitalfilters_NIDAQ_widget.setStyleSheet(u"QWidget{\n"
@@ -312,6 +312,7 @@ class Ui_Digitalfilters_NIDAQ_widget(object):
 "	background-color: rgb(0, 50, 0);\n"
 "}\n"
 "")
+        Digitalfilters_NIDAQ_widget.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
         self.gridLayout = QGridLayout(Digitalfilters_NIDAQ_widget)
         self.gridLayout.setObjectName(u"gridLayout")
         self.line_2 = QFrame(Digitalfilters_NIDAQ_widget)

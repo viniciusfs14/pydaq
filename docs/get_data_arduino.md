@@ -3,9 +3,8 @@
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data
 Acquisition) device
 
-**NOTE 2** To acquire/send data with arduino, the code provided here (located
-at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code))
-should be firstly uploaded in Arduino. Default input port is A0 and this port can be changed in the above mentioned code.
+**NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
+at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
 
 **NOTE 3** PYDAQ is programmed to use 10 bits as a ADC resolution, and 0V and 5V as the input range.
 To change this, the user can alter the following variables:
@@ -52,6 +51,7 @@ from pydaq.get_data import GetData
 sample_period_in_seconds = 1
 session_duration_in_seconds = 10.0
 com_port_arduino = 'COM3'
+channels_used = ['A0', 'A1']
 save_data = True
 will_plot = "no" # Can be realtime, end or no
 ```
@@ -62,6 +62,7 @@ Then, instantiate a class with defined parametes and get the data
 # Class GetData
 g = GetData(com=com_port_arduino,
             ts=sample_period_in_seconds,
+            channels=channels_used,
             session_duration=session_duration_in_seconds,
             save=save_data,
             plot_mode=will_plot)
@@ -77,8 +78,8 @@ g.get_data_arduino()
 To show acquired data, type:
 
 ```python
-print(f'First 10 values of time: \n {g.time_var[0:10]}')
-print(f'\nFirst 10 values of data: \n {g.data[0:10]}')
+print(f"First 10 values of time (Channel A0): \n {g.time_var['A0'][0:10]}")
+print(f"\nFirst 10 values of data (Channel A0): \n {g.data['A0'][0:10]}")
 ```
 
 If you choose to plot you can see acquired data on screen, i.e:

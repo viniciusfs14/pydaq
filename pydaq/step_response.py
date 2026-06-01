@@ -4,7 +4,7 @@ import numpy as np
 
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 
 import threading
 import queue
@@ -14,9 +14,8 @@ import serial
 import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import warnings
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 from scipy.signal import savgol_filter
+
 
 class StepResponse(Base):
     """
@@ -45,8 +44,8 @@ class StepResponse(Base):
     def __init__(
         self,
         device="Dev1",
-        ao_channel="ao0",
-        ai_channel="ai0",
+        ao_channels=None,
+        ai_channels=None,
         ts=0.5,
         session_duration=10.0,
         step_time=3.0,
@@ -64,8 +63,6 @@ class StepResponse(Base):
         self.plot_mode = plot_mode
         self.step_time = step_time
         self.device = device
-        self.ai_channel = ai_channel
-        self.ao_channel = ao_channel
         self.step_min = step_min
         self.step_max = step_max
         self.save = save
@@ -103,19 +100,38 @@ class StepResponse(Base):
         self.plot_closed_by_user = False
         self.plot_ready_event = threading.Event()
 
+        # --- Lógica de Inicialização Segura (MIMO) ---
+        if ai_channels is None:
+            self.channels = ['A0'] if device == 'Arduino' else ['ai0']
+        else:
+            self.channels = ai_channels
+
+        if ao_channels is None:
+            self.ao_channels = ['D9'] if device == 'Arduino' else ['ao0']
+        else:
+            self.ao_channels = ao_channels
+
     # Handler for plot window closure
     def _on_plot_close(self, event):
         """..."""
-        print("Plot window closed by user. Initiating shutdown...")
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False
         self.plot_closed_by_user = True
 
     def _step_response_worker_arduino(self, data_queue):
+
+        channels = self.channels  # === NEW ===
+        n_channels = len(channels)  # === NEW ===
         self.plot_ready_event.wait()
-        
+        num_cycles_performed = 0  # === NEW ===
+        st_worker = None 
         try:
             self._open_serial()
-            
+            if not self._verify_arduino_firmware():
+                self.ser.close()
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+
+                return
             # --- WARM-UP SECTION ---
             # Send an initial command (b"0") to "wake up" the Arduino.
             self.ser.write(b"0")
@@ -127,50 +143,92 @@ class StepResponse(Base):
             # --- END WARM-UP SECTION ---
 
             st_worker = time.perf_counter()
-
+            self.st_worker = st_worker
+            
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
-                
-                # Update step value
+
+                # Update step value (Respeita min/max da interface)
                 if k * self.ts >= float(self.step_time):
-                    sent_data = b"1"
+                    sent_val = float(self.step_max)
                 else:
-                    sent_data = b"0"
+                    sent_val = float(self.step_min)
 
-                self.ser.write(sent_data)
-                
-                self.ser.reset_input_buffer()
-                
-                temp = int(self.ser.read(14).split()[-2].decode("UTF-8")) * self.ard_vpb
+                # Converte os Volts (0 a 5) em Duty Cycle (0 a 255)
+                duty_val = int((sent_val / 5.0) * 255)
 
-                '''try:
+                # === MODIFIED: multi-channel digital send ===
+                msg_parts = []
+                for ch in self.ao_channels:
+                    pin_num = ch.replace("D", "")
+                    msg_parts.append(f"{pin_num}:{duty_val}")
+                
+                msg = ",".join(msg_parts) + "\n"
+                self.ser.write(msg.encode())
+                
+                try:
                     self.ser.reset_input_buffer()
-                    line_bytes = self.ser.readline()
-                    #parts = line_bytes.split()
-                    #temp = int(parts[0].decode("UTF-8")) * self.ard_vpb  
-                    temp = int(line_bytes.split()[-2].decode("UTF-8")) * self.ard_vpb
-                except (ValueError, IndexError, UnicodeDecodeError):
-                    warnings.warn(f"Invalid read from Arduino on cycle {k}. Using value 0.")
-                    temp = 0 # Error handling to avoid breaking the loop.'''
-                
-                time_now = time.perf_counter() - st_worker
-                data_queue.put((time_now, 5.0 * float(sent_data.decode()), temp))
+                    self.ser.readline()
+                    
+                    raw = self.ser.readline()
+                    values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
+                    if len(values) < 6:
+                        warnings.warn("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.")
+                        continue
+
+                    time_now = time.perf_counter() - st_worker
+
+                    ch_values = {}
+                    for ch in channels:
+                        idx = int(ch.replace("A", ""))
+                        ch_values[ch] = values[idx] * self.ard_vpb
+
+                    data_queue.put((time_now, ch_values, sent_val))
+                    
+                    num_cycles_performed += 1
+
+                except (ValueError, UnicodeDecodeError):
+                    warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
+                    continue
+
+                wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
 
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
-                self.ser.write(b"0")
+                try:
+                    stop_parts = []
+                    for ch in self.ao_channels:
+                        pin_num = ch.replace("D", "")
+                        stop_parts.append(f"{pin_num}:0")
+                    self.ser.write((",".join(stop_parts) + "\n").encode())
+                except:
+                    pass
                 self.ser.close()
-                print(f"Serial port {self.com_port} closed.")
             data_queue.put(None)
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")  
     
-
     def step_response_arduino(self):
         """
         This method performs the step response using an Arduino board for given parameters.
@@ -180,9 +238,16 @@ class StepResponse(Base):
 
         """
 
+        # --- SISO SAFETY LOCK FOR PID TUNING ---
+        if self.calculate_pid and (len(self.channels) != 1 or len(self.ao_channels) != 1):
+            raise ValueError("[PYDAQ] Dimension mismatch: PID tuning requires exactly 1 AI and 1 AO channel (SISO).")
+        
         # --- Start of placeholder implementation ---
-        print("Running step response for Arduino...")
-        self.time_var, self.input, self.output = [], [], []
+        
+        self.time_var = {ch: [] for ch in self.channels}
+        self.input = {ch: [] for ch in self.channels}
+        self.output = {ch: [] for ch in self.channels}
+
         data_queue = queue.Queue()
         self.acquisition_running = True
         self.plot_closed_by_user = False
@@ -191,6 +256,7 @@ class StepResponse(Base):
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
+        print ("\n[PYDAQ] Running Step Response...")
         acquisition_thread = threading.Thread(
             target=self._step_response_worker_arduino,
             args=(data_queue,),
@@ -199,12 +265,10 @@ class StepResponse(Base):
         acquisition_thread.start()
 
         if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Step Response (Arduino), Port: {self.com_port}"
+            self.title = f"PYDAQ - Step Response (Arduino), Port: {self.com_port}."
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
 
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
 
             self.plot_ready_event.set()
@@ -212,10 +276,7 @@ class StepResponse(Base):
             self.plot_ready_event.set()
 
         # Plot update throttling logic for performance
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts*0.9, 0.05)
 
         last_plot_update_time = time.perf_counter()
 
@@ -229,210 +290,46 @@ class StepResponse(Base):
                     while not data_queue.empty():
                         remaining_item = data_queue.get_nowait()
                         if remaining_item is not None:
-                            timestamp, input_val, output_val = remaining_item
-                            self.time_var.append(timestamp)
-                            self.input.append(input_val)
-                            self.output.append(output_val)
+                            timestamp, ch_values, input_val = remaining_item
+                            for ch in self.channels:
+                                self.time_var[ch].append(timestamp)
+                                self.input[ch].append(input_val)
+                                self.output[ch].append(ch_values[ch])
                     break
 
-                timestamp, input_val, output_val = item
-                self.time_var.append(timestamp)
-                self.input.append(input_val)
-                self.output.append(output_val)
+                timestamp, ch_values, input_val = item
+
+                for ch in self.channels:
+                    self.time_var[ch].append(timestamp)
+                    self.input[ch].append(input_val)
+                    self.output[ch].append(ch_values[ch])
 
                 # Throttle plot updates for performance
                 now = time.perf_counter()
+
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
+
+                    time_rt, output_rt, input_rt = {}, {}, {}
+                    for ch in self.channels:
+                        n_points = len(self.time_var[ch])
+                        if n_points >= 2:
+                            time_rt[ch] = self.time_var[ch][0:-1]
+                            input_rt[ch] = self.input[ch][0:-1]
+                            output_rt[ch] = self.output[ch][1:]
+                        else:
+                            # If it's the first sample, send empty data or the raw data to avoid breaking the plot.
+                            time_rt[ch] = self.time_var[ch]
+                            input_rt[ch] = self.input[ch]
+                            output_rt[ch] = self.output[ch]
+                            
                     self._update_plot(
-                        self.time_var[0:-1],
-                        self.output[1:],
-                        y2_values=self.input[0:-1],
-                        y1_label=self.legend[0],
-                        y2_label=self.legend[1]
-                    ) # Adjusting data, since no last data is acquired by arduino
-                    last_plot_update_time = now
-
-            except queue.Empty:
-                # This keeps the loop responsive
-                time.sleep(0.01)
-                if not self.acquisition_running and data_queue.empty():
-                    break
-
-        acquisition_thread.join()
-
-        if self.calculate_pid:
-            Kp, Ki, Kd, tangent_plot = self.get_parameters(
-                self.time_var[0:-1],
-                self.output[1:],
-                self.step_time,
-                self.sintony_type,
-                self.ard_ao_min, # Min for Arduino
-                self.ard_ao_max  # Max for Arduino
-            )
-
-            self.pid_parameters = [Kp, Ki, Kd]
-
-            # Plot tuning results
-            plt.figure(figsize=(10, 6))
-            plt.plot(self.time_var[0:-1], self.output[1:], label="System Output", linewidth=2)
-            plt.plot(self.time_var[0:-1], self.input[0:-1], label="Step Input (Gain K)", linewidth=2)
-            plt.plot(self.time_var[0:-1], tangent_plot, '--', label="Tangent Line (Inflection)", linewidth=2, color='r')
-            plt.title("Ziegler-Nichols Tuning Analysis", fontsize=16)
-            plt.xlabel("Time (s)", fontsize=14)
-            plt.ylabel("Amplitude", fontsize=14)
-            plt.legend()
-            plt.grid(True)
-            plt.show(block=False) # Show the plot without blocking the code
-
-        if self.plot_mode == 'end' and self.time_var:
-            self.title = f"PYDAQ - Step Response (Arduino)"
-            self._start_updatable_plot(title_str=self.title)
-            self._update_plot(
-                self.time_var[0:-1],
-                self.output[1:],
-                y2_values=self.input[0:-1],  # Correct format
-                y1_label=self.legend[0],
-                y2_label=self.legend[1]
-            ) # Adjusting data, since no last data is acquired by arduino
-            plt.show(block=True)
-
-        if self.save:
-            print("\nSaving data ...")
-            self._save_data(self.time_var[0:-1], "time.dat")
-            self._save_data(self.input[0:-1], "input.dat")
-            self._save_data(self.output[1:], "output.dat")
-            print("\nData saved ...")
-            
-        if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
-            plt.show(block=True)
-            
-        return
-
-    def _step_response_worker_nidaq(self, data_queue):
-        # Wait for plot to be ready to synchronize start time
-        self.plot_ready_event.wait()
-        
-        st_worker = time.perf_counter()
-        task_ao = nidaqmx.Task()
-        task_ai = nidaqmx.Task()
-    
-        try:
-            task_ao.ao_channels.add_ao_voltage_chan(
-                f"{self.device}/{self.ao_channel}",
-                min_val=float(self.step_min),
-                max_val=float(self.step_max),
-            )
-            task_ai.ai_channels.add_ai_voltage_chan(
-                f"{self.device}/{self.ai_channel}", terminal_config=self.terminal
-            )
-            
-            sent_data = self.step_min
-            task_ao.write(sent_data)
-
-            for k in range(self.cycles):
-                if not self.acquisition_running:
-                    break
-
-                # Update step value
-                if k * self.ts >= float(self.step_time):
-                    sent_data = self.step_max
-                else:
-                    sent_data = self.step_min
-                
-                task_ao.write(sent_data)
-                temp = task_ai.read()
-                
-                time_now = time.perf_counter() - st_worker
-                data_queue.put((time_now, float(sent_data), temp))
-
-                wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
-                if wait_time > 0:
-                    time.sleep(wait_time)
-        
-        finally:
-            task_ao.write(0) # Turn off output at the end
-            task_ao.close()
-            task_ai.close()
-            data_queue.put(None) # Signal end of acquisition
-
-    def step_response_nidaq(self):
-        """
-        This method performs the step response using a NIDAQ board for given parameters.
-
-        :example:
-            step_response_nidaq()
-
-        """
-
-        self.time_var, self.input, self.output = [], [], []
-        data_queue = queue.Queue()
-        self.acquisition_running = True
-        self.plot_closed_by_user = False
-        self.plot_ready_event.clear()
-
-        self._check_path()
-        self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
-
-        acquisition_thread = threading.Thread(
-            target=self._step_response_worker_nidaq,
-            args=(data_queue,),
-            daemon=True
-        )
-        acquisition_thread.start()
-
-        if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}, {self.ai_channel}, {self.ao_channel}"
-            self._start_updatable_plot(title_str=self.title)
-            self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
-
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
-            time.sleep(0.5)
-
-            self.plot_ready_event.set()
-        else:
-            self.plot_ready_event.set() # Allow acquisition to start immediately
-
-        # Plot update throttling logic for performance
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
-            
-        last_plot_update_time = time.perf_counter()
-        
-        # Main loop for data consumption and plotting
-        while (self.acquisition_running and not self.plot_closed_by_user) or not data_queue.empty():
-            try:
-                item = data_queue.get(timeout=0.01)
-
-                if item is None:
-                    self.acquisition_running = False
-                    # Drain the queue to ensure all data is processed
-                    while not data_queue.empty():
-                        remaining_item = data_queue.get_nowait()
-                        if remaining_item is not None:
-                            timestamp, input_val, output_val = remaining_item
-                            self.time_var.append(timestamp)
-                            self.input.append(input_val)
-                            self.output.append(output_val)
-                    break
-
-                timestamp, input_val, output_val = item
-                self.time_var.append(timestamp)
-                self.input.append(input_val)
-                self.output.append(output_val)
-
-                # Throttle plot updates for performance
-                now = time.perf_counter()
-                if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
-                    self._update_plot(
-                        self.time_var,
-                        self.output,
-                        y2_values=self.input,
-                        y1_label=self.legend[0],
-                        y2_label=self.legend[1]
+                        time_rt,
+                        output_rt,
+                        y2_values=input_rt,
+                        y1_label="Output",
+                        y2_label="Input",
+                        channel_names=self.channels,        # Ex: ["A0", "A1"]
+                        y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
                     )
                     last_plot_update_time = now
 
@@ -445,56 +342,375 @@ class StepResponse(Base):
         acquisition_thread.join()
 
         if self.calculate_pid:
-            
-            Kp, Ki, Kd, tangent_plot = self.get_parameters(
-                self.time_var,
-                self.output,
-                self.step_time,
-                self.sintony_type,
-                self.step_min, # Min for NIDAQ
-                self.step_max  # Max for NIDAQ
-            )
 
-            self.pid_parameters = [Kp, Ki, Kd]
+            # === NEW: dict to store pid per channel ===
+            self.pid_parameters = {}
 
-            # Plot tuning results
-            plt.figure(figsize=(10, 6))
-            plt.plot(self.time_var, self.output, label="System Output", linewidth=2)
-            plt.plot(self.time_var, tangent_plot, '--', label="Tangent Line (Inflection)", linewidth=2, color='r')
-            plt.plot(self.time_var, self.input, label="Step Input (Gain K)", linewidth=2)
-            plt.title("Ziegler-Nichols Tuning Analysis", fontsize=16)
-            plt.xlabel("Time (s)", fontsize=14)
-            plt.ylabel("Normalized Amplitude", fontsize=14)
-            plt.legend()
-            plt.grid(True)
-            plt.show(block=False) # Show the plot without blocking the code
+            ch = self.channels[0]  # default to first channel for error messages if needed
+
+            for ch in self.channels:   # === NEW: loop per channel ===
+
+                if len(self.time_var[ch]) < 3:
+                    continue  # safety
+
+                channel_name=ch  
+
+                Kp, Ki, Kd, tangent_plot = self.get_parameters(
+                    self.time_var[ch][0:-1],     # === MODIFIED ===
+                    self.output[ch][1:],         # === MODIFIED ===
+                    self.step_time,
+                    self.sintony_type,
+                    self.ard_ao_min,
+                    self.ard_ao_max,
+                    channel_name     # === NEW: pass channel name for better error messages ===
+                )
+
+                # === NEW: store per channel ===
+                self.pid_parameters[ch] = [Kp, Ki, Kd]
+
+                if self.plot_mode != 'no':
+
+                    # === NEW: plot per channel ===
+                    plt.figure(figsize=(10, 6))
+
+                    plt.plot(
+                        self.time_var[ch][0:-1],
+                        self.output[ch][1:],
+                        label=f"System Output - {ch}",
+                        linewidth=2
+                    )
+
+                    plt.plot(
+                        self.time_var[ch][0:-1],
+                        self.input[ch][0:-1],
+                        label=f"Step Input - ({self.ao_channels[0]})", 
+                        linewidth=2
+                    )
+
+                    plt.plot(
+                        self.time_var[ch][0:-1],
+                        tangent_plot,
+                        '--',
+                        label=f"Tangent Line - {ch}",
+                        linewidth=2
+                    )
+
+                    plt.title(f"Ziegler-Nichols Tuning - Channel {ch}", fontsize=16)
+                    plt.xlabel("Time (s)", fontsize=14)
+                    plt.ylabel("Amplitude", fontsize=14)
+                    plt.legend()
+                    plt.grid(True)
+                    plt.show(block=False)
 
         if self.plot_mode == 'end' and self.time_var:
-            self.title = f"PYDAQ - Step Response (NIDAQ)"
+
+            # Synchronizes the samples, discarding the first output and the last input/time.
+            time_aligned = {ch: self.time_var[ch][0:-1] for ch in self.channels}
+            output_aligned = {ch: self.output[ch][1:] for ch in self.channels}
+            input_aligned = {ch: self.input[ch][0:-1] for ch in self.channels}
+
+            self.title = f"PYDAQ - Final Step Response: Arduino, Port: {self.com_port}"
             self._start_updatable_plot(title_str=self.title)
             self._update_plot(
-                self.time_var,
-                self.output,
-                y2_values=self.input,  # Correct format
-                y1_label=self.legend[0],
-                y2_label=self.legend[1]
+                time_aligned,
+                output_aligned,
+                y2_values=input_aligned,
+                y1_label="Output",
+                y2_label="Input",
+                channel_names=self.channels,        # Ex: ["A0", "A1"]
+                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
             )
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
-            self._save_data(self.time_var, "time.dat")
-            self._save_data(self.input, "input.dat")
-            self._save_data(self.output, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Saving data ...")
+
+            time_save = {ch: self.time_var[ch][0:-1] for ch in self.channels}
+            input_save = {ch: self.input[ch][0:-1] for ch in self.channels}
+            output_save = {ch: self.output[ch][1:] for ch in self.channels}
+            
+            self._save_data(time_save, "time.dat")
+            self._save_data(input_save, "input.dat")
+            self._save_data(output_save, "output.dat")
+            print("\n[PYDAQ] Data saved ...")
 
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
 
         return
 
-    def get_parameters(self, time, system_value, step_time, type_sintony, min_val, max_val):
+    def _step_response_worker_nidaq(self, data_queue):
+
+        # Wait for plot to be ready to synchronize start time
+        self.plot_ready_event.wait()
+        st_worker = None
+        
+        task_ao = nidaqmx.Task()
+        task_ai = nidaqmx.Task()
+    
+        try:
+            num_cycles_performed = 0
+            
+            # === NEW: Multi-channel string construction ===
+            ao_channel_str = ",".join([f"{self.device}/{ch}" for ch in self.ao_channels])
+            ai_channel_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])
+
+            # Configure AO
+            task_ao.ao_channels.add_ao_voltage_chan(
+                ao_channel_str,
+                min_val=float(self.step_min),
+                max_val=float(self.step_max),
+            )
+
+            # Configure AI
+            task_ai.ai_channels.add_ai_voltage_chan(
+                ai_channel_str,
+                terminal_config=self.terminal
+            )
+            
+            n_ai = len(self.channels)
+            n_ao = len(self.ao_channels)
+
+            st_worker = time.perf_counter()
+            for k in range(self.cycles):
+                if not self.acquisition_running:
+                    break
+
+                # Update step value
+                if k * self.ts >= float(self.step_time):
+                    sent_val = self.step_max
+                else:
+                    sent_val = self.step_min
+                
+                # === NEW: multi-channel AO write ===
+                if n_ao == 1:
+                    task_ao.write(sent_val)
+                else:
+                    task_ao.write([sent_val] * n_ao)
+                input_vals = [sent_val] * n_ai
+
+                # Read AI
+                temp = task_ai.read()
+
+                if n_ai == 1:
+                    temp = [temp]
+
+                time_now = time.perf_counter() - st_worker
+
+                num_cycles_performed += 1
+                # === NEW: queue per channel ===
+                ch_values = {}
+                for i, ch in enumerate(self.channels):
+                    ch_values[ch] = temp[i]
+
+                data_queue.put((time_now, ch_values, sent_val))
+
+                wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                else:
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
+        
+        finally:
+            # Turn off outputs
+            try:
+                if n_ao == 1:
+                    task_ao.write(0)
+                else:
+                    task_ao.write([0] * n_ao)
+            except:
+                pass
+
+            task_ao.close()
+            task_ai.close()
+            data_queue.put(None)
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ]Thread finished before acquisition started (Configuration blocked).") 
+
+
+    def step_response_nidaq(self):
+        """
+        This method performs the step response using a NIDAQ board for given parameters.
+
+        :example:
+            step_response_nidaq()
+
+        """
+
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
+        # --- SISO SAFETY LOCK FOR PID TUNING ---
+        if self.calculate_pid and (len(self.channels) != 1 or len(self.ao_channels) != 1):
+            raise ValueError("[PYDAQ] Dimension mismatch: PID tuning requires exactly 1 AI and 1 AO channel (SISO).")
+        
+        self.time_var = {ch: [] for ch in self.channels}
+        self.input = {ch: [] for ch in self.channels}
+        self.output = {ch: [] for ch in self.channels}
+
+        data_queue = queue.Queue()
+        self.acquisition_running = True
+        self.plot_closed_by_user = False
+        self.plot_ready_event.clear()
+
+        self._check_path()
+        self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
+
+        print ("\n[PYDAQ] Running Step Response...")
+        acquisition_thread = threading.Thread(
+            target=self._step_response_worker_nidaq,
+            args=(data_queue,),
+            daemon=True
+        )
+        acquisition_thread.start()
+
+        if self.plot_mode == 'realtime':
+            self.title = f"PYDAQ - Step Response (NIDAQ). {self.device}."
+            self._start_updatable_plot(title_str=self.title)
+            self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
+
+            time.sleep(0.5)
+
+            self.plot_ready_event.set()
+        else:
+            self.plot_ready_event.set() # Allow acquisition to start immediately
+
+        # Plot update throttling logic for performance
+        plot_update_interval = max(self.ts * 0.9, 0.05)
+
+        last_plot_update_time = time.perf_counter()
+        
+        # Main loop for data consumption and plotting
+        while (self.acquisition_running and not self.plot_closed_by_user) or not data_queue.empty():
+            try:
+                item = data_queue.get(timeout=0.01)
+
+                if item is None:
+                    self.acquisition_running = False
+
+                    # Drain the queue to ensure all data is processed
+                    while not data_queue.empty():
+                        remaining_item = data_queue.get_nowait()
+                        if remaining_item is not None:
+                            timestamp, ch_values, input_val = remaining_item
+                            for ch in self.channels:
+                                self.time_var[ch].append(timestamp)
+                                self.input[ch].append(input_val)
+                                self.output[ch].append(ch_values[ch])
+                    break
+
+                timestamp, ch_values, input_val = item
+
+                for ch in self.channels:
+                    self.time_var[ch].append(timestamp)
+                    self.input[ch].append(input_val)
+                    self.output[ch].append(ch_values[ch])
+
+                # Throttle plot updates for performance
+                now = time.perf_counter()
+
+                if self.plot_mode == 'realtime' and (
+                    now - last_plot_update_time >= plot_update_interval
+                    or not self.acquisition_running
+                ):
+                    self._update_plot(
+                        self.time_var,
+                        self.output,
+                        y2_values=self.input,
+                        y1_label="Output",
+                        y2_label="Input",
+                        channel_names=self.channels,        # Ex: ["A0", "A1"]
+                        y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
+                    )
+                    last_plot_update_time = now
+
+            except queue.Empty:
+                # This keeps the loop responsive
+                time.sleep(0.01)
+                if not self.acquisition_running and data_queue.empty():
+                    break
+
+        acquisition_thread.join()
+
+        if self.calculate_pid:
+
+            self.pid_parameters = {}  # === NEW ===
+
+            for ch in self.channels:  # === NEW ===
+
+                if len(self.time_var[ch]) < 3:
+                    continue
+
+                channel_name  = ch  # === NEW: for better error messages ===
+
+                Kp, Ki, Kd, tangent_plot = self.get_parameters(
+                    self.time_var[ch],
+                    self.output[ch],
+                    self.step_time,
+                    self.sintony_type,
+                    self.step_min,
+                    self.step_max,
+                    channel_name              # === NEW: pass channel name for better error messages ===
+                )
+
+                self.pid_parameters[ch] = [Kp, Ki, Kd]
+
+                if self.plot_mode != 'no':
+
+                    plt.figure(figsize=(10, 6))
+                    plt.plot(self.time_var[ch], self.output[ch], label=f"Output - {ch}", linewidth=2)
+                    plt.plot(self.time_var[ch], self.input[ch], label=f"Input - {self.ao_channels}", linewidth=2)
+                    plt.plot(self.time_var[ch], tangent_plot, '--', label="Tangent", linewidth=2)
+
+                    plt.title(f"Ziegler-Nichols Tuning - {ch}", fontsize=16)
+                    plt.xlabel("Time (s)", fontsize=14)
+                    plt.ylabel("Amplitude", fontsize=14)
+                    plt.legend()
+                    plt.grid(True)
+                    plt.show(block=False)
+
+        if self.plot_mode == 'end' and any(self.time_var.values()):
+            self.title = f"PYDAQ - Final Step Response (NIDAQ)"
+            self._start_updatable_plot(title_str=self.title)
+            self._update_plot(
+                self.time_var,
+                self.output,
+                y2_values=self.input,
+                y1_label="Output",
+                y2_label="Input",
+                channel_names=self.channels,        # Ex: ["A0", "A1"]
+                y2_channel_names=self.ao_channels   # Ex: ["D8", "D9"]
+            )
+            plt.show(block=True)
+
+        if self.save:
+            print("\n[PYDAQ] Saving data ...")
+            self._save_data(self.time_var, "time.dat")
+            self._save_data(self.input, "input.dat")
+            self._save_data(self.output, "output.dat")
+            print("\n[PYDAQ] Data saved ...")
+
+        if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
+            plt.show(block=True)
+
+        return
+
+    def get_parameters(self, time, system_value, step_time, type_sintony, min_val, max_val, channel_name):
 
         time = np.array(time)
         system_value = np.array(system_value)
@@ -510,7 +726,6 @@ class StepResponse(Base):
             baseline = np.min(system_value)  # Use the minimum value of the entire signal
         system_value_normalized = system_value - baseline
 
-
         # Calculate the process gain K
         delta_input = max_val - min_val
         if delta_input == 0:
@@ -518,7 +733,6 @@ class StepResponse(Base):
             k = np.inf
         else:
             k = (system_value_normalized[-1] - system_value_normalized[0]) / delta_input
-
 
         if n >= 5:
             # escolher janela ímpar permitida
@@ -574,10 +788,10 @@ class StepResponse(Base):
             Kd = Kp * Td
 
         if L_adjusted <= 0 or T <= 0 or Kp <= 0 or Ki < 0 or Kd < 0 or n < 3 or slope <= 0:
-            print("Invalid sample values. Sintony cannot be calculated correctly.")
+            print(f"\n[PYDAQ] Invalid sample values for channel {channel_name}. Sintony cannot be calculated correctly.")
             return 0, 0, 0, tangent_line_real  # Retorna PID=0
         
-        print(f"Gains: Kp={Kp:.4f}, Ki={Ki:.4f}, Kd={Kd:.4f}")
+        print(f"\n[PYDAQ] Gains: Kp={Kp:.4f}, Ki={Ki:.4f}, Kd={Kd:.4f}")
         
         return Kp, Ki, Kd, tangent_line_real
 

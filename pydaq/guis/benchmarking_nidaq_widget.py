@@ -1,26 +1,41 @@
 import time
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 import warnings
+
+# --- OPTIONAL DEPENDENCY HANDLING ---
+try:
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+    NIDAQ_AVAILABLE = True
+except (ImportError, OSError):
+    NIDAQ_AVAILABLE = False
+    class TerminalConfiguration:
+        DIFF = "Diff"
+        RSE = "RSE"
+        NRSE = "NRSE"
 
 def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
                     periods_ms=[10, 5, 2, 1, 0.5, 0.2, 0.1], duration_s=5):
     """
-    Realiza um benchmarking da performance de aquisição usando uma placa NI-DAQ.
+    Performs a benchmarking of acquisition performance using an NI-DAQ board.
     
     Parameters:
-        device (str): Nome do dispositivo NI (ex: "Dev1").
-        channel (str): Canal analógico de entrada (ex: "ai0").
-        terminal_config (str): Configuração do terminal ("RSE", "Diff", "NRSE").
-        periods_ms (list): Lista de períodos de amostragem a testar, em milissegundos.
-        duration_s (float): Duração de cada teste, em segundos.
+        device (str): Name of the NI device (ex: "Dev1").
+        channel (str): Analog input channel (ex: "ai0").
+        terminal_config (str): Terminal configuration ("RSE", "Diff", "NRSE").
+        periods_ms (list): List of sampling periods to test, in milliseconds.
+        duration_s (float): Duration of each test, in seconds.
     """
+
+    if not NIDAQ_AVAILABLE:
+        print("❌ NI-DAQmx drivers not found! Cannot run benchmark.")
+        warnings.warn("[PYDAQ] NI-DAQmx drivers not found. Please install NI-MAX.")
+        return
 
     print(f"Testing NI-DAQ sampling performance for {duration_s} seconds per period...\n")
 
     term_map = {
         "RSE": TerminalConfiguration.RSE,
-        "Diff": TerminalConfiguration.DIFFERENTIAL,
+        "Diff": TerminalConfiguration.DIFF, 
         "NRSE": TerminalConfiguration.NRSE
     }
 
@@ -40,7 +55,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
                 terminal_config=term_map[terminal_config]
             )
         except nidaqmx.errors.DaqError as e:
-            warnings.warn(f"❌ Failed to open NI-DAQ channel: {e}")
+            warnings.warn(f"[PYDAQ] ❌ Failed to open NI-DAQ channel: {e}")
             return
 
         while (time.perf_counter() - start) < duration_s:
@@ -49,7 +64,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
             try:
                 value = task.read()
             except nidaqmx.errors.DaqError as e:
-                warnings.warn(f"NI-DAQ read error: {e}")
+                warnings.warn(f"[PYDAQ] NI-DAQ read error: {e}")
                 continue
 
             t1 = time.perf_counter()
@@ -77,7 +92,7 @@ def benchmark_nidaq(device="Dev1", channel="ai0", terminal_config="RSE",
 
         if delays == 0:
             best_stable_period = period_ms
-            min_period_recommended = avg_cycle * 1.2  # 20% margem de segurança
+            min_period_recommended = avg_cycle * 1.2  # 20% safety margin
 
     if min_period_recommended:
         print("\n✅ Ideal sampling period (with 20% safety margin): "

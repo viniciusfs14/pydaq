@@ -1,49 +1,70 @@
-/* Code that should be loaded in arduino in order to acquire data from a specific port (analogInputPort) and
- send data from another one (digitalOutputPort)
- Author:    Samir Angelo Milani Martins
-             - https://www.samirmartins.com.br
-             - https://www.github.com/samirmartins/
-
+/* * Code that should be loaded in arduino in order to acquire and send data
+ * Author:    Samir Angelo Milani Martins
+ * - https://www.samirmartins.com.br
+ * - https://www.github.com/samirmartins/
  */
 
-int analogInputPort = A0; // Port that will be used to acquire data
-const int digitallOutputPort = 13; // Port that will be used to send data
+/* * Multichannel Arduino DAQ firmware
+ * Stream-based, PyDAQ compatible (bidirectional)
+ *
+ * Compatible with:
+ * - Multichannel get_data (CSV streaming)
+ * - Multichannel send_data (CSV digital frame)
+ * - Multichannel step_response
+ * - PID and LQR control (PWM support)
+ */
 
-int inputValue; // A variable to store data that will be sent to digitalOutputPort 
-int analogValue; // A variable to store data from analogInputPort
-
-void setup() 
-{ 
-  // Initializing serial communication :
-  Serial.begin(115200);
-
-  // Setting up digitalOutputPort
-  pinMode(digitallOutputPort, OUTPUT);
-
+void setup() {
+  // Baud rate must match the one configured in Python (e.g., 115200 or 9600)
+  Serial.begin(115200); 
 }
 
-void loop() 
-{ 
-
-  // Reading data from serial and sending it to digital output
-  if (Serial.available() > 0) // Check if there is data from serial
-  {
-    // Read the oldest byte in the serial buffer:
-    inputValue = Serial.read();
-    // if it's a '1', send HIGH to the output
-    if (inputValue == '1') 
-    {
-      digitalWrite(digitallOutputPort, HIGH);
-    }
-    // if it's an '0' turn off the output:
-    if (inputValue == '0') 
-    {
-      digitalWrite(digitallOutputPort, LOW);
+void loop() {
+  
+  // 1. Continuous Analog Reading (A0 to A5) - Maximum speed streaming
+  String out = "";
+  out += String(analogRead(A0)) + ",";
+  out += String(analogRead(A1)) + ",";
+  out += String(analogRead(A2)) + ",";
+  out += String(analogRead(A3)) + ",";
+  out += String(analogRead(A4)) + ",";
+  out += String(analogRead(A5));
+  
+  Serial.println(out);
+  
+  // 2. Parse Incoming Control Commands
+  // Expected format: "8:255,9:128\n" (Pin:Value) OR "0\n" (Stop/Warmup)
+  if (Serial.available() > 0) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    
+    if (command == "0") {
+       // Stop command: Turn off all commonly used actuator pins (D0 to D13)
+       for(int i = 0; i <= 13; i++) {
+          pinMode(i, OUTPUT);
+          digitalWrite(i, LOW);
+       }
+    } else {
+       int startIndex = 0;
+       while (startIndex < command.length()) {
+          int commaIndex = command.indexOf(',', startIndex);
+          if (commaIndex == -1) {
+             commaIndex = command.length();
+          }
+          
+          String pair = command.substring(startIndex, commaIndex);
+          int colonIndex = pair.indexOf(':');
+          
+          if (colonIndex != -1) {
+             int pin = pair.substring(0, colonIndex).toInt();
+             int val = pair.substring(colonIndex + 1).toInt();
+             
+             // Dynamically configure the pin and actuate (PWM or Digital)
+             pinMode(pin, OUTPUT);
+             analogWrite(pin, val);
+          }
+          startIndex = commaIndex + 1;
+       }
     }
   }
-
-    // Reading data from arduino and printing on serial
-  analogValue = analogRead(analogInputPort); // Reading input
-  Serial.println(analogValue); // Printing on serial
-
 }

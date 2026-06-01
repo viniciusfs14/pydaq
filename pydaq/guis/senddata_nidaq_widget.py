@@ -1,9 +1,12 @@
 import os
-import nidaqmx
+import warnings
 import numpy as np
 
-from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt
 from pydaq.utils.signals import GuiSignals
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System, ClickableLineEdit
 
 from ..uis.ui_PyDAQ_send_data_NIDAQ_widget import Ui_NIDAQ_SendData_W
 from .error_window_gui import Error_window
@@ -20,27 +23,20 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
         self._nidaq_info()
 
         try:
-            chan = nidaqmx.system.device.Device(
+            self.available_channels = nidaqmx.system.device.Device(
                 self.device_names[0]
             ).ao_physical_chans.channel_names
-            defchan = chan[0]
         except BaseException:
-            chan = ""
-            defchan = ""
+            self.available_channels = []
 
-        # Setting the starting values for some widgets
+        # Setting the starting values 
         self.device_combo.addItems(self.device_type)
+        
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop", "data.dat")
         )
-        self.channel_combo.addItems(chan)
-
-        defchan_index = self.channel_combo.findText(defchan)
-
-        if defchan_index == -1:
-            pass
-        else:
-            self.channel_combo.setCurrentIndex(defchan_index)
+        
+        self._setup_channel_selector()
 
         # Connecting Signals
         self.path_folder_browse.released.connect(self.locate_path)
@@ -58,6 +54,15 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             self.label_warning.hide()
             
     def start_func_send_data(self):  # Start sending data
+
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
+        if not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.exec()
+            return
+
         try:
             # Instantiating the SendData class
             s = SendData()
@@ -65,38 +70,63 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             s.ao_max = self.out_range_max_in.value()
             s.ao_min = self.out_range_min_in.value()
 
+            # Checking if a path was set
+            if self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty data path.")
+            
             # Reading data from defined path
             s.path = self.path_line_edit.text()
-            s.data = np.loadtxt(s.path)
-
-            # Check if max(data) < self.ao_max
-            if (max(s.data) > float(s.ao_max)) or (min(s.data) < float(s.ao_min)):
-                s._range_error()
-                s.error_max = True
-            else:
-                s.error_max = False
-
+            
             # Separating variables
-            s.device = self.channel_combo.currentText().split("/")[0]
-            s.channel = self.channel_combo.currentText().split("/")[1]
+            selected = self.get_selected_channels()
+            if selected:
+                s.device = selected[0].split("/")[0]
+                # Sending the list of channel names (e.g., ["ao0", "ao1"])
+                s.channels = [ch.split("/")[1] for ch in selected]
+            else:
+                raise ValueError("[PYDAQ] Missing configuration: Please ensure device and channel are properly defined.")
+
+            s.data = self._prepare_data_matrix_nidaq(
+                s.path,
+                s.channels,
+                s.ao_min,
+                s.ao_max
+            )
+
             s.ts = self.Ts_in.value()
-            if self.yes_rt_plot_radio.isChecked(): # Assumindo que 'yes_radio' agora significa 'Real time'
+            if self.yes_rt_plot_radio.isChecked(): 
                 s.plot_mode = 'realtime'
-            elif self.yes_ate_plot_radio.isChecked(): # Supondo que você criou um radio button com este nome
+            elif self.yes_ate_plot_radio.isChecked(): 
                 s.plot_mode = 'end'
             else: # self.No_radio.isChecked()
                 s.plot_mode = 'no'
             s.error_path = False
 
-        except BaseException:
+        except BaseException as e:
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
             error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Dimension mismatch" in err_msg:
+                error_w.ui.confirm.setText("Dimension mismatch: Number of selected channels incorrect.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and data path are properly defined.")
+
             error_w.exec()
-            s.error_path = True
+
+            if 's' in locals():
+                s.error_path = True
+            return
 
         if not s.error_path:
             # Calling send data method
             s.send_data_nidaq()
             self.signals.returned.emit(s)
+
 
     def locate_path(self):  # Calling the File Browser Widget
         data_path = QFileDialog.getOpenFileName(
@@ -116,6 +146,10 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
 
         for device in self.local_system.devices:
@@ -124,29 +158,43 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
+
         # Changing availables channels if device changes
-
-        # Discovering new ao channels
-        new_ao_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ao_physical_chans.channel_names
-
-        # Default channel
         try:
-            default_channel = new_ao_channels[0]
-        except:
-            default_channel = "There is no analog output in this board"
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            
+            if NIDAQ_AVAILABLE:
+                new_ao_channels = nidaqmx.system.device.Device(dev_name).ao_physical_chans.channel_names
+            else:
+                new_ao_channels = []
+        except BaseException:
+            new_ao_channels = []
 
-        # Rewriting new ai channels into the right place
-        self.channel_combo.clear()
-        self.channel_combo.addItems(new_ao_channels)
-        defchan_index = self.channel_combo.findText(default_channel)
+        self.available_channels = new_ao_channels
+        # Recreate the channel menu
+        self.channel_menu.clear()
+        self.channel_actions = []
 
-        if defchan_index == -1:
-            pass
+        if not self.available_channels:
+             self.channel_combo.lineEdit().setText("No analog output available")
+             return
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        # Select the first channel by default if available
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
         else:
-            self.channel_combo.setCurrentIndex(defchan_index)
-        pass
+            self.channel_combo.lineEdit().clear()
+        
+        self._update_channel_text()
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
@@ -161,3 +209,94 @@ class SendData_NIDAQ_Widget(QWidget, Ui_NIDAQ_SendData_W):
 
         # Reconnecting the signal
         self.device_combo.currentIndexChanged.connect(self.update_channels)
+
+    def _prepare_data_matrix_nidaq(self, path, selected_channels, ao_min, ao_max):
+        """
+        Reads file and prepares a matrix for NIDAQ AO output.
+        
+        - 1D file → replicate to all selected channels
+        - 2D file → columns must match number of selected channels
+        - Validates range against ao_min and ao_max
+        """
+
+        raw_data = np.loadtxt(path)
+        n_channels = len(selected_channels)
+
+        # -----------------------------
+        # Case 1: 1D
+        # -----------------------------
+        if raw_data.ndim == 1:
+            data_matrix = np.tile(raw_data.reshape(-1, 1), (1, n_channels))
+
+        # -----------------------------
+        # Case 2: 2D
+        # -----------------------------
+        elif raw_data.ndim == 2:
+            if raw_data.shape[1] != n_channels:
+                # Padronizado para o Terminal
+                raise ValueError(
+                    f"[PYDAQ] Dimension mismatch: Number of selected channels incorrect. "
+                    f"File has {raw_data.shape[1]} columns, but {n_channels} channels were selected."
+                )
+            data_matrix = raw_data
+
+        else:
+            raise ValueError("[PYDAQ] Missing configuration: Unsupported file format.")
+
+        # -----------------------------
+        # Range validation
+        # -----------------------------
+        if np.max(data_matrix) > ao_max or np.min(data_matrix) < ao_min:
+            raise ValueError(
+                f"Data out of range [{ao_min}, {ao_max}]"
+            )
+
+        return data_matrix
+
+    def _setup_channel_selector(self):
+        self.channel_combo.setEditable(True)
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_channel_menu) 
+        
+        self.channel_combo.setLineEdit(clickable_line)
+        
+        self.channel_menu = QMenu(self)
+        self.channel_actions = []
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        self.channel_combo.showPopup = self._show_channel_menu
+
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
+
+    def _show_channel_menu(self):
+        self.channel_menu.exec(
+            self.channel_combo.mapToGlobal(
+                self.channel_combo.rect().bottomLeft()
+            )
+        )
+    
+    def _update_channel_text(self):
+        selected = self.get_selected_channels()
+
+        if not any(a.isChecked() for a in self.channel_actions) and self.channel_actions:
+            self.channel_actions[0].setChecked(True)
+            selected = [self.channel_actions[0].text()]
+
+        self.channel_combo.lineEdit().setText(", ".join(selected))
+
+    def get_selected_channels(self):
+        selected = [a.text() for a in self.channel_actions if a.isChecked()]
+        return selected if selected else (self.available_channels[:1] if self.available_channels else [])
