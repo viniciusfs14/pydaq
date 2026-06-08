@@ -5,7 +5,7 @@ Acquisition) device
 
 ## Step Response using Graphical User Interface (GUI)
 
-Using GUI for step response is really straighforward and require only
+Using GUI for step response is really straightforward and require only
 two LOC (lines of code):
 
 ```python
@@ -55,7 +55,7 @@ terminal_configuration = 'Diff'
 will_plot = "realtime" # Can be realtime, end or no
 ```
 
-Then, instantiate a class with defined parametes and send the data
+Then, instantiate a class with defined parameters and send the data
 
 ```python
 # Class StepResponse
@@ -78,6 +78,6 @@ If you choose to plot you can see the data sent on screen, i.e:
 
 ![](img/step_response_nidaq.png)
 
-You can see more detailed bellow:
+You can see more detailed below:
 
 ![](img/stepresponse_nidaq.gif)

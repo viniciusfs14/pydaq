@@ -6,12 +6,12 @@ Acquisition) device
 **NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
 at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
 
-**NOTE 3**: Since are used digital output ports, the output will be
+**NOTE 3**: Since digital output ports are used, the output will be
 0V if data < 2.5 and 5V otherwise.
 
 ## Sending Data using Graphical User Interface (GUI)
 
-Using GUI to send data is really straighforward and require only
+Using GUI to send data is really straightforward and require only
 two LOC (lines of code):
 
 ```python
@@ -31,9 +31,9 @@ The user is now able to select desired Arduino and sample period. Also,
 the user will define if the data will or not be plotted. The data that
 will be sent should be in the range (0-5V).
 
-Data should be formated as one data
+Data should be formatted as one data
 per line and saved as a .dat file. After
-configuration is done, the user only need to click on **SEND DATA** button to start the process.
+configuration is done, the user only needs to click on **SEND DATA** button to start the process.
 
 ## Sending data using command line
 
@@ -56,7 +56,7 @@ will_plot = "realtime" # Can be realtime, end or no
 
 ```
 
-Then, instantiate a class with defined parametes and send the data
+Then, instantiate a class with defined parameters and send the data
 
 ```python
 # Class SendData
@@ -75,6 +75,6 @@ If you choose to plot you can see the data sent on screen, i.e:
 
 ![](img/sending_data_arduino.png)
 
-You can see more detailed bellow:
+You can see more detailed below:
 
 ![](img/senddata_arduino.gif)

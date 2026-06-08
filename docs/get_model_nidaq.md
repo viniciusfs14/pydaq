@@ -2,9 +2,9 @@
 
 **NOTE**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device
 
-## Adquiring the model using Graphical User Interface (GUI)
+## Obtaining the model using Graphical User Interface (GUI)
 
-Using GUI to adquire the model is really straighforward and 
+Using GUI to estimate the model is really straightforward and
 require only two LOC (lines of code):
 
 ```python
@@ -12,8 +12,8 @@ from pydaq.pydaq_global import PydaqGui
 
 PydaqGui()
 ```
-After this command, the following screen will show up. In "Get Model" 
-screen the user is able to define parameters and start the experiment to adquire the model.
+After this command, the following screen will show up. In "Get Model"
+screen the user is able to define parameters and start the experiment to estimate the model.
 
 ![](img/get_model_nidaq.jpg)
 

@@ -17,7 +17,7 @@ self.ard_ai_min = 0
 
 ## Data Acquisition using Graphical User Interface (GUI)
 
-Using GUI to acquire data is really straighforward and require only
+Using GUI to acquire data is really straightforward and require only
 two LOC (lines of code):
 
 ```python
@@ -56,7 +56,7 @@ save_data = True
 will_plot = "no" # Can be realtime, end or no
 ```
 
-Then, instantiate a class with defined parametes and get the data
+Then, instantiate a class with defined parameters and get the data
 
 ```python
 # Class GetData
@@ -90,6 +90,6 @@ Data will also be saved as depicted below:
 
 ![](img/data.png)
 
-You can see more detailed bellow: 
+You can see more detailed below:
 
 ![](img/getdata_arduino.gif)

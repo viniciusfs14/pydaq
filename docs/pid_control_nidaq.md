@@ -56,7 +56,7 @@ A disturbance input can also be simulated during real-time control. It acts as a
 
 ![](img/pidcontrol_nidaq.gif)
 
-# Control PID with NIDAQ (GUI via code)
+# PID Control with NIDAQ (GUI via code)
 
 It is possible to access the PID Control GUI directly with a few lines of code. This allows you to hardcode your hardware and controller settings for faster testing and deployment, bypassing the initial setup screens.
 
@@ -74,20 +74,20 @@ plot_window = PID_Control_Window_Dialog()
 
 # 1. Hardware Configuration
 plot_window.check_board(
-    board="nidaq", 
-    hardware_id="Dev1", 
-    ao=['ao0'], 
-    ai=['ai0'], 
-    terminal="RSE", 
+    board="nidaq",
+    hardware_id="Dev1",
+    ao=['ao0'],
+    ai=['ai0'],
+    terminal="RSE",
     simulate=False
 )
 
 # 2. Controller & Logging Parameters
 plot_window.set_parameters(
-    kp=1.0, ki=0.2, kd=0.05, index=3, 
-    numerator=None, denominator=None, 
-    setpoint=2.0, unit="Voltage (V)", 
-    equationvu="", equationuv="", 
+    kp=1.0, ki=0.2, kd=0.05, index=3,
+    numerator=None, denominator=None,
+    setpoint=2.0, unit="Voltage (V)",
+    equationvu="", equationuv="",
     period=0.1, path=None, save=True
 )
 

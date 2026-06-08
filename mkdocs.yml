@@ -11,19 +11,19 @@ copyright: Copyright &copy; 2025 - Samir Martins
 nav:
   - Home: index.md
   - Data Acquisition:
-      - NIDAQ: 
+      - NIDAQ:
           - Get Data: get_data_nidaq.md
           - Digital Filters: digital_filters_nidaq.md
-      - Arduino: 
+      - Arduino:
           - Get Data: get_data_arduino.md
           - Digital Filters: digital_filters_arduino.md
-  - Sending Data:
+  - Signal Generation:
       - NIDAQ: send_data_nidaq.md
       - Arduino: send_data_arduino.md
   - Step Response:
       - NIDAQ: step_response_nidaq.md
       - Arduino: step_response_arduino.md
-  - Get Model:
+  - System Identification:
       - NIDAQ: get_model_nidaq.md
       - Arduino: get_model_arduino.md
   - PID Control:
@@ -32,11 +32,13 @@ nav:
   - LQR Control:
       - NIDAQ: lqr_control_nidaq.md
       - Arduino: lqr_control_arduino.md
-  - Benchmarking: benchmarking.md
   - Arduino Firmware: arduino_firmware.md
-  - Error Dictionary: error_dictionary.md
-  - Jupyter Notebooks: jupyter_notebooks.md
-  
+  - Benchmarking: benchmarking.md
+  - Examples:
+      - Jupyter Notebooks: jupyter_notebooks.md
+  - Troubleshooting:
+      - Error Dictionary: error_dictionary.md
+
 
 theme:
   favicon: img/favicon.ico

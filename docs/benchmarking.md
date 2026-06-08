@@ -1,5 +1,3 @@
-# Benchmarking
-
 ## Benchmarking – Minimum Supported Sampling Period Evaluation
 This benchmarking function was developed to test the computer's performance under high-frequency data acquisition conditions. Its primary purpose is to evaluate how the system behaves when subjected to extremely low sampling periods, simulating real-time processing demands.
 

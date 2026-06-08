@@ -5,7 +5,7 @@
 **NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
 at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. This firmware handles communication via serial CSV. To maintain theoretical rigor in classical control theory, the PID Control module operates strictly as a Single-Input Single-Output (SISO) system. Therefore, you must select exactly one analog input channel (e.g., A0) and one digital PWM output channel (e.g., D0).
 
-**NOTE 3**: PYDAQ is programmed to use 10 bits as ADC resolution and 0V to 5V as the input range.  
+**NOTE 3**: PYDAQ is programmed to use 10 bits as ADC resolution and 0V to 5V as the input range.
 To change this, the user can alter the following variables:
 
 ```python
@@ -64,7 +64,7 @@ A disturbance input can also be simulated during real-time control. It acts as a
 
 ![](img/pidcontrol_arduino_gif.gif)
 
-# Control PID with Arduino (GUI via code)
+# PID Control with Arduino (GUI via code)
 
 It is possible to access the PID Control GUI directly with a few lines of code. This allows you to hardcode your hardware and controller settings for faster testing and deployment, bypassing the initial setup screens.
 
@@ -82,20 +82,20 @@ plot_window = PID_Control_Window_Dialog()
 
 # 1. Hardware Configuration
 plot_window.check_board(
-    board="arduino", 
-    hardware_id="COM7", 
+    board="arduino",
+    hardware_id="COM7",
     ao=['D0'], # Single-Input Single-Output (SISO) configuration
-    ai=['A0'], 
-    terminal=None, 
+    ai=['A0'],
+    terminal=None,
     simulate=False
 )
 
 # 2. Controller & Logging Parameters
 plot_window.set_parameters(
-    kp=1.0, ki=0.2, kd=0.05, index=3, 
-    numerator=None, denominator=None, 
-    setpoint=2.0, unit="Voltage (V)", 
-    equationvu="", equationuv="", 
+    kp=1.0, ki=0.2, kd=0.05, index=3,
+    numerator=None, denominator=None,
+    setpoint=2.0, unit="Voltage (V)",
+    equationvu="", equationuv="",
     period=0.1, path=None, save=True
 )
 

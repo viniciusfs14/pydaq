@@ -5,7 +5,7 @@ device
 
 ## Sending Data using Graphical User Interface (GUI)
 
-Using GUI to send data is really straighforward and require only
+Using GUI to send data is really straightforward and require only
 two LOC (lines of code):
 
 ```python
@@ -23,8 +23,8 @@ to be able to define parameters and start to send data.
 
 The user is now able to select desired device, analog output channel and sample period. Also,
 the user will define if the data will or not be plotted. The data that will be sent should be in
-the output range defined, formated as one data per line and saved as a .dat file. After
-configuration is done, the user only need to click on **SEND DATA** button to start the process.
+the output range defined, formatted as one data per line and saved as a .dat file. After
+configuration is done, the user only needs to click on **SEND DATA** button to start the process.
 
 ## Sending data using command line
 
@@ -46,7 +46,7 @@ ao_max = 5  # Maximum allowed analog output value
 will_plot = "realtime" # Can be realtime, end or no
 ```
 
-Then, instantiate a class with defined parametes and send the data
+Then, instantiate a class with defined parameters and send the data
 
 ```python
 # Class SendData
@@ -66,6 +66,6 @@ If you choose to plot you can see the data sent on screen, i.e:
 
 ![](img/sending_data_nidaq.png)
 
-You can see more detailed bellow:
+You can see more detailed below:
 
 ![](img/senddata_nidaq.gif)

@@ -14,9 +14,9 @@ self.ard_ai_max = 5
 self.ard_ai_min = 0
 ```
 
-## Adquiring the model using Graphical User Interface (GUI)
+## Obtaining the model using Graphical User Interface (GUI)
 
-Using GUI to adquire the model is really straighforward and 
+Using GUI to estimate the model is really straighforward and
 require only two LOC (lines of code):
 
 ```python
@@ -24,8 +24,8 @@ from pydaq.pydaq_global import PydaqGui
 
 PydaqGui()
 ```
-After this command, the following screen will show up. In "Get Model" 
-screen the user is able to define parameters and start the experiment to adquire the model.
+After this command, the following screen will show up. In "Get Model"
+screen the user is able to define parameters and start the experiment to estimate the model.
 
 ![](img/get_model_arduino.jpg)
 
@@ -63,7 +63,7 @@ from pydaq.get_model import GetModel
 # Defining parameters
 com_port_arduino = 'COM7'
 # Single-Input Single-Output (SISO) configuration
-ao_channels = ['D0'] 
+ao_channels = ['D0']
 ai_channels = ['A0']
 session_duration_in_s = 100
 sample_period_in_s = 0.5

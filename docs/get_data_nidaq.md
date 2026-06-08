@@ -81,6 +81,6 @@ Data will also be saved as depicted as shown below:
 
 ![](img/data.png)
 
-You can see more detailed bellow:
+You can see more detailed below:
 
 ![](img/getdata_nidaq.gif)
