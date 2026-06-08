@@ -13,9 +13,7 @@
 [![forks](https://img.shields.io/github/forks/samirmartins/pydaq?color=a26969&style=social)](https://github.com/samirmartins/pydaq/network/members)
 [![stars](https://img.shields.io/github/stars/samirmartins/pydaq?color=a26969&style=social)](https://github.com/samirmartins/pydaq/stargazers)
 
-# PYDAQ - Data Acquisition and Experimental Analysis with Python
-
-**Website:** [www.pydaq.org](https://www.pydaq.org)
+# PYDAQ - Data Acquisition and Experimental Analysis with Python ([www.pydaq.org](https://www.pydaq.org))
 
 PYDAQ is a Python package for data acquisition, signal generation, system identification, digital filtering, and real-time control using Arduino and National Instruments DAQ devices.
 
