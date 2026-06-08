@@ -3,21 +3,21 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
 import numpy as np
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 from sysidentpy.metrics import __ALL__ as metrics_list
 import sysidentpy.metrics as metrics
 import threading
 import queue
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 from pydaq.utils.signals import Signal
 from math import floor
 from sysidentpy.model_structure_selection import FROLS
-#from sysidentpy.basis_function._basis_function import Polynomial
 from sysidentpy.basis_function import Polynomial
 from sysidentpy.metrics import root_relative_squared_error
 from sysidentpy.utils.display_results import results
@@ -30,6 +30,7 @@ from collections import Counter
 from typing import Tuple
 
 from sysidentpy.parameter_estimation import LeastSquares
+
 
 
 mpl.rcParams["axes.spines.right"] = False
@@ -64,13 +65,9 @@ def display_formated_results(results_array):
             else:
                 formatted_item = item.rjust(
                     int_width + dec_width + 1
-                )  # Caso não tenha ponto decimal
+                )  
             formatted_row.append(formatted_item)
         print("  ".join(formatted_row))
-
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 def plot_combined_results_with_metrics(
     y: np.ndarray,
@@ -99,11 +96,11 @@ def plot_combined_results_with_metrics(
     """Plot combined results with three stacked subplots and a metrics table."""
 
     if len(y) == 0 or len(yhat) == 0:
-        raise ValueError("Arrays must have at least 1 sample.")
+        raise ValueError("[PYDAQ] Arrays must have at least 1 sample.")
 
     if len(residuals) == 0 or len(cross_corr) == 0:
         raise ValueError(
-            "Residuals and cross-correlation arrays must have at least 1 sample."
+            "[PYDAQ] Residuals and cross-correlation arrays must have at least 1 sample."
         )
 
     # Set Matplotlib style and figure properties
@@ -172,9 +169,8 @@ class GetModel(Base):
     def __init__(
         self,
         device="Dev1",
-        ao_channel="ao0",
-        ai_channel="ai0",
-        channel="ai0",
+        ao_channels=None,
+        ai_channels=None,
         terminal="Diff",
         com="COM1",
         ts=0.5,
@@ -198,11 +194,23 @@ class GetModel(Base):
 
         super().__init__()
         self.device = device
-        self.ai_channel = ai_channel
-        self.ao_channel = ao_channel
+
         self.ao_min = ao_min
         self.ao_max = ao_max
-        self.channel = channel
+
+        self.input_channels = None
+        self.output_channels = None
+
+        if ai_channels is None:
+            self.channels = ['A0'] if device == 'Arduino' else ['ai0']
+        else:
+            self.channels = ai_channels
+
+        if ao_channels is None:
+            self.ao_channels = ['D0'] if device == 'Arduino' else ['ao0'] 
+        else:
+            self.ao_channels = ao_channels
+            
         self.session_duration = session_duration
         self.ts = ts
         self.var_tb = var_tb
@@ -219,14 +227,18 @@ class GetModel(Base):
         self.prbs_bits = prbs_bits
         self.prbs_seed = prbs_seed
         self.perc_value = perc_value
-        self.final_model = None
-        self.theta = None
-        self.n_terms = None
+        
+        self.final_model = None  
+        self.theta = None        
+        self.n_terms = None      
         self.terminal = self.term_map[terminal]
 
         self.out_read = []
-        self.time_var = []
         self.inp_read = []
+        self.time_var = []
+
+        self.input_channels = []
+        self.output_channels = []
 
         # Thread controls
         self.acquisition_running = False
@@ -266,37 +278,92 @@ class GetModel(Base):
         """Worker to send signal and acquire data with Arduino."""
         self.plot_ready_event.wait()
 
+        st_worker = None
+
         try:
             self._open_serial()
-            time.sleep(2) # Wait for serial to settle
+
+            if not self._verify_arduino_firmware():
+                self.ser.close()
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+                return 
+                
+            # --- WARM-UP SECTION ---
+            self.ser.write(b"0")
+            self.ser.reset_input_buffer()
+            _ = self.ser.readline()
+            # --- END WARM-UP SECTION ---
 
             # Start the clock AFTER serial is open
             st_worker = time.perf_counter()
+            num_cycles_performed = 0
+
+            pin_num = self.ao_channels[0].replace("D", "")
+            idx = int(self.channels[0].replace("A", ""))
 
             for k in range(self.cycles):
                 if not self.acquisition_running:
                     break
 
+                # Send signal
+                val_to_send = sent_data_bytes[k] # It directly retrieves the calculated Duty Cycle (e.g., "255")
+                msg = f"{pin_num}:{val_to_send}\n"
+                self.ser.write(msg.encode())
+
                 self.ser.reset_input_buffer()
-                self.ser.write(sent_data_bytes[k])
-
-                temp = int(self.ser.read(14).split()[-2].decode("UTF-8")) * self.ard_vpb
+                self.ser.readline()
                 
-                sent_value = signal_to_send[k]
-                time_now = time.perf_counter() - st_worker
-                data_queue.put((time_now, sent_value, temp))
+                try:
+                    raw = self.ser.readline()
+                    values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-                wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
+                    if len(values) < 6:
+                        warnings.warn("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.")
+                        continue
+
+                    time_now = time.perf_counter() - st_worker
+                    sent_value = signal_to_send[k]
+
+                    value = values[idx] * self.ard_vpb
+                    data_queue.put((time_now, sent_value, value))
+                
+                    num_cycles_performed += 1
+
+                except (ValueError, UnicodeDecodeError):
+                    warnings.warn(f"[PYDAQ] Data parsing error: Invalid multichannel read from Arduino: {raw}")
+                    continue
+
+                wait_time = (st_worker + num_cycles_performed * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
-        
+                else:
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
-                self.ser.write(b"0")
+                try:
+                    stop_msg = f"{pin_num}:0\n"
+                    self.ser.write(stop_msg.encode())
+                except:
+                    pass
                 self.ser.close()
             data_queue.put(None)
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")
 
     def _acquisition_worker_nidaq(self, data_queue, signal_to_send):
         """Worker to send signal and acquire data with NI-DAQ."""
@@ -304,10 +371,16 @@ class GetModel(Base):
 
         task_ao = nidaqmx.Task()
         task_ai = nidaqmx.Task()
-        
+        st_worker = None
+
         try:
-            task_ao.ao_channels.add_ao_voltage_chan(f"{self.device}/{self.ao_channel}", min_val=self.ao_min, max_val=self.ao_max)
-            task_ai.ai_channels.add_ai_voltage_chan(f"{self.device}/{self.ai_channel}", terminal_config=self.terminal)
+            num_cycles_performed = 0
+            
+            ao_str = f"{self.device}/{self.ao_channels[0]}"
+            ai_str = f"{self.device}/{self.channels[0]}"
+
+            task_ao.ao_channels.add_ao_voltage_chan(ao_str, min_val=self.ao_min, max_val=self.ao_max) 
+            task_ai.ai_channels.add_ai_voltage_chan(ai_str, terminal_config=self.terminal) 
             
             # Zero the output before starting
             task_ao.write(self.ao_min)
@@ -324,29 +397,54 @@ class GetModel(Base):
                 task_ao.write(sent_value)
                 read_value = task_ai.read()
                 
-                # Calculate timestamp and put data in the queue
                 time_now = time.perf_counter() - st_worker
-                data_queue.put((time_now, sent_value, read_value))
 
+                data_queue.put((time_now, sent_value, read_value)) 
+
+                num_cycles_performed += 1
                 # Wait to maintain the sampling period
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
+
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         finally:
             # Ensure tasks are safely closed
             task_ao.write(self.ao_min)
             task_ao.close()
             task_ai.close()
+
             data_queue.put(None) # Signal the end of acquisition
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")
 
     def _orchestrate_acquisition(self, worker_target, worker_args):
         """General-purpose orchestrator for data acquisition and plotting."""
-        self.time_var, self.inp_read, self.out_read = [], [], []
+        
+        self.time_var = [] 
+        self.inp_read = [] 
+        self.out_read = [] 
+
         data_queue = queue.Queue()
         self.acquisition_running = True
         self.plot_closed_by_user = False
         self.plot_ready_event.clear()
 
+        print ("\n[PYDAQ] Starting Get Model...")
         acquisition_thread = threading.Thread(
             target=worker_target,
             args=(data_queue, *worker_args),
@@ -362,41 +460,45 @@ class GetModel(Base):
         else:
             self.plot_ready_event.set()
         
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts * 0.9, 0.05)
             
         last_plot_update_time = time.perf_counter()
 
-        while True:
+        while (self.acquisition_running and not self.plot_closed_by_user) or not data_queue.empty():
             try:
                 item = data_queue.get(timeout=0.01)
                 if item is None:
                     break # Worker has finished
                 
-                timestamp, input_val, output_val = item
-                self.time_var.append(timestamp)
-                self.inp_read.append(input_val)
-                self.out_read.append(output_val)
+                timestamp, input_val, output_val = item 
+                self.time_var.append(timestamp) 
+                self.inp_read.append(input_val) 
+                self.out_read.append(output_val) 
 
                 now = time.perf_counter()
                 if self.plot_mode == 'realtime' and (now - last_plot_update_time >= plot_update_interval or not self.acquisition_running):
                     # Apply alignment only for Arduino acquisitions
                     if 'Arduino' in self.title:
-                        if len(self.out_read) > 1 and len(self.inp_read) > 1:
-                            self._update_plot(
-                                self.time_var[:-1],
-                                self.out_read[1:],
-                                y2_values=self.inp_read[:-1],
-                                y1_label="Output",
-                                y2_label="Input"
-                            )
+                        aligned_time = self.time_var[:-1]
+                        aligned_out = self.out_read[1:]
+                        aligned_in = self.inp_read[:-1]
+
+                        self._update_plot(       
+                            aligned_time,
+                            aligned_out,
+                            y2_values=aligned_in,
+                            y1_label="Output",
+                            y2_label="Input"
+                        )
                     else:
-                        self._update_plot(
-                            self.time_var,
-                            self.out_read,
-                            y2_values=self.inp_read,
+                        aligned_time = self.time_var
+                        aligned_out = self.out_read
+                        aligned_in = self.inp_read
+
+                        self._update_plot(       
+                            aligned_time,
+                            aligned_out,
+                            y2_values=aligned_in,
                             y1_label="Output",
                             y2_label="Input"
                         )
@@ -410,40 +512,68 @@ class GetModel(Base):
 
     def _on_plot_close(self, event):
         """Event handler for Matplotlib figure closure."""
-        print("Plot window closed by user. Initiating graceful shutdown...")
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.acquisition_running = False
         self.plot_closed_by_user = True
 
     def get_model_arduino(self):
+
+        if self.input_channels:
+            self.channels = self.input_channels
+
+        if self.output_channels:
+            self.ao_channels = self.output_channels
+
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
         signal_generator = Signal(self.prbs_bits, self.prbs_seed, self.var_tb)
         signal_finale = signal_generator.prbs_final(cycles=self.cycles, ao_max=self.ao_max)
         
-        # Arduino expects bytes for digital output
-        sent_data_bytes = [b"1" if i == self.ao_max else b"0" for i in signal_finale]
+        # Convert Volts (ao_max/ao_min) to PWM Duty Cycle (0-255) for the unified firmware
+        sent_data_bytes = [str(int((v / 5.0) * 255)) for v in signal_finale]
         
         self.title = f"PYDAQ - Data Collection for Model (Arduino)"
         self._orchestrate_acquisition(self._acquisition_worker_arduino, (signal_finale, sent_data_bytes))
 
         # Plot at the end if requested
-        if self.plot_mode == 'end' and self.time_var:
+        if self.plot_mode == 'end' and len(self.time_var) > 0:
             self._start_updatable_plot(title_str=self.title)
-            self._update_plot(self.time_var[:-1], self.out_read[1:], y2_values=self.inp_read[:-1], y1_label="Output", y2_label="Input")
+            
+            aligned_time = self.time_var[:-1]
+            aligned_out = self.out_read[1:]
+            aligned_in = self.inp_read[:-1]
+
+            self._update_plot(
+                aligned_time,
+                aligned_out,
+                y2_values=aligned_in,
+                y1_label="Output",
+                y2_label="Input"
+            )
             plt.show(block=True)
 
         if self.save:  # Adjusting data, since no last data is acquired by arduino
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             # Saving time_var and data
-            self._save_data(self.time_var[:-1], "time.dat")
-            self._save_data(self.inp_read[:-1], "input.dat")
-            self._save_data(self.out_read[1:], "output.dat")
-            print("\nData saved ...")
+            sliced_time_var = self.time_var[:-1]
+            sliced_input = self.inp_read[:-1]
+            sliced_output = self.out_read[1:]
+
+            self._save_data(sliced_time_var, "time.dat")
+            self._save_data(sliced_input, "input.dat")
+            self._save_data(sliced_output, "output.dat")
+            print("\n[PYDAQ] Data saved ...")
+
+        self.acquired_model = None
+        self.final_model = None
+        self.theta = None
+        self.n_terms = None
 
         # adapts the time at which data starts to be saved to obtain the model
         time_save = int(self.start_save_time / self.ts)
 
+        print(f"\n[PYDAQ] Identifying model...")
         data_x = np.array(self.inp_read[:-1])   # input (discard last)
         data_y = np.array(self.out_read[1:])    # output (discard first)
         
@@ -473,6 +603,7 @@ class GetModel(Base):
         model = FROLS(
             order_selection=True,
             n_info_values=self.num_info_val,
+            # The extended_least_squares parameter no longer goes here; it's defined by the estimator above.
             ylag=[i + 1 for i in range(self.inp_lag)],
             xlag=[i + 1 for i in range(self.out_lag)],
             info_criteria="aic",
@@ -482,7 +613,7 @@ class GetModel(Base):
         model.fit(X=x_train, y=y_train)
         yhat = model.predict(X=x_valid, y=y_valid)
         rrse = root_relative_squared_error(y_valid, yhat)
-        print(f"Root relative squared error: {rrse}")
+        print(f"\n[PYDAQ] Root relative squared error: {rrse}")
 
         results_data = results(
             model.final_model,
@@ -505,33 +636,35 @@ class GetModel(Base):
         ee = compute_residues_autocorrelation(y_valid, yhat)
         x1e = compute_cross_correlation(y_valid, yhat, x_valid)
 
-        metrics_df = dict()
-        metrics_namelist = list()
-        metrics_vallist = list()
+        metrics_namelist = []
+        metrics_vallist = []
 
-        for index in range(len(metrics_list)):
-            if (
-                metrics_list[index] == "r2_score"
-                or metrics_list[index] == "forecast_error"
-            ):
-                pass
-            else:
-                metrics_namelist.append(
-                    Base.get_acronym(Base.adjust_string(metrics_list[index]))
-                )
-                metrics_vallist.append(
-                    getattr(metrics, metrics_list[index])(y_valid, yhat)
-                )
-        metrics_vallist = [f"{value:.4f}" for value in metrics_vallist]
-        metrics_df["Metric Name"] = metrics_namelist
-        metrics_df["Value"] = metrics_vallist
+        for name in dir(metrics):
+            if name.startswith("_"):
+                continue
+
+            func = getattr(metrics, name)
+
+            if callable(func):
+                try:
+                    value = func(y_valid, yhat)
+
+                    # Ensure value is scalar
+                    if isinstance(value, (int, float, np.number)):
+                        metrics_namelist.append(
+                            Base.get_acronym(Base.adjust_string(name))
+                        )
+                        metrics_vallist.append(f"{value:.4f}")
+
+                except Exception:
+                    continue
 
         plot_combined_results_with_metrics(
             y=y_valid,
             yhat=yhat,
             residuals=ee,
             cross_corr=x1e,
-            title_main="Free run simulation",
+            title_main=f"Free run simulation",
             title_residuals="Residues",
             title_cross_corr="Residues",
             xlabel_main="Samples",
@@ -549,6 +682,11 @@ class GetModel(Base):
         self.show_results(results_data)
 
     def get_model_nidaq(self):
+        
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+
         self._check_path()
         self.cycles = int(np.floor(self.session_duration / self.ts)) + 1
 
@@ -559,25 +697,42 @@ class GetModel(Base):
         self._orchestrate_acquisition(self._acquisition_worker_nidaq, (signal_finale,))
         
         # Plot at the end if requested
-        if self.plot_mode == 'end' and self.time_var:
+        if self.plot_mode == 'end' and len(self.time_var) > 0:
             self._start_updatable_plot(title_str=self.title)
-            self._update_plot(self.time_var, self.out_read, y2_values=self.inp_read, y1_label="Output", y2_label="Input")
+            
+            aligned_time = self.time_var
+            aligned_out = self.out_read
+            aligned_in = self.inp_read
+
+            self._update_plot(
+                aligned_time,
+                aligned_out,
+                y2_values=aligned_in,
+                y1_label="Output",
+                y2_label="Input"
+            )
             plt.show(block=True)
 
         if self.save:
-            print("\nSaving data ...")
+            print("\n[PYDAQ] Saving data ...")
             # Saving time_var and data
             self._save_data(self.time_var, "time.dat")
             self._save_data(self.inp_read, "input.dat")
             self._save_data(self.out_read, "output.dat")
-            print("\nData saved ...")
+            print("\n[PYDAQ] Data saved ...")
+
+        self.acquired_model = None
+        self.final_model = None
+        self.theta = None
+        self.n_terms = None
 
         # adapts the time at which data starts to be saved to obtain the model
         time_save = int(self.start_save_time / self.ts)
         
+        print(f"\n[PYDAQ] Identifying model...")
+
         data_x = np.array(self.inp_read)
         data_y = np.array(self.out_read)
-
 
         perc_index = floor(data_x.shape[0] - data_x.shape[0] * (self.perc_value / 100))
 
@@ -600,6 +755,7 @@ class GetModel(Base):
         model = FROLS(
             order_selection=True,
             n_info_values=self.num_info_val,
+            # The extended_least_squares parameter no longer goes here; it's defined by the estimator above.
             ylag=[i + 1 for i in range(self.inp_lag)],
             xlag=[i + 1 for i in range(self.out_lag)],
             info_criteria="aic",
@@ -609,7 +765,7 @@ class GetModel(Base):
         model.fit(X=x_train, y=y_train)
         yhat = model.predict(X=x_valid, y=y_valid)
         rrse = root_relative_squared_error(y_valid, yhat)
-        print(f"Root relative squared error: {rrse}")
+        print(f"\n[PYDAQ] Root relative squared error: {rrse}")
 
         results_data = results(
             model.final_model,
@@ -631,33 +787,35 @@ class GetModel(Base):
         ee = compute_residues_autocorrelation(y_valid, yhat)
         x1e = compute_cross_correlation(y_valid, yhat, x_valid)
 
-        metrics_df = dict()
-        metrics_namelist = list()
-        metrics_vallist = list()
+        metrics_namelist = []
+        metrics_vallist = []
 
-        for index in range(len(metrics_list)):
-            if (
-                metrics_list[index] == "r2_score"
-                or metrics_list[index] == "forecast_error"
-            ):
-                pass
-            else:
-                metrics_namelist.append(
-                    Base.get_acronym(Base.adjust_string(metrics_list[index]))
-                )
-                metrics_vallist.append(
-                    getattr(metrics, metrics_list[index])(y_valid, yhat)
-                )
-        metrics_vallist = [f"{value:.4f}" for value in metrics_vallist]
-        metrics_df["Metric Name"] = metrics_namelist
-        metrics_df["Value"] = metrics_vallist
+        for name in dir(metrics):
+            if name.startswith("_"):
+                continue
+
+            func = getattr(metrics, name)
+
+            if callable(func):
+                try:
+                    value = func(y_valid, yhat)
+
+                    # Ensure value is scalar
+                    if isinstance(value, (int, float, np.number)):
+                        metrics_namelist.append(
+                            Base.get_acronym(Base.adjust_string(name))
+                        )
+                        metrics_vallist.append(f"{value:.4f}")
+
+                except Exception:
+                    continue
 
         plot_combined_results_with_metrics(
             y=y_valid,
             yhat=yhat,
             residuals=ee,
             cross_corr=x1e,
-            title_main="Free run simulation",
+            title_main=f"Free run simulation",
             title_residuals="Residues",
             title_cross_corr="Residues",
             xlabel_main="Samples",
@@ -676,6 +834,9 @@ class GetModel(Base):
         self.show_results(results_data)
 
     def show_results(self, results):
+
+        model = self.acquired_model
+
         r = np.array(results[1:], dtype="U50")
         model_string = "y_k = "
         line_control = 0
@@ -705,22 +866,22 @@ class GetModel(Base):
 
         fig, ax = plt.subplots()
         aux_pos = 0
-        fig.patch.set_facecolor("#404040")  # Fundo cinza escuro
+        fig.patch.set_facecolor("#404040") 
         ax.axis("off")
-        ax.text(0.5, 1, "Mathematical Model", fontsize=18, ha="center", color="white")
+        ax.text(0.5, 1, f"Mathematical Model", fontsize=18, ha="center", color="white")
         plt.axhline(y=0.96, color="#044c04", linestyle="-")
 
         if (
-            self.acquired_model.basis_function.degree == 1
-            and 0 not in self.acquired_model.final_model
+            model.basis_function.degree == 1
+            and 0 not in model.final_model
         ):
             numerator_string = ""
             denominator_string = "1"
-            for i in range(self.acquired_model.n_terms):
-                if np.max(self.acquired_model.final_model[i]) < 1:
+            for i in range(model.n_terms):
+                if np.max(model.final_model[i]) < 1:
                     tmp_regressor_str = str(1)
                 else:
-                    regressor_dic = Counter(self.acquired_model.final_model[i])
+                    regressor_dic = Counter(model.final_model[i])
                     regressor_string = []
                     for j in range(len(list(regressor_dic.keys()))):
                         regressor_key = list(regressor_dic.keys())[j]
@@ -734,22 +895,22 @@ class GetModel(Base):
                                 )
                             )
                             if int(regressor_key / 1000) < 2:
-                                if self.acquired_model.theta[i][0] > 0:
-                                    regressor_Z_transformed = f"\\,-\\,{self.acquired_model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
+                                if model.theta[i][0] > 0:
+                                    regressor_Z_transformed = f"\\,-\\,{model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
                                     denominator_string += regressor_Z_transformed
                                 else:
-                                    regressor_Z_transformed = f"\\,+\\,{-self.acquired_model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
+                                    regressor_Z_transformed = f"\\,+\\,{-model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
                                     denominator_string += regressor_Z_transformed
                             else:
                                 if (
                                     numerator_string
-                                    and self.acquired_model.theta[i][0] > 0
+                                    and model.theta[i][0] > 0
                                 ):
                                     numerator_string += "\\,+\\,"
-                                    regressor_Z_transformed = f"{self.acquired_model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
+                                    regressor_Z_transformed = f"{model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
                                     numerator_string += regressor_Z_transformed
                                 else:
-                                    regressor_Z_transformed = f"{self.acquired_model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
+                                    regressor_Z_transformed = f"{model.theta[i][0]:.4f}\\,z^{{{expoent_string}}}"
                                     numerator_string += regressor_Z_transformed
 
             latex_eq = "H[z]\\,=\\,\\frac{Y[z]}{X[z]}\\,=\\,"
@@ -770,7 +931,7 @@ class GetModel(Base):
                     rf"${string_list[i]}$",
                     fontsize=15,
                     ha="center",  # Adjust horizontal alignment to center
-                    color="white",  # Texto em branco
+                    color="white",  
                 )
                 aux_pos = 1
 

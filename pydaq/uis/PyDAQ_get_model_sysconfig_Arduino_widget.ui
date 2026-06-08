@@ -241,6 +241,9 @@ QPushButton#reload_devices:pressed{
 	border: 2px solid rgb(255, 255, 255);
 }</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="World"/>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QWidget" name="widget" native="true">
@@ -613,7 +616,7 @@ QPushButton#reload_devices:pressed{
   </layout>
  </widget>
  <resources>
-  <include location="../../../../../../../rafar/OneDrive/Documentos/IC - PySide/pydaq/uis/resources_1.qrc"/>
+  <include location="resources_1.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

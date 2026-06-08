@@ -5,11 +5,11 @@ import threading
 import queue
 
 import matplotlib.pyplot as plt
-import nidaqmx
 import numpy as np
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
+
 
 class SendData(Base):
     """
@@ -34,7 +34,7 @@ class SendData(Base):
         self,
         data=None,
         device="Dev1",
-        channel="ao0",
+        channels=None,
         com="COM1",
         ts=0.5,
         ao_min=0,
@@ -44,37 +44,53 @@ class SendData(Base):
 
         super().__init__()
         self.device = device
-        self.channel = channel
+        # Handling channels (default to single channel if not list)
+        # Ensure channels is a list
+        if channels is None:
+            self.channels = ["ao0"] # Default
+        elif isinstance(channels, str) or isinstance(channels, int):
+            self.channels = [channels]
+        else:
+            self.channels = channels
         self.ts = ts
         self.plot_mode = plot_mode
         self.ao_min = ao_min
         self.ao_max = ao_max
+        self.com_port = com
 
-        if data is not None and type(data) == list:
-            self.data = np.array(data)
+        # Processing input data
+        if data is not None:
+            self.data = np.asarray(data)
+            n_channels = len(self.channels)
+            
+            # If we have multiple channels but data is 1D, we assume the user wants
+            # to send the SAME signal to all channels (Broadcasting)
+            if n_channels > 1 and self.data.ndim == 1:
+                # Reshape to (Samples, Channels) by repeating columns
+                self.data = np.tile(self.data[:, np.newaxis], (1, n_channels))
+            
+            # If data is already 2D, we assume it is (Samples, Channels).
+            # If the shape doesn't match, we warn but proceed (might crash later if mismatch)
+            if self.data.ndim == 2 and self.data.shape[1] != n_channels:
+                warnings.warn("[PYDAQ] Missing configuration: You must define data to be sent.")
+
         else:
-            self.data = data
+            self.data = np.array([])
 
         # Gathering nidaq info
         self._nidaq_info()
 
-        # Time variable for plotting progress
-        self.time_var = []
-        # History of sent data for plotting
-        self.sent_data_history = []
+        # Data storage for plotting/saving (Dictionary based, like get_data)
+        self.time_var = {ch: [] for ch in self.channels}
+        self.sent_data_history = {ch: [] for ch in self.channels} 
 
         # Defining default path
         self.path = os.path.join(
             os.path.join(os.path.expanduser("~")), "Desktop", "data.dat"
         )
 
-        # COM ports
-        self.com_ports = [i.description for i in serial.tools.list_ports.comports()]
-        self.com_port = com
-
         # Plot title and legend
         self.title = None
-        self.legend = ["Output"]
 
         # Threading control
         self.sending_running = False
@@ -83,65 +99,130 @@ class SendData(Base):
 
     # Handler for plot window closure
     def _on_plot_close(self, event):
-        """..."""
-        print("Plot window closed by user. Halting data sending...")
+        """
+        Event handler for Matplotlib figure closure.
+        Sets sending_running to False and plot_closed_by_user to True.
+        """
+        print("\n[PYDAQ] Plot window closed by user. Initiating shutdown...")
         self.sending_running = False
         self.plot_closed_by_user = True
 
     def _send_data_worker_nidaq(self, progress_queue):
+
         self.plot_ready_event.wait() # Wait for plot to be ready
+        st_worker = None
 
         try:
             task = nidaqmx.Task()   # cria primeiro
+            
+            channel_str = ",".join([f"{self.device}/{ch}" for ch in self.channels])
 
             task.ao_channels.add_ao_voltage_chan(
-                f"{self.device}/{self.channel}",
+                channel_str,
                 min_val=float(self.ao_min),
                 max_val=float(self.ao_max),
             )
 
-            cycles = len(self.data)
-            
+            # Number of samples (rows in data)
+            n_channels = len(self.channels)
+            cycles = self.data.shape[0] # Number of samples (rows)
+
+            num_cycles_performed = 0
             st_worker = time.perf_counter()
 
             for k in range(cycles):
                 if not self.sending_running:
                     break
 
-                current_value = self.data[k]
-                task.write(current_value)
-                
+                # Get current sample(s) for this step
+                if n_channels == 1:
+                    # If 1D array or (N, 1) matrix
+                    if self.data.ndim == 1:
+                        current_val = self.data[k]
+                    else:
+                        current_val = self.data[k][0]
+                    
+                    # Write single value
+                    task.write(current_val)
+                    val_to_queue = [current_val] # List for consistency in queue
+                else:
+                    # Multi-channel write (expects list or array of values for that sample)
+                    current_vals = self.data[k].tolist()
+                    task.write(current_vals)
+                    val_to_queue = current_vals
+
                 time_now = time.perf_counter() - st_worker
                 
-                # Put progress on the queue for the main thread to plot
-                progress_queue.put((time_now, current_value))
-
+                # Put progress on the queue: (timestamp, [val_ch0, val_ch1...])
+                progress_queue.put((time_now, val_to_queue))
+                
+                num_cycles_performed += 1
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         finally:
-            task.write(0) # Ensure output is zeroed at the end
+            try:
+                if len(self.channels) == 1:
+                    task.write(0)
+                else:
+                    task.write([0] * len(self.channels))
+            except:
+                pass
             task.close()
             progress_queue.put(None) # Signal end of sending
+            # PROTECTION: Only calculates the time if the acquisition has actually started.
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")  
 
     def send_data_nidaq(self):
         """
-            This function can be used to send experimental data  using Python + NIDAQ boards.
-
+            This function can be used to send experimental data using Python + NIDAQ boards.
         :example:
             send_data_nidaq()
         """
 
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
         if self.data is None:
-            warnings.warn("You must define data to be sent.")
+            warnings.warn("[PYDAQ] Missing configuration: You must define data to be sent.")
             return
 
-        self.time_var, self.sent_data_history = [], []
+        self.data = np.array(self.data)
+        
+        # Determine the number of columns in the loaded data
+        n_cols = self.data.shape[1] if self.data.ndim == 2 else 1
+        
+        # Abort ONLY if it's not a single column AND doesn't match the channel count
+        if n_cols != 1 and n_cols != len(self.channels):
+            self._dim_error("Dimension mismatch: The number of selected channels does not match the data structure.")
+            return
+
+        # Initialize storage dicts
+        self.time_var = {ch: [] for ch in self.channels}
+        self.sent_data_history = {ch: [] for ch in self.channels}
+
         progress_queue = queue.Queue()
         self.sending_running = True
         self.plot_closed_by_user = False
         self.plot_ready_event.clear()
 
+        print ("\n[PYDAQ] Running Send Data...")
         sending_thread = threading.Thread(
             target=self._send_data_worker_nidaq,
             args=(progress_queue,),
@@ -149,25 +230,19 @@ class SendData(Base):
         )
         sending_thread.start()
 
+        # Plot Setup
         if self.plot_mode == 'realtime':
-            self.title = f"PYDAQ - Sending Data. {self.device}, {self.channel}"
+            self.title = f"PYDAQ - Sending Data. {self.device}, Channels: {self.channels}"
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
-
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
-
             self.plot_ready_event.set()
         else:
             self.plot_ready_event.set()
 
-        # Control variables for periodic plot update
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
-            
+        # Plot Update Rate
+        plot_update_interval = max(self.ts * 0.9, 0.05)
+        
         last_plot_time = time.perf_counter()
 
         # Main loop to consume progress and update plot
@@ -179,21 +254,30 @@ class SendData(Base):
                     self.sending_running = False
                     # Drain the queue to ensure all data is processed
                     while not progress_queue.empty():
-                        remaining_item = progress_queue.get_nowait()
-                        if remaining_item:
-                            timestamp, sent_value = remaining_item
-                            self.time_var.append(timestamp)
-                            self.sent_data_history.append(sent_value)
+                        remaining = progress_queue.get_nowait()
+                        if remaining:
+                            t_stamp, vals = remaining
+                            for i, ch in enumerate(self.channels):
+                                self.time_var[ch].append(t_stamp)
+                                self.sent_data_history[ch].append(vals[i])
                     break
 
-                timestamp, sent_value = item
-                self.time_var.append(timestamp)
-                self.sent_data_history.append(sent_value)
+                timestamp, values = item
+                # Append data for each channel
+                for i, ch in enumerate(self.channels):
+                    self.time_var[ch].append(timestamp)
+                    self.sent_data_history[ch].append(values[i])
 
                 now = time.perf_counter()
                 # Improved plot condition to ensure the final frame is drawn
                 if self.plot_mode == 'realtime' and (now - last_plot_time >= plot_update_interval or not self.sending_running):
-                    self._update_plot(self.time_var, self.sent_data_history, y1_label="Sent Data")
+                    # Plot using the dictionaries, matching get_data style
+                    self._update_plot(
+                        self.time_var, 
+                        self.sent_data_history,
+                        y1_label="Sent Data",
+                        channel_names=self.channels
+                        )
                     last_plot_time = now
             
             except queue.Empty:
@@ -204,28 +288,48 @@ class SendData(Base):
         sending_thread.join()
 
         # Plotting at the end logic remains the same
-        if self.plot_mode == 'end' and self.sent_data_history:
+        if self.plot_mode == 'end' and any(self.time_var.values()):
+            print("\n[PYDAQ] Generating plot at the end of acquisition...")
             self.title = f"PYDAQ - Final Sent Data (NIDAQ)"
             self._start_updatable_plot(title_str=self.title)
-            # Use the actual sent data history for the final plot
-            self._update_plot(self.time_var, self.sent_data_history, y1_label="Sent Data")
+            self._update_plot(
+                self.time_var, 
+                self.sent_data_history,
+                y1_label="Sent Data",
+                channel_names=self.channels
+                )
             plt.show(block=True)
             
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
 
         return
 
     def _send_data_worker_arduino(self, progress_queue):
+        """
+        Worker thread for Arduino data transmission.
+        Supports sending digital signals (on/off) or formatted strings.
+        """
         self.plot_ready_event.wait()
         
+        n_channels = len(self.channels)
+        cycles = self.data.shape[0]
+        
+        num_cycles_performed = 0
+        st_worker = None
         # This logic is specific to sending digital signals based on a voltage threshold
-        data_to_send = [b"1" if i > 2.5 else b"0" for i in self.data]
-        cycles = len(data_to_send)
+        #data_to_send = [b"1" if i > 2.5 else b"0" for i in self.data]
 
         try:
             self._open_serial()
+            if not self._verify_arduino_firmware():
+                self.ser.close()
+                warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+                # If you are using a graphical interface with PySide6, you can call a QMessageBox here.
+                # QMessageBox.critical(None, "Firmware Error", "PyDAQ Firmware not detected. Please upload it first.")
+
+                return
             time.sleep(0.5) # Wait for serial to settle
             
             st_worker = time.perf_counter()
@@ -233,23 +337,73 @@ class SendData(Base):
             for k in range(cycles):
                 if not self.sending_running:
                     break
-                
-                self.ser.write(data_to_send[k])
-                
+
+                # Logic to get values for this step
+                if n_channels == 1:
+                     if self.data.ndim == 1:
+                        val = self.data[k]
+                     else:
+                        val = self.data[k][0]
+                     
+                     current_vals = [val]
+                else:
+                    current_vals = self.data[k].tolist()
+
+                # Digital logic: High/Low based on 2.5V threshold (0 or 255 for Duty Cycle)
+                digital_vals = [255 if x > 2.5 else 0 for x in current_vals]
+
+                msg_parts = []
+                for i, ch in enumerate(self.channels): # e.g., self.channels = ["D8", "D9"]
+                    pin_num = ch.replace("D", "")      # Extracts "8"
+                    msg_parts.append(f"{pin_num}:{digital_vals[i]}") # Formats "8:255"
+
+                msg = ",".join(msg_parts) + "\n"       # Creates "8:1,9:0\n"
+
+                self.ser.reset_input_buffer()
+
+                self.ser.write(msg.encode())
+
+                num_cycles_performed += 1
+
                 time_now = time.perf_counter() - st_worker
-                # Send original data value for plotting, not the b'1'/b'0'
-                progress_queue.put((time_now, self.data[k]))
+
+                plot_vals = [5.0 if x == 255 else 0.0 for x in digital_vals]
+                progress_queue.put((time_now, plot_vals))
 
                 wait_time = (st_worker + (k + 1) * self.ts) - time.perf_counter()
                 if wait_time > 0:
                     time.sleep(wait_time)
-        
+                else:
+                    warnings.warn("[PYDAQ] Time spent to append data and update interface was greater than ts. You CANNOT trust time.dat")
         except serial.SerialException as e:
-            warnings.warn(f"Failed to open or use serial port {self.com_port}: {e}")
+            warnings.warn(f"[PYDAQ] Hardware error: Failed to open serial port {self.com_port}. Details: {e}")
+            self.acquisition_running = False
         finally:
             if hasattr(self, 'ser') and self.ser.is_open:
-                self.ser.write(b"0")
+                try:
+                    stop_parts = []
+                    for ch in self.channels:
+                        pin_num = ch.replace("D", "")
+                        stop_parts.append(f"{pin_num}:0")
+                    self.ser.write((",".join(stop_parts) + "\n").encode())
+                except:
+                    pass
                 self.ser.close()
+            if st_worker is not None:
+                total_acquisition_duration = time.perf_counter() - st_worker
+                if num_cycles_performed > 0:
+                    avg = total_acquisition_duration / num_cycles_performed
+                    print(
+                        f"\n[PYDAQ] Thread finished. "
+                        f"Total time: {total_acquisition_duration:.5f}s | "
+                        f"Cycles processed: {num_cycles_performed} | "
+                        f"Avg per cycle: {avg:.5f}s"
+                    )       
+                else:
+                    print("\n[PYDAQ] Thread finished. No data cycles acquired.")
+            else:
+                print("\n[PYDAQ] Thread finished before acquisition started (Configuration blocked).")  
+
             progress_queue.put(None)
 
     def send_data_arduino(self):
@@ -262,14 +416,29 @@ class SendData(Base):
             send_data_arduino()
         """
         if self.data is None:
-            warnings.warn("You must define data to be sent.")
+            warnings.warn("[PYDAQ] You must define data to be sent.")
+            return
+        
+        self.data = np.array(self.data)
+
+        # Determine the number of columns in the loaded data
+        n_cols = self.data.shape[1] if self.data.ndim == 2 else 1
+        
+        # Abort ONLY if it's not a single column AND doesn't match the channel count
+        if n_cols != 1 and n_cols != len(self.channels):
+            self._dim_error("[PYDAQ] Data columns do not match the number of selected channels!")
             return
 
-        self.time_var, self.sent_data_history = [], []
+        # Initialize storage dicts
+        self.time_var = {ch: [] for ch in self.channels}
+        self.sent_data_history = {ch: [] for ch in self.channels}
+
         progress_queue = queue.Queue()
         self.sending_running = True
         self.plot_closed_by_user = False
         self.plot_ready_event.clear()
+
+        print ("\n[PYDAQ] Running Send Data...")
 
         sending_thread = threading.Thread(
             target=self._send_data_worker_arduino,
@@ -282,20 +451,13 @@ class SendData(Base):
             self.title = f"PYDAQ - Sending Data. Arduino, Port: {self.com_port}"
             self._start_updatable_plot(title_str=self.title)
             self.fig.canvas.mpl_connect('close_event', self._on_plot_close)
-
-            # Add a short delay to allow the plot window to open fully
-            print("\nReal-time plot started. Waiting 0.5s for the window to render...")
             time.sleep(0.5)
-
             self.plot_ready_event.set()
         else:
             self.plot_ready_event.set()
 
         # Control variables for periodic plot update
-        if self.ts >= 0.05:
-            plot_update_interval = 0.05
-        else:
-            plot_update_interval = 0.25
+        plot_update_interval = max(self.ts*0.9, 0.05)
 
         last_plot_time = time.perf_counter()
 
@@ -306,23 +468,29 @@ class SendData(Base):
 
                 if item is None:
                     self.sending_running = False
-                    # Drain the queue to ensure all data is processed
+                    # Flush
                     while not progress_queue.empty():
-                        remaining_item = progress_queue.get_nowait()
-                        if remaining_item:
-                            timestamp, sent_value = remaining_item
-                            self.time_var.append(timestamp)
-                            self.sent_data_history.append(sent_value)
+                        remaining = progress_queue.get_nowait()
+                        if remaining:
+                            t_stamp, vals = remaining
+                            for i, ch in enumerate(self.channels):
+                                self.time_var[ch].append(t_stamp)
+                                self.sent_data_history[ch].append(vals[i])
                     break
                 
-                timestamp, sent_value = item
-                self.time_var.append(timestamp)
-                self.sent_data_history.append(sent_value)
+                timestamp, vals = item
+                for i, ch in enumerate(self.channels):
+                    self.time_var[ch].append(timestamp)
+                    self.sent_data_history[ch].append(vals[i])
 
                 now = time.perf_counter()
-                # Improved plot condition to ensure the final frame is drawn
                 if self.plot_mode == 'realtime' and (now - last_plot_time >= plot_update_interval or not self.sending_running):
-                    self._update_plot(self.time_var, self.sent_data_history, y1_label="Sent Data")
+                    self._update_plot(
+                        self.time_var, 
+                        self.sent_data_history,
+                        y1_label="Sent Data",
+                        channel_names=self.channels
+                        )
                     last_plot_time = now
             
             except queue.Empty:
@@ -332,15 +500,20 @@ class SendData(Base):
 
         sending_thread.join()
 
-        if self.plot_mode == 'end' and self.sent_data_history:
+        if self.plot_mode == 'end' and any(self.time_var.values()):
+            print("\n[PYDAQ] Generating plot at the end of acquisition...")
             self.title = f"PYDAQ - Final Sent Data (Arduino)"
             self._start_updatable_plot(title_str=self.title)
-            # Use the actual sent data history for the final plot
-            self._update_plot(self.time_var, self.sent_data_history, y1_label="Sent Data")
+            self._update_plot(
+                self.time_var, 
+                self.sent_data_history,
+                y1_label="Sent Data",
+                channel_names=self.channels
+                )
             plt.show(block=True)
-        
+
         if self.plot_mode == 'realtime' and not self.plot_closed_by_user:
-            print("\nPlot remains open. Close window manually to exit.")
+            print("\n[PYDAQ] Plot remains open. Close window manually to exit.")
             plt.show(block=True)
-            
+
         return

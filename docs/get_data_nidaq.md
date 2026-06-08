@@ -1,4 +1,4 @@
-# Data Acquisition with NIDAQ Boards
+# Data Acquisition with NI-DAQ Boards
 
 **NOTE**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition)
 device
@@ -16,7 +16,7 @@ PydaqGui()
 ```
 
 After this command, the graphical user interface screen will show up, where the
-user should select the NIDAQ option and go to the Get Data tab,
+user should select the NI-DAQ option and go to the Get Data tab,
 to define parameters and start acquiring data.
 
 ![](img/get_data_nidaq.png)
@@ -28,7 +28,7 @@ save data.
 
 ## Data Acquisition using command line
 
-It will be presented how to use GetData (and get_data_nidaq) to acquire signal using a National Instruments board.
+It will be presented how to use GetData (and get_data_nidaq) to acquire signal using an NI-DAQ board.
 
 Firstly, import the library and define the parameters:
 
@@ -38,7 +38,7 @@ from pydaq.get_data import GetData
 
 # Defining parameters
 device_name = "Dev1"
-channel_used = "ai0"
+channels_used = ['ai0','ai2']
 terminal_configuration = 'Diff'
 sample_period_in_seconds = 1
 session_duration_in_seconds = 10.0
@@ -51,7 +51,7 @@ Then, instantiate a class with the defined parameters and get the data
 ```python
 # Class GetData
 g = GetData(device=device_name,
-            channel=channel_used,
+            channels=channels_used,
             terminal=terminal_configuration,
             ts=sample_period_in_seconds,
             session_duration=session_duration_in_seconds,
@@ -69,8 +69,8 @@ g.get_data_nidaq()
 To show acquired data, type:
 
 ```python
-print(f'First 10 values of time: \n {g.time_var[0:10]}')
-print(f'\nFirst 10 values of data: \n {g.data[0:10]}')
+print(f"First 10 values of time (Channel Ai0): \n {g.time_var['ai0'][0:10]}")
+print(f"\nFirst 10 values of data (Channel Ai0): \n {g.data['ai0'][0:10]}")
 ```
 
 If you choose to plot, you can see acquired data on screen, i.e:
@@ -81,6 +81,6 @@ Data will also be saved as depicted as shown below:
 
 ![](img/data.png)
 
-You can see more detailed bellow:
+You can see more detailed below:
 
 ![](img/getdata_nidaq.gif)

@@ -332,6 +332,9 @@ QScrollArea{
 }
 </string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="4" column="0">
     <widget class="QWidget" name="widget" native="true">

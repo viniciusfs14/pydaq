@@ -2,112 +2,136 @@
   <img src="img/logo.png" alt="PYDAQ" class="center" width="50%" height="50%">
 </p>
 
-# Welcome to PYDAQ documentation
+PYDAQ is a Python package for data acquisition, signal generation, system identification, digital filtering, and real-time control using Arduino and NI-DAQ devices.
 
-## Introduction
-
-**PYDAQ (Python Data Acquisition and Experimental Analysis)** is a framework designed to support **experimental data acquisition, real-time analysis, system identification, and control** using Python. It provides an integrated environment for working with **Arduino** and **National Instruments NIDAQ** boards, supporting both **graphical** and **command-line** workflows.
-
-Initially focused on basic data acquisition and signal generation for experiments such as step-response tests, PYDAQ has evolved into a broader experimental platform. Its development milestones are:
-
-* **Version v0.0.5** introduced **real-time system identification**, enabling the estimation of linear and nonlinear black-box models directly from experimental data.
-* **Version v0.0.6** expanded PYDAQ with **real-time digital filtering (FIR and IIR)** and **classical control techniques**, including **PID control with Ziegler–Nichols tuning**, supporting both simulation and live experiments.
-
-PYDAQ can be used through a **Graphical User Interface (GUI)** for rapid experimentation or via a **command-line interface** for scripting, automation, and advanced workflows. These features make the framework suitable for research, teaching laboratories, and rapid prototyping involving empirical data.
+It provides a unified graphical interface, command-line tools, and Jupyter notebook examples for laboratory experiments, rapid prototyping, teaching, and research workflows.
 
 ---
 
-## Installation and Requirements
+## Capabilities
 
-The fastest way to install PYDAQ is using `pip`:
+PYDAQ supports the following experimental workflows:
+
+| Capability | Description |
+| :--- | :--- |
+| Data acquisition | Acquire, plot, and save experimental data from Arduino or NI-DAQ boards |
+| Signal generation | Send user-defined input signals, including nonlinear excitation signals |
+| Step-response experiments | Run automatic step-response tests and save the resulting data |
+| PRBS-based experiments | Generate excitation signals for system identification workflows |
+| System identification | Estimate linear and nonlinear black-box models from experimental data using [SysIdentPy](https://www.sysidentpy.org) |
+| Digital filtering | Apply FIR and IIR filters directly to acquired data in real time |
+| PID control | Run real-time or simulated P, PI, PD, and PID control with Ziegler-Nichols tuning |
+| LQR control | Simulate or implement Linear Quadratic Regulator control for state-space systems |
+| Multi-channel workflows | Work with multiple Arduino or NI-DAQ channels |
+| Benchmarking | Estimate the maximum reliable sampling frequency supported by the local system |
+
+---
+
+## Installation
+
+Install PYDAQ with `pip`:
 
 ```console
 pip install pydaq
 ```
 
-PYDAQ requires:
+**Hardware notes:**
 
-* Driver of the board used (Arduino or National Instruments NIDAQ)
-* `nidaqmx (>=0.6.5)` for data acquisition from National Instruments boards
-* `matplotlib (>=3.5.3)` for data visualization
-* `numpy (>=1.22.3)` for numerical processing
-* `PySide6 (>=6.7.1)`, `PySide6_Addons`, `PySide6_Essentials`, and `shiboken6` for the graphical user interface
-* `pyserial (>=3.5)` for communication with Arduino boards
-* `sysidentpy (>=0.4.1)` and `bitarray (>=3.0.0)` for system identification and signal generation
-* `packaging (>=24.1)`
-* `scipy (>=1.16.1)` for digital filters and PID control
+- Arduino workflows do not require NI-DAQmx drivers.
+- NI-DAQ workflows require the [NI-DAQmx drivers](https://www.ni.com/en/support/downloads/drivers/download.ni-daq-mx.html#494676).
 
-**Note:** In version **v0.0.6.1**, NI-DAQmx drivers must be installed even if only Arduino boards are used. This limitation will be addressed in future releases.
+PYDAQ is tested up to Python 3.14. It may run on newer versions, but without guarantees.
 
 ---
 
-## Documentation Map
+## Graphical user interface
 
-### Data Acquisition
+All main workflows are available from a single graphical interface.
 
-Examples showing how to acquire data using either the GUI or the command line with:
+Launch the GUI with:
 
-* [NIDAQ](https://samirmartins.github.io/pydaq/get_data_nidaq/)
-* [Arduino](https://samirmartins.github.io/pydaq/get_data_arduino/)
+```python
+from pydaq.pydaq_global import PydaqGui
 
-### Sending Data
+PydaqGui()
+```
 
-How to generate and send excitation or custom signals using:
+---
 
-* [NIDAQ](https://samirmartins.github.io/pydaq/send_data_nidaq/)
-* [Arduino](https://samirmartins.github.io/pydaq/send_data_arduino/)
+## Documentation map
 
-Both GUI-based and command-line approaches are covered.
+### Data acquisition
 
-### Step Response
+Acquire, plot, and save experimental data using:
 
-Configuration and execution of step-response experiments with:
+- [NI-DAQ](get_data_nidaq.md)
+- [Arduino](get_data_arduino.md)
 
-* [NIDAQ](https://samirmartins.github.io/pydaq/step_response_nidaq/)
-* [Arduino](https://samirmartins.github.io/pydaq/step_response_arduino/)
+### Signal generation
 
-### Get Model (System Identification)
+Generate and send user-defined excitation signals using:
 
-Documentation on estimating mathematical models from experimental data using:
+- [NI-DAQ](send_data_nidaq.md)
+- [Arduino](send_data_arduino.md)
 
-* [NIDAQ](https://samirmartins.github.io/pydaq/get_model_nidaq/)
-* [Arduino](https://samirmartins.github.io/pydaq/get_model_arduino/)
+### Step-response experiments
 
-This includes real-time identification workflows introduced in **v0.0.5**.
+Run automatic step-response experiments using:
 
-### PID Control
+- [NI-DAQ](step_response_nidaq.md)
+- [Arduino](step_response_arduino.md)
 
-Guidelines for performing **real-time or simulated PID control**, including **Ziegler–Nichols tuning**, using:
+### System identification
 
-* [NIDAQ](https://samirmartins.github.io/pydaq/pid_control_nidaq/)
-* [Arduino](https://samirmartins.github.io/pydaq/pid_control_arduino/)
+Estimate mathematical models from experimental data using:
 
-Controller configuration and closed-loop experiments are supported through the GUI.
+- [NI-DAQ](get_model_nidaq.md)
+- [Arduino](get_model_arduino.md)
 
-### Digital Filters
+### PID control
 
-Design and real-time application of **FIR and IIR digital filters** using:
+Run real-time or simulated PID control experiments using:
 
-* [Arduino](https://samirmartins.github.io/pydaq/pid_control_arduino/)
-* [NIDAQ](https://samirmartins.github.io/pydaq/pid_control_nidaq/)
+- [NI-DAQ](pid_control_nidaq.md)
+- [Arduino](pid_control_arduino.md)
 
-Filter parameters such as cutoff frequency and order can be configured via the graphical interface, with support for simulation and live data processing. These features were introduced in **v0.0.6**.
+### LQR control
+
+Simulate or implement Linear Quadratic Regulator control for state-space systems using:
+
+- [NI-DAQ](lqr_control_nidaq.md)
+- [Arduino](lqr_control_arduino.md)
+
+### Digital filtering
+
+Design and apply FIR and IIR digital filters in real time using:
+
+- [NI-DAQ](digital_filters_nidaq.md)
+- [Arduino](digital_filters_arduino.md)
 
 ### Benchmarking
 
-This section provides a benchmarking tool to estimate the **maximum reliable sampling frequency** supported by the user’s system. It helps identify practical limits for real-time or high-speed data acquisition without data loss.
+Estimate the maximum reliable sampling frequency supported by the local system:
 
-Instructions on **how to run and interpret the benchmark** are available at:
-[Benchmarking tool documentation](https://pydaq.org/benchmarking/)
+- [Benchmarking tool](benchmarking.md)
 
----
+### Arduino firmware
 
-## Examples
+PYDAQ uses a unified Arduino firmware based on a standardized CSV serial protocol for multi-channel acquisition, signal generation, system identification, filtering, and control workflows.
 
-This section provides Jupyter Notebook examples demonstrating PYDAQ functionalities for both:
+- [Arduino firmware](arduino_firmware.md)
 
-* [NIDAQ](https://samirmartins.github.io/pydaq/jupyter_notebooks/)
-* [Arduino](https://samirmartins.github.io/pydaq/jupyter_notebooks/)
+### Error dictionary
+
+The error dictionary helps diagnose common GUI messages, terminal outputs, communication issues, and configuration problems.
+
+- [Error dictionary](error_dictionary.md)
+
+### Jupyter notebook examples
+
+Notebook examples are available for both Arduino and NI-DAQ workflows:
+
+- [Jupyter notebook examples](jupyter_notebooks.md)
 
 ---
 
@@ -118,11 +142,12 @@ This section provides Jupyter Notebook examples demonstrating PYDAQ functionalit
 </p>
 
 ---
-CITATION
----
+
+## Citation
+
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.05662/status.svg)](https://doi.org/10.21105/joss.05662)
 
-This is the **seminal publication** of the PYDAQ project and **must be cited** in any work that uses PYDAQ.
+This is the **seminal publication** of the PYDAQ project and should be cited in any work that uses PYDAQ.
 
 - Martins, S. A. M. (2023). *PYDAQ: Data Acquisition and Experimental Analysis with Python*. Journal of Open Source Software, 8(92), 5662. https://doi.org/10.21105/joss.05662
 
@@ -140,5 +165,5 @@ This is the **seminal publication** of the PYDAQ project and **must be cited** i
   year    = {2023}
 }
 ```
-Additional related publications that contributed to the development of PYDAQ are available in the [`papers`](https://github.com/samirmartins/pydaq/tree/main/papers) directory.
 
+Additional related publications are available in the [`papers`](https://github.com/samirmartins/pydaq/tree/main/papers) directory.

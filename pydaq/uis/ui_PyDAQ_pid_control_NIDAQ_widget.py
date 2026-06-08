@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'PyDAQ_pid_control_NIDAQ_widgetSLjeqp.ui'
+## Form generated from reading UI file 'PyDAQ_pid_control_NIDAQ_widgetwSalUo.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -24,7 +24,7 @@ class Ui_NIDAQ_PID_Control(object):
     def setupUi(self, NIDAQ_PID_Control):
         if not NIDAQ_PID_Control.objectName():
             NIDAQ_PID_Control.setObjectName(u"NIDAQ_PID_Control")
-        NIDAQ_PID_Control.resize(588, 1031)
+        NIDAQ_PID_Control.resize(575, 1031)
         NIDAQ_PID_Control.setStyleSheet(u"QWidget{\n"
 "	background-color: rgb(64, 64, 64);\n"
 "}\n"
@@ -336,6 +336,13 @@ class Ui_NIDAQ_PID_Control(object):
 "")
         self.gridLayout = QGridLayout(NIDAQ_PID_Control)
         self.gridLayout.setObjectName(u"gridLayout")
+        self.pushButton_start = QPushButton(NIDAQ_PID_Control)
+        self.pushButton_start.setObjectName(u"pushButton_start")
+        self.pushButton_start.setMinimumSize(QSize(120, 30))
+        self.pushButton_start.setMaximumSize(QSize(150, 30))
+
+        self.gridLayout.addWidget(self.pushButton_start, 4, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
+
         self.frame_equation = QFrame(NIDAQ_PID_Control)
         self.frame_equation.setObjectName(u"frame_equation")
         self.frame_equation.setMinimumSize(QSize(400, 120))
@@ -352,7 +359,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.gridLayout_5.addWidget(self.widget_image, 0, 0, 1, 1)
 
 
-        self.gridLayout.addWidget(self.frame_equation, 3, 0, 1, 1)
+        self.gridLayout.addWidget(self.frame_equation, 2, 0, 1, 1)
 
         self.widget_top = QWidget(NIDAQ_PID_Control)
         self.widget_top.setObjectName(u"widget_top")
@@ -788,15 +795,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.gridLayout_2.addWidget(self.widget_polynomial, 2, 3, 1, 1)
 
 
-        self.gridLayout.addWidget(self.widget_top, 2, 0, 1, 1)
-
-        self.line_2 = QFrame(NIDAQ_PID_Control)
-        self.line_2.setObjectName(u"line_2")
-        self.line_2.setMinimumSize(QSize(0, 0))
-        self.line_2.setFrameShape(QFrame.Shape.HLine)
-        self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout.addWidget(self.line_2, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.widget_top, 1, 0, 1, 1)
 
         self.line_3 = QFrame(NIDAQ_PID_Control)
         self.line_3.setObjectName(u"line_3")
@@ -804,14 +803,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.line_3.setFrameShape(QFrame.Shape.HLine)
         self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.gridLayout.addWidget(self.line_3, 4, 0, 1, 1)
-
-        self.pushButton_start = QPushButton(NIDAQ_PID_Control)
-        self.pushButton_start.setObjectName(u"pushButton_start")
-        self.pushButton_start.setMinimumSize(QSize(120, 30))
-        self.pushButton_start.setMaximumSize(QSize(150, 30))
-
-        self.gridLayout.addWidget(self.pushButton_start, 5, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
+        self.gridLayout.addWidget(self.line_3, 3, 0, 1, 1)
 
 
         self.retranslateUi(NIDAQ_PID_Control)
@@ -821,6 +813,7 @@ class Ui_NIDAQ_PID_Control(object):
 
     def retranslateUi(self, NIDAQ_PID_Control):
         NIDAQ_PID_Control.setWindowTitle(QCoreApplication.translate("NIDAQ_PID_Control", u"Form", None))
+        self.pushButton_start.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"PID CONTROL", None))
         self.label_terminal.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Terminal config.:", None))
         self.label_setpoint.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Setpoint:", None))
         self.pushButton_confirm.setText(QCoreApplication.translate("NIDAQ_PID_Control", u" CONFIRM ", None))
@@ -854,7 +847,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.yes_save_radio.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Yes", None))
         self.no_save_radio.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"No", None))
         self.label_path.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Path:", None))
-        self.label_ai_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AI channel:", None))
+        self.label_ai_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AI channels:", None))
         self.comboBox_setpoint.setItemText(0, QCoreApplication.translate("NIDAQ_PID_Control", u"Voltage (V)", None))
         self.comboBox_setpoint.setItemText(1, QCoreApplication.translate("NIDAQ_PID_Control", u"Temperature (C\u00b0)", None))
         self.comboBox_setpoint.setItemText(2, QCoreApplication.translate("NIDAQ_PID_Control", u"Other", None))
@@ -865,7 +858,7 @@ class Ui_NIDAQ_PID_Control(object):
         self.label_equation.setToolTip(QCoreApplication.translate("NIDAQ_PID_Control", u"<html><head/><body><p><span style=\" font-size:14pt;\">The equation should be written in the form: Ax\u00b2+Bx+C</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.label_equation.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Equation:", None))
-        self.label_ao_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AO channel:", None))
+        self.label_ao_channel.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"AO channels:", None))
         self.label_kp.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Kp:", None))
         self.label_vunit.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"V(Unit)", None))
         self.lineEdit_equationvu.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"1*x", None))
@@ -880,6 +873,5 @@ class Ui_NIDAQ_PID_Control(object):
         self.lineEdit_numerator.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"1", None))
         self.label_denominator.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"Denominator:", None))
         self.lineEdit_denominator.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"1*s+0.2", None))
-        self.pushButton_start.setText(QCoreApplication.translate("NIDAQ_PID_Control", u"PID CONTROL", None))
     # retranslateUi
 

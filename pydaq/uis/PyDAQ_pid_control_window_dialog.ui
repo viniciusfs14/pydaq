@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>631</width>
-    <height>804</height>
+    <width>837</width>
+    <height>833</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -315,7 +315,121 @@ QDoubleSpinBox::down-button:hover{
 	background-color: rgb(0, 50, 0);
 }
 
+QScrollBar:vertical {
+     border: 1px solid rgb(140, 140, 140);
+     background: rgb(140, 140, 140);
+     width: 17px;
+     margin: 17px 0 17px 0;
+ }
+QScrollBar::handle:vertical {
+     background: rgb(0, 79, 0);
+     min-height: 20px;
+ }
+QScrollBar::add-line:vertical {
+	image: url(:/imgs/imgs/drop_down_arrow.png);
+     border: 1px solid rgb(140, 140, 140);
+     background: rgb(0, 79, 0);
+     height: 15px;
+     subcontrol-position: bottom;
+     subcontrol-origin: margin;
+ }
+
+QScrollBar::sub-line:vertical {
+	image: url(:/imgs/imgs/drop_up_arrow.png);
+     border: 1px solid rgb(140, 140, 140);
+     background: rgb(0, 79, 0);
+     height: 15px;
+     subcontrol-position: top;
+     subcontrol-origin: margin;
+ }
+
+QScrollBar::add-line:vertical:pressed {
+    border: 1px solid rgb(255, 255, 255);
+	background: rgb(0, 79, 0)
+ }
+
+QScrollBar::sub-line:vertical:pressed {
+	border: 1px solid rgb(255, 255, 255);
+	background: rgb(0, 79, 0)
+ }
+
+QScrollBar::add-line:vertical:hover {
+     background-color: rgb(0, 50, 0);
+ }
+
+QScrollBar::sub-line:vertical:hover {
+    background-color: rgb(0, 50, 0);
+ }
+
+QScrollBar::handle:vertical:pressed {
+    border: 1px solid rgb(255, 255, 255);
+	background: rgb(0, 79, 0)
+ }
+
+QScrollBar::handle:vertical:hover {
+    background-color: rgb(0, 50, 0);
+ }
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+     background: none;
+ }
+
+QScrollArea{
+	border: none;
+}
+
+QScrollBar:horizontal {
+    border: 1px solid rgb(140, 140, 140);
+    background: rgb(140, 140, 140);
+    height: 17px; /* Era width na vertical */
+    margin: 0 17px 0 17px; /* Margens laterais agora */
+}
+
+/* O &quot;pegador&quot; (slider) */
+QScrollBar::handle:horizontal {
+    background: rgb(0, 79, 0);
+    min-width: 20px; /* Era min-height */
+}
+
+/* Botão da direita (Add line) */
+QScrollBar::add-line:horizontal {
+    image: url(:/imgs/imgs/drop_right_arrow.png); /* Ideal trocar para uma seta à direita */
+    border: 1px solid rgb(140, 140, 140);
+    background: rgb(0, 79, 0);
+    width: 15px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+/* Botão da esquerda (Sub line) */
+QScrollBar::sub-line:horizontal {
+    image: url(:/imgs/imgs/drop_left_arrow.png); /* Ideal trocar para uma seta à esquerda */
+    border: 1px solid rgb(140, 140, 140);
+    background: rgb(0, 79, 0);
+    width: 15px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+/* Estados de Interação (Hover e Pressed) */
+QScrollBar::add-line:horizontal:pressed, QScrollBar::sub-line:horizontal:pressed, QScrollBar::handle:horizontal:pressed {
+    border: 1px solid rgb(255, 255, 255);
+    background: rgb(0, 79, 0);
+}
+
+QScrollBar::add-line:horizontal:hover, QScrollBar::sub-line:horizontal:hover, QScrollBar::handle:horizontal:hover {
+    background-color: rgb(0, 50, 0);
+}
+
+/* Área de clique para pular página */
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
 </string>
+  </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -328,8 +442,8 @@ QDoubleSpinBox::down-button:hover{
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>611</width>
-        <height>784</height>
+        <width>802</width>
+        <height>944</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -629,7 +743,7 @@ QDoubleSpinBox::down-button:hover{
                <property name="minimumSize">
                 <size>
                  <width>550</width>
-                 <height>325</height>
+                 <height>500</height>
                 </size>
                </property>
                <layout class="QHBoxLayout" name="image_layout"/>

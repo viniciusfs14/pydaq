@@ -1,10 +1,10 @@
-# Model Acquisition with NIDAQ Boards
+# Model Acquisition with NI-DAQ Boards
 
 **NOTE**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device
 
-## Adquiring the model using Graphical User Interface (GUI)
+## Obtaining the model using Graphical User Interface (GUI)
 
-Using GUI to adquire the model is really straighforward and 
+Using GUI to estimate the model is really straightforward and
 require only two LOC (lines of code):
 
 ```python
@@ -12,8 +12,8 @@ from pydaq.pydaq_global import PydaqGui
 
 PydaqGui()
 ```
-After this command, the following screen will show up. In "Get Model" 
-screen the user is able to define parameters and start the experiment to adquire the model.
+After this command, the following screen will show up. In "Get Model"
+screen the user is able to define parameters and start the experiment to estimate the model.
 
 ![](img/get_model_nidaq.jpg)
 
@@ -54,16 +54,16 @@ from pydaq.get_model import GetModel
 
 # Defining parameters
 device_name = "Dev1"
-ao_channel = "ao0"
-ai_channel = "ai0"
-channel = "ai0"
+# Single-Input Single-Output (SISO) configuration
+ao_channels = ['ao0']
+ai_channels = ['ai0']
 terminal = "Diff"
 ao_min = 0
 ao_max = 5
-session_duration_in_s = 10
+session_duration_in_s = 100
 sample_period_in_s = 0.5
 save_data = True
-plot_data = "realtime"
+plot_data = "realtime" # Can be realtime, end or no
 
 # system identification parameters
 degree = 2
@@ -83,11 +83,10 @@ var_tb = 1
 # Class GetModel
 g = GetModel(
     device=device_name,
-    ai_channel=ai_channel,
-    ao_channel=ao_channel,
+    ai_channels=ai_channels,
+    ao_channels=ao_channels,
     ao_min=ao_min,
     ao_max=ao_max,
-    channel=channel,
     terminal=terminal,
     session_duration= session_duration_in_s,
     ts= sample_period_in_s,

@@ -1,4 +1,4 @@
-# Digital Filters Arduino
+# Digital Filtering with Arduino
 
 ## Filtering using Graphical User Interface (GUI)
 

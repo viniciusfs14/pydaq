@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_get_model_Arduino_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.2
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -25,7 +25,7 @@ class Ui_Arduino_GetModel_W(object):
     def setupUi(self, Arduino_GetModel_W):
         if not Arduino_GetModel_W.objectName():
             Arduino_GetModel_W.setObjectName(u"Arduino_GetModel_W")
-        Arduino_GetModel_W.resize(739, 526)
+        Arduino_GetModel_W.resize(804, 622)
         Arduino_GetModel_W.setStyleSheet(u"QComboBox QAbstractItemView {\n"
 "    background-color: rgb(77, 77, 77);\n"
 "}\n"
@@ -264,103 +264,74 @@ class Ui_Arduino_GetModel_W(object):
         self.widget.setMaximumSize(QSize(16777205, 16777205))
         self.gridLayout = QGridLayout(self.widget)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.label = QLabel(self.widget)
-        self.label.setObjectName(u"label")
-        self.label.setMinimumSize(QSize(0, 30))
-        self.label.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
-
-        self.widget_7 = QWidget(self.widget)
-        self.widget_7.setObjectName(u"widget_7")
-        self.horizontalLayout = QHBoxLayout(self.widget_7)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.yes_save_radio = QRadioButton(self.widget_7)
-        self.save_radio_group = QButtonGroup(Arduino_GetModel_W)
-        self.save_radio_group.setObjectName(u"save_radio_group")
-        self.save_radio_group.addButton(self.yes_save_radio)
-        self.yes_save_radio.setObjectName(u"yes_save_radio")
-        self.yes_save_radio.setChecked(True)
-
-        self.horizontalLayout.addWidget(self.yes_save_radio)
-
-        self.no_save_radio = QRadioButton(self.widget_7)
-        self.save_radio_group.addButton(self.no_save_radio)
-        self.no_save_radio.setObjectName(u"no_save_radio")
-
-        self.horizontalLayout.addWidget(self.no_save_radio)
-
-
-        self.gridLayout.addWidget(self.widget_7, 5, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
-
-        self.widget_6 = QWidget(self.widget)
-        self.widget_6.setObjectName(u"widget_6")
-        self.gridLayout_7 = QGridLayout(self.widget_6)
-        self.gridLayout_7.setObjectName(u"gridLayout_7")
-        self.sesh_dur_in = QDoubleSpinBox(self.widget_6)
-        self.sesh_dur_in.setObjectName(u"sesh_dur_in")
-        self.sesh_dur_in.setMinimumSize(QSize(0, 22))
-        self.sesh_dur_in.setMaximumSize(QSize(16777215, 22))
-        self.sesh_dur_in.setBaseSize(QSize(0, 12))
-        self.sesh_dur_in.setDecimals(6)
-        self.sesh_dur_in.setMaximum(999999999999.000000000000000)
-        self.sesh_dur_in.setSingleStep(0.010000000000000)
-        self.sesh_dur_in.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
-        self.sesh_dur_in.setValue(100.000000000000000)
-
-        self.gridLayout_7.addWidget(self.sesh_dur_in, 0, 0, 1, 1)
-
-
-        self.gridLayout.addWidget(self.widget_6, 3, 2, 1, 1)
-
         self.label_8 = QLabel(self.widget)
         self.label_8.setObjectName(u"label_8")
         self.label_8.setMinimumSize(QSize(0, 30))
         self.label_8.setMaximumSize(QSize(16777215, 30))
         self.label_8.setBaseSize(QSize(0, 0))
 
-        self.gridLayout.addWidget(self.label_8, 6, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_8, 8, 0, 1, 1)
 
-        self.label_2 = QLabel(self.widget)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setMinimumSize(QSize(0, 30))
-        self.label_2.setMaximumSize(QSize(16777215, 30))
+        self.label_3 = QLabel(self.widget)
+        self.label_3.setObjectName(u"label_3")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
+        self.label_3.setSizePolicy(sizePolicy)
+        self.label_3.setMinimumSize(QSize(0, 30))
+        self.label_3.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout.addWidget(self.label_2, 7, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_3, 10, 0, 1, 1)
 
-        self.label_4 = QLabel(self.widget)
-        self.label_4.setObjectName(u"label_4")
-        self.label_4.setMinimumSize(QSize(0, 30))
-        self.label_4.setMaximumSize(QSize(16777215, 30))
+        self.widget_9 = QWidget(self.widget)
+        self.widget_9.setObjectName(u"widget_9")
+        self.horizontalLayout_3 = QHBoxLayout(self.widget_9)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.path_line_edit = QLineEdit(self.widget_9)
+        self.path_line_edit.setObjectName(u"path_line_edit")
+        self.path_line_edit.setMinimumSize(QSize(0, 22))
+        self.path_line_edit.setMaximumSize(QSize(16777215, 22))
 
-        self.gridLayout.addWidget(self.label_4, 1, 0, 1, 1)
+        self.horizontalLayout_3.addWidget(self.path_line_edit)
 
-        self.widget_5 = QWidget(self.widget)
-        self.widget_5.setObjectName(u"widget_5")
-        self.gridLayout_6 = QGridLayout(self.widget_5)
-        self.gridLayout_6.setObjectName(u"gridLayout_6")
-        self.Ts_in = QDoubleSpinBox(self.widget_5)
-        self.Ts_in.setObjectName(u"Ts_in")
-        self.Ts_in.setMinimumSize(QSize(0, 22))
-        self.Ts_in.setMaximumSize(QSize(16777215, 22))
-        self.Ts_in.setDecimals(6)
-        self.Ts_in.setMinimum(0.000000000000000)
-        self.Ts_in.setMaximum(999999999999.000000000000000)
-        self.Ts_in.setSingleStep(0.010000000000000)
-        self.Ts_in.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
-        self.Ts_in.setValue(1.000000000000000)
+        self.path_folder_browse = QPushButton(self.widget_9)
+        self.path_folder_browse.setObjectName(u"path_folder_browse")
+        self.path_folder_browse.setMinimumSize(QSize(0, 30))
+        self.path_folder_browse.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout_6.addWidget(self.Ts_in, 0, 0, 1, 1)
+        self.horizontalLayout_3.addWidget(self.path_folder_browse)
 
 
-        self.gridLayout.addWidget(self.widget_5, 1, 2, 1, 1)
+        self.gridLayout.addWidget(self.widget_9, 8, 3, 1, 1)
 
-        self.label_7 = QLabel(self.widget)
-        self.label_7.setObjectName(u"label_7")
-        self.label_7.setMinimumSize(QSize(0, 30))
-        self.label_7.setMaximumSize(QSize(16777215, 30))
+        self.widget_2 = QWidget(self.widget)
+        self.widget_2.setObjectName(u"widget_2")
+        self.gridLayout_3 = QGridLayout(self.widget_2)
+        self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.device_combo = QComboBox(self.widget_2)
+        self.device_combo.setObjectName(u"device_combo")
+        self.device_combo.setMinimumSize(QSize(0, 22))
+        self.device_combo.setMaximumSize(QSize(16777215, 22))
 
-        self.gridLayout.addWidget(self.label_7, 5, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.device_combo, 0, 0, 1, 1)
+
+        self.reload_devices = QPushButton(self.widget_2)
+        self.reload_devices.setObjectName(u"reload_devices")
+        self.reload_devices.setMinimumSize(QSize(22, 22))
+        self.reload_devices.setMaximumSize(QSize(22, 22))
+
+        self.gridLayout_3.addWidget(self.reload_devices, 0, 1, 1, 1)
+
+
+        self.gridLayout.addWidget(self.widget_2, 0, 3, 1, 1)
+
+        self.label = QLabel(self.widget)
+        self.label.setObjectName(u"label")
+        self.label.setMinimumSize(QSize(0, 30))
+        self.label.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
 
         self.widget_4 = QWidget(self.widget)
         self.widget_4.setObjectName(u"widget_4")
@@ -394,7 +365,158 @@ class Ui_Arduino_GetModel_W(object):
         self.gridLayout_2.addWidget(self.label_warning, 0, 1, 1, 1)
 
 
-        self.gridLayout.addWidget(self.widget_4, 4, 2, 1, 1, Qt.AlignmentFlag.AlignLeft)
+        self.gridLayout.addWidget(self.widget_4, 6, 3, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        self.label_2 = QLabel(self.widget)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setMinimumSize(QSize(0, 30))
+        self.label_2.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_2, 9, 0, 1, 1)
+
+        self.widget_10 = QWidget(self.widget)
+        self.widget_10.setObjectName(u"widget_10")
+        self.gridLayout_8 = QGridLayout(self.widget_10)
+        self.gridLayout_8.setObjectName(u"gridLayout_8")
+        self.system_settings_button = QPushButton(self.widget_10)
+        self.system_settings_button.setObjectName(u"system_settings_button")
+
+        self.gridLayout_8.addWidget(self.system_settings_button, 0, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter)
+
+
+        self.gridLayout.addWidget(self.widget_10, 10, 3, 1, 1)
+
+        self.label_10 = QLabel(self.widget)
+        self.label_10.setObjectName(u"label_10")
+
+        self.gridLayout.addWidget(self.label_10, 1, 0, 1, 1)
+
+        self.line = QFrame(self.widget)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.Shape.VLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.gridLayout.addWidget(self.line, 0, 2, 11, 1)
+
+        self.widget_5 = QWidget(self.widget)
+        self.widget_5.setObjectName(u"widget_5")
+        self.gridLayout_6 = QGridLayout(self.widget_5)
+        self.gridLayout_6.setObjectName(u"gridLayout_6")
+        self.Ts_in = QDoubleSpinBox(self.widget_5)
+        self.Ts_in.setObjectName(u"Ts_in")
+        self.Ts_in.setMinimumSize(QSize(0, 22))
+        self.Ts_in.setMaximumSize(QSize(16777215, 22))
+        self.Ts_in.setDecimals(6)
+        self.Ts_in.setMinimum(0.000000000000000)
+        self.Ts_in.setMaximum(999999999999.000000000000000)
+        self.Ts_in.setSingleStep(0.010000000000000)
+        self.Ts_in.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
+        self.Ts_in.setValue(1.000000000000000)
+
+        self.gridLayout_6.addWidget(self.Ts_in, 0, 0, 1, 1)
+
+
+        self.gridLayout.addWidget(self.widget_5, 3, 3, 1, 1)
+
+        self.label_9 = QLabel(self.widget)
+        self.label_9.setObjectName(u"label_9")
+        self.label_9.setMinimumSize(QSize(0, 30))
+        self.label_9.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_9, 4, 0, 1, 1)
+
+        self.label_11 = QLabel(self.widget)
+        self.label_11.setObjectName(u"label_11")
+
+        self.gridLayout.addWidget(self.label_11, 2, 0, 1, 1)
+
+        self.widget_7 = QWidget(self.widget)
+        self.widget_7.setObjectName(u"widget_7")
+        self.horizontalLayout = QHBoxLayout(self.widget_7)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.yes_save_radio = QRadioButton(self.widget_7)
+        self.save_radio_group = QButtonGroup(Arduino_GetModel_W)
+        self.save_radio_group.setObjectName(u"save_radio_group")
+        self.save_radio_group.addButton(self.yes_save_radio)
+        self.yes_save_radio.setObjectName(u"yes_save_radio")
+        self.yes_save_radio.setChecked(True)
+
+        self.horizontalLayout.addWidget(self.yes_save_radio)
+
+        self.no_save_radio = QRadioButton(self.widget_7)
+        self.save_radio_group.addButton(self.no_save_radio)
+        self.no_save_radio.setObjectName(u"no_save_radio")
+
+        self.horizontalLayout.addWidget(self.no_save_radio)
+
+
+        self.gridLayout.addWidget(self.widget_7, 7, 3, 1, 1, Qt.AlignmentFlag.AlignLeft)
+
+        self.widget_6 = QWidget(self.widget)
+        self.widget_6.setObjectName(u"widget_6")
+        self.gridLayout_7 = QGridLayout(self.widget_6)
+        self.gridLayout_7.setObjectName(u"gridLayout_7")
+        self.sesh_dur_in = QDoubleSpinBox(self.widget_6)
+        self.sesh_dur_in.setObjectName(u"sesh_dur_in")
+        self.sesh_dur_in.setMinimumSize(QSize(0, 22))
+        self.sesh_dur_in.setMaximumSize(QSize(16777215, 22))
+        self.sesh_dur_in.setBaseSize(QSize(0, 12))
+        self.sesh_dur_in.setDecimals(6)
+        self.sesh_dur_in.setMaximum(999999999999.000000000000000)
+        self.sesh_dur_in.setSingleStep(0.010000000000000)
+        self.sesh_dur_in.setStepType(QAbstractSpinBox.StepType.AdaptiveDecimalStepType)
+        self.sesh_dur_in.setValue(100.000000000000000)
+
+        self.gridLayout_7.addWidget(self.sesh_dur_in, 0, 0, 1, 1)
+
+
+        self.gridLayout.addWidget(self.widget_6, 5, 3, 1, 1)
+
+        self.label_4 = QLabel(self.widget)
+        self.label_4.setObjectName(u"label_4")
+        self.label_4.setMinimumSize(QSize(0, 30))
+        self.label_4.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_4, 3, 0, 1, 1)
+
+        self.label_5 = QLabel(self.widget)
+        self.label_5.setObjectName(u"label_5")
+        self.label_5.setMinimumSize(QSize(0, 30))
+        self.label_5.setMaximumSize(QSize(16777215, 30))
+
+        self.gridLayout.addWidget(self.label_5, 5, 0, 1, 1)
+
+        self.widget_19 = QWidget(self.widget)
+        self.widget_19.setObjectName(u"widget_19")
+        self.horizontalLayout_2 = QHBoxLayout(self.widget_19)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.inp_signal_combo = QComboBox(self.widget_19)
+        self.inp_signal_combo.setObjectName(u"inp_signal_combo")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.inp_signal_combo.sizePolicy().hasHeightForWidth())
+        self.inp_signal_combo.setSizePolicy(sizePolicy1)
+        self.inp_signal_combo.setMinimumSize(QSize(0, 22))
+        self.inp_signal_combo.setMaximumSize(QSize(16777215, 22))
+        self.inp_signal_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContentsOnFirstShow)
+
+        self.horizontalLayout_2.addWidget(self.inp_signal_combo)
+
+        self.config_signal_button = QPushButton(self.widget_19)
+        self.config_signal_button.setObjectName(u"config_signal_button")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.config_signal_button.sizePolicy().hasHeightForWidth())
+        self.config_signal_button.setSizePolicy(sizePolicy2)
+        self.config_signal_button.setMinimumSize(QSize(0, 30))
+        self.config_signal_button.setMaximumSize(QSize(16777215, 30))
+
+        self.horizontalLayout_2.addWidget(self.config_signal_button, 0, Qt.AlignmentFlag.AlignRight)
+
+
+        self.gridLayout.addWidget(self.widget_19, 9, 3, 1, 1)
 
         self.widget_8 = QWidget(self.widget)
         self.widget_8.setObjectName(u"widget_8")
@@ -411,133 +533,45 @@ class Ui_Arduino_GetModel_W(object):
         self.gridLayout_5.addWidget(self.save_time_in, 0, 0, 1, 1)
 
 
-        self.gridLayout.addWidget(self.widget_8, 2, 2, 1, 1)
+        self.gridLayout.addWidget(self.widget_8, 4, 3, 1, 1)
 
-        self.widget_9 = QWidget(self.widget)
-        self.widget_9.setObjectName(u"widget_9")
-        self.horizontalLayout_3 = QHBoxLayout(self.widget_9)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.path_line_edit = QLineEdit(self.widget_9)
-        self.path_line_edit.setObjectName(u"path_line_edit")
-        self.path_line_edit.setMinimumSize(QSize(0, 22))
-        self.path_line_edit.setMaximumSize(QSize(16777215, 22))
+        self.label_7 = QLabel(self.widget)
+        self.label_7.setObjectName(u"label_7")
+        self.label_7.setMinimumSize(QSize(0, 30))
+        self.label_7.setMaximumSize(QSize(16777215, 30))
 
-        self.horizontalLayout_3.addWidget(self.path_line_edit)
-
-        self.path_folder_browse = QPushButton(self.widget_9)
-        self.path_folder_browse.setObjectName(u"path_folder_browse")
-        self.path_folder_browse.setMinimumSize(QSize(0, 30))
-        self.path_folder_browse.setMaximumSize(QSize(16777215, 30))
-
-        self.horizontalLayout_3.addWidget(self.path_folder_browse)
-
-
-        self.gridLayout.addWidget(self.widget_9, 6, 2, 1, 1)
-
-        self.widget_2 = QWidget(self.widget)
-        self.widget_2.setObjectName(u"widget_2")
-        self.gridLayout_3 = QGridLayout(self.widget_2)
-        self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.device_combo = QComboBox(self.widget_2)
-        self.device_combo.setObjectName(u"device_combo")
-        self.device_combo.setMinimumSize(QSize(0, 22))
-        self.device_combo.setMaximumSize(QSize(16777215, 22))
-
-        self.gridLayout_3.addWidget(self.device_combo, 0, 0, 1, 1)
-
-        self.reload_devices = QPushButton(self.widget_2)
-        self.reload_devices.setObjectName(u"reload_devices")
-        self.reload_devices.setMinimumSize(QSize(22, 22))
-        self.reload_devices.setMaximumSize(QSize(22, 22))
-
-        self.gridLayout_3.addWidget(self.reload_devices, 0, 1, 1, 1)
-
-
-        self.gridLayout.addWidget(self.widget_2, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.label_7, 7, 0, 1, 1)
 
         self.label_6 = QLabel(self.widget)
         self.label_6.setObjectName(u"label_6")
         self.label_6.setMinimumSize(QSize(0, 30))
         self.label_6.setMaximumSize(QSize(16777215, 30))
 
-        self.gridLayout.addWidget(self.label_6, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_6, 6, 0, 1, 1)
 
-        self.label_9 = QLabel(self.widget)
-        self.label_9.setObjectName(u"label_9")
-        self.label_9.setMinimumSize(QSize(0, 30))
-        self.label_9.setMaximumSize(QSize(16777215, 30))
+        self.widget_11 = QWidget(self.widget)
+        self.widget_11.setObjectName(u"widget_11")
+        self.horizontalLayout_4 = QHBoxLayout(self.widget_11)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.ai_channel_combo = QComboBox(self.widget_11)
+        self.ai_channel_combo.setObjectName(u"ai_channel_combo")
 
-        self.gridLayout.addWidget(self.label_9, 2, 0, 1, 1)
-
-        self.label_5 = QLabel(self.widget)
-        self.label_5.setObjectName(u"label_5")
-        self.label_5.setMinimumSize(QSize(0, 30))
-        self.label_5.setMaximumSize(QSize(16777215, 30))
-
-        self.gridLayout.addWidget(self.label_5, 3, 0, 1, 1)
-
-        self.widget_19 = QWidget(self.widget)
-        self.widget_19.setObjectName(u"widget_19")
-        self.horizontalLayout_2 = QHBoxLayout(self.widget_19)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.inp_signal_combo = QComboBox(self.widget_19)
-        self.inp_signal_combo.setObjectName(u"inp_signal_combo")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.inp_signal_combo.sizePolicy().hasHeightForWidth())
-        self.inp_signal_combo.setSizePolicy(sizePolicy)
-        self.inp_signal_combo.setMinimumSize(QSize(0, 22))
-        self.inp_signal_combo.setMaximumSize(QSize(16777215, 22))
-        self.inp_signal_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContentsOnFirstShow)
-
-        self.horizontalLayout_2.addWidget(self.inp_signal_combo)
-
-        self.config_signal_button = QPushButton(self.widget_19)
-        self.config_signal_button.setObjectName(u"config_signal_button")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.config_signal_button.sizePolicy().hasHeightForWidth())
-        self.config_signal_button.setSizePolicy(sizePolicy1)
-        self.config_signal_button.setMinimumSize(QSize(0, 30))
-        self.config_signal_button.setMaximumSize(QSize(16777215, 30))
-
-        self.horizontalLayout_2.addWidget(self.config_signal_button, 0, Qt.AlignmentFlag.AlignRight)
+        self.horizontalLayout_4.addWidget(self.ai_channel_combo)
 
 
-        self.gridLayout.addWidget(self.widget_19, 7, 2, 1, 1)
+        self.gridLayout.addWidget(self.widget_11, 1, 3, 1, 1)
 
-        self.label_3 = QLabel(self.widget)
-        self.label_3.setObjectName(u"label_3")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
-        self.label_3.setSizePolicy(sizePolicy2)
-        self.label_3.setMinimumSize(QSize(0, 30))
-        self.label_3.setMaximumSize(QSize(16777215, 30))
+        self.widget_12 = QWidget(self.widget)
+        self.widget_12.setObjectName(u"widget_12")
+        self.horizontalLayout_5 = QHBoxLayout(self.widget_12)
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.ao_channel_combo = QComboBox(self.widget_12)
+        self.ao_channel_combo.setObjectName(u"ao_channel_combo")
 
-        self.gridLayout.addWidget(self.label_3, 8, 0, 1, 1)
-
-        self.line = QFrame(self.widget)
-        self.line.setObjectName(u"line")
-        self.line.setFrameShape(QFrame.Shape.VLine)
-        self.line.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.gridLayout.addWidget(self.line, 0, 1, 9, 1)
-
-        self.widget_10 = QWidget(self.widget)
-        self.widget_10.setObjectName(u"widget_10")
-        self.gridLayout_8 = QGridLayout(self.widget_10)
-        self.gridLayout_8.setObjectName(u"gridLayout_8")
-        self.system_settings_button = QPushButton(self.widget_10)
-        self.system_settings_button.setObjectName(u"system_settings_button")
-
-        self.gridLayout_8.addWidget(self.system_settings_button, 0, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter)
+        self.horizontalLayout_5.addWidget(self.ao_channel_combo)
 
 
-        self.gridLayout.addWidget(self.widget_10, 8, 2, 1, 1)
+        self.gridLayout.addWidget(self.widget_12, 2, 3, 1, 1)
 
 
         self.verticalLayout.addWidget(self.widget)
@@ -572,13 +606,14 @@ class Ui_Arduino_GetModel_W(object):
 
     def retranslateUi(self, Arduino_GetModel_W):
         Arduino_GetModel_W.setWindowTitle(QCoreApplication.translate("Arduino_GetModel_W", u"Form", None))
-        self.label.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Device:", None))
-        self.yes_save_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Yes", None))
-        self.no_save_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"No", None))
         self.label_8.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Path:", None))
-        self.label_2.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Input signal:", None))
-        self.label_4.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Sample period (s):", None))
-        self.label_7.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Save data?", None))
+        self.label_3.setText(QCoreApplication.translate("Arduino_GetModel_W", u"System identification:", None))
+        self.path_folder_browse.setText(QCoreApplication.translate("Arduino_GetModel_W", u" BROWSE ", None))
+#if QT_CONFIG(tooltip)
+        self.reload_devices.setToolTip(QCoreApplication.translate("Arduino_GetModel_W", u"<html><head/><body><p>Update COM ports</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.reload_devices.setText("")
+        self.label.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Device:", None))
         self.yes_rt_plot_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Real time", None))
         self.yes_ate_plot_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"At the end", None))
         self.no_plot_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"No", None))
@@ -586,17 +621,18 @@ class Ui_Arduino_GetModel_W(object):
         self.label_warning.setToolTip(QCoreApplication.translate("Arduino_GetModel_W", u"<html><head/><body><p><span style=\" font-size:16pt;\">Selecting Real Time may reduce your acquisition performance if you need to collect data at high frequencies ( sample period &lt; 0.05 s ). We suggest plotting at the end of the acquisition if you don't want to be affected.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.label_warning.setText(QCoreApplication.translate("Arduino_GetModel_W", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
-        self.path_folder_browse.setText(QCoreApplication.translate("Arduino_GetModel_W", u" BROWSE ", None))
-#if QT_CONFIG(tooltip)
-        self.reload_devices.setToolTip(QCoreApplication.translate("Arduino_GetModel_W", u"<html><head/><body><p>Update COM ports</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.reload_devices.setText("")
-        self.label_6.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Plot data?", None))
+        self.label_2.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Input signal:", None))
+        self.system_settings_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" ADVANCED SETTINGS ", None))
+        self.label_10.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AI channels:", None))
         self.label_9.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Start saving data (s):", None))
+        self.label_11.setText(QCoreApplication.translate("Arduino_GetModel_W", u"AO channels:", None))
+        self.yes_save_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Yes", None))
+        self.no_save_radio.setText(QCoreApplication.translate("Arduino_GetModel_W", u"No", None))
+        self.label_4.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Sample period (s):", None))
         self.label_5.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Session duration (s):", None))
         self.config_signal_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" CONFIG SIGNAL ", None))
-        self.label_3.setText(QCoreApplication.translate("Arduino_GetModel_W", u"System identification:", None))
-        self.system_settings_button.setText(QCoreApplication.translate("Arduino_GetModel_W", u" ADVANCED SETTINGS ", None))
+        self.label_7.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Save data?", None))
+        self.label_6.setText(QCoreApplication.translate("Arduino_GetModel_W", u"Plot data?", None))
         self.start_get_model.setText(QCoreApplication.translate("Arduino_GetModel_W", u" GET MODEL ", None))
     # retranslateUi
 

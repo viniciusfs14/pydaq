@@ -5,14 +5,10 @@ from scipy.signal import dlti, dlsim
 import scipy.signal as signal
 import serial
 import serial.tools.list_ports
-from pydaq.utils.base import Base
-import os
-import serial
-import serial.tools.list_ports
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx
 import matplotlib.pyplot as plt
 import warnings
-import nidaqmx
-from nidaqmx.constants import TerminalConfiguration
+
 
 class PIDControl(Base): 
     def __init__( 
@@ -28,6 +24,7 @@ class PIDControl(Base):
         unit='Voltage (V)', 
         period=1 
         ):
+
         super().__init__() #Inicializating the matematical control
         self.Kp = float(Kp)
         self.Ki = float(Ki)
@@ -38,9 +35,6 @@ class PIDControl(Base):
         self.denominator = denominator
         self.calibration_equation_vu = calibration_equation_vu
         self.calibration_equation_uv = calibration_equation_uv
-        self.integral = 0.0
-        self.previous_error = 0.0
-        self.previous_output = 0.0
         self.period = period
         self.device = "Dev1" # To nidaq
         self.ao_channel="ao0"
@@ -48,137 +42,213 @@ class PIDControl(Base):
         self.terminal="Diff"
         self.com_port = 'COM1' # To arduino  # Default COM port
         self.a = 0.2 # To simulate
+        
+        self.channels = [self.ai_channel]       # Default single AI channel
+        self.ao_channels = [self.ao_channel]    # Default single AO channel
+
+        # PID internal states
+        self.integral = 0.0
+        self.previous_error = 0.0
+        self.previous_output = 0.0
+        self.error = 0.0
+        self.output = 0.0
+        self.control_unit = 0.0
 
     def update(self, feedback_value):
-        error = self.setpoint - feedback_value
-        self.integral = self.integral + error * self.period
-        derivative = (error - self.previous_error) / self.period
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        self.previous_error = error
-        self.previous_output = output
-        return output, error
+        self.error = self.setpoint - feedback_value
+        self.integral = self.integral + self.error * self.period
+        derivative = (self.error - self.previous_error) / self.period
+        self.output = self.Kp * self.error + self.Ki * self.integral + self.Kd * derivative
+        self.previous_error = self.error
+        self.previous_output = self.output
+        return self.output, self.error
 
     def pid_control_arduino(self):
-        self.feedback_value = 0
-        self.feedback_calibrated = 0
-        self.control_voltage = 0
-        self.control_unit = 0
-        self.control = 0
+        self.feedback_value = 0.0
+        self.feedback_calibrated = 0.0
+        self.control_voltage = 0.0
+        self.control_unit = 0.0
+        self.control = 0.0
+        self.error = 0.0
 
-        self.com_ports = [i.description for i in serial.tools.list_ports.comports()] # COM ports
+        self.integral = 0.0
+        self.previous_error = 0.0
+        self.previous_output = 0.0
+        self.output = 0.0
+
         self._open_serial() # Oppening ports
         self.arduino_ai_bits = 10 # Arduino ADC resolution (in bits)
         self.ard_ao_max, self.ard_ao_min = 5, 0 # Arduino analog input max and min
         self.ard_vpb = (self.ard_ao_max - self.ard_ao_min) / ((2 ** self.arduino_ai_bits)-1) # Value per bit - Arduino
-        self.ser.reset_input_buffer()
-        time.sleep(0.5)  # Wait for Arduino and Serial to start up
+
+        time.sleep(0.5)  # Wait for the serial connection to initialize
+        if hasattr(self, '_verify_arduino_firmware') and not self._verify_arduino_firmware():
+            self.ser.close()
+            warnings.warn("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+            self.plot_running = False
+            self.control_running = False
+            
+            return # Return early to prevent further execution if firmware is not detected
+        
+        self.ser.reset_input_buffer() # Clear any existing data in the serial buffer
+        try:
+            _ = self.ser.readline() # Read the first line to clear any startup messages from the Arduino
+        except:
+            pass
+        
         self.title = f"PYDAQ - Step Response (Arduino), Port: {self.com_port}" # Start updatable plot
 
 # Updating the Datas to plot
     def update_plot_arduino(self):
         
-        self.ser.reset_input_buffer()
-        
-        #data = self.ser.read(14).decode("UTF-8") # Get the feedback sensor value
+        try:
+            self.ser.reset_input_buffer()
+            self.ser.readline()
+            
+            raw = self.ser.readline()
+            values = list(map(int, raw.decode("utf-8").strip().split(",")))
 
-        try: 
-            temp = int(self.ser.read(14).split()[-2].decode("UTF-8")) * self.ard_vpb
+            if len(values) < 6:
+                raise ValueError("[PYDAQ] Data parsing error: Incomplete universal frame received. Please ensure the correct PyDAQ firmware is running.") 
         except:
-            temp = self.feedback_value # Use the last valid value
-        self.feedback_value = temp
-        
-        #try:
-        #    self.feedback_value =  int(data.split()[-2]) * self.ard_vpb
-        #except (IndexError, ValueError):
-        #    self.feedback_value = self.feedback_value # Use the last valid value
+            values = None
 
-        self.feedback_calibrated = self.calibrationuv(self.feedback_value) #Calibration by U(v)
-        self.control_unit, error = self.update(self.feedback_calibrated) # Get the control value
-        self.control_voltage = self.calibrationvu(self.control_unit) #Calibration by V(u)
+        if values is not None:
+            # Extracts the channel number (e.g., 'A2' -> 2)
+            idx = int(self.channels[0].replace("A", ""))
+            self.feedback_value = values[idx] * self.ard_vpb
+
+        # --- PID Calculations ---
+        self.feedback_calibrated = self.calibrationuv(self.feedback_value)
+        self.control_unit, self.error = self.update(self.feedback_calibrated)
+        self.control_voltage = self.calibrationvu(self.control_unit)
         self.control = self.control_voltage
-        if(self.control <= self.ard_ao_min):
+        
+        # Control Saturation (0 to 5V)
+        if self.control <= self.ard_ao_min:
             self.control = self.ard_ao_min
-        elif (self.control >=self.ard_ao_max):
+        elif self.control >= self.ard_ao_max:
             self.control = self.ard_ao_max
-        self.duty_cycle_control = int((self.control/self.ard_ao_max) *255) # Change to a duty cicle
-        self.ser.write(f"{self.duty_cycle_control}\n".encode("utf-8")) # Send data to arduino 
-        self.error = error
-        #print(f"Control (V)/(U): {self.control:.2f} / {self.control_unit:.2f}; Feedback (V)/(U): {self.feedback_value:.2f} / {self.feedback_calibrated:.2f}; Setpoint(U) {self.setpoint:.2f}; error (U) {self.error}")
-        return self.feedback_calibrated, self.error, self.setpoint, self.control
+
+        # Duty cycle calculation (0 - 255)
+        duty = int((self.control / self.ard_ao_max) * 255)
+
+        # Extracts the pin number (e.g., 'D8' -> '8') and formats it
+        pin_num = self.ao_channels[0].replace("D", "")
+        msg = f"{pin_num}:{duty}\n"
+
+        self.ser.write(msg.encode())
+
+        return (self.feedback_calibrated, self.error, self.setpoint, self.control)
 
     def pid_control_nidaq(self): #Inicializating the updating nidaq values
+
+        # --- NIDAQ SAFETY LOCK ---
+        if not self._check_nidaq_availability():
+            return
+        
         terminal_config = self.terminal # Terminal configuration
         self._nidaq_info() # Gathering nidaq info
         self.task_ai = nidaqmx.Task()
         self.task_ao = nidaqmx.Task()   
+
         self.task_ai.ai_channels.add_ai_voltage_chan(
-            self.device + "/" + self.ai_channel, terminal_config=terminal_config
+            self.device + "/" + self.channels[0], terminal_config=terminal_config
         )
+        
         self.task_ao.ao_channels.add_ao_voltage_chan(
-            self.device + "/" + self.ao_channel,
-            min_val=0.0,  # Max value to usb 6009
-            max_val=5.0   # Max value to usb 6009
+            self.device + "/" + self.ao_channels[0],
+            min_val=0.0,
+            max_val=5.0
         )
 
-        self.feedback_value = 0
-        self.control = 0
-        self.control_unit = 0
-        self.feedback_calibrated = 0
+        self.feedback_value = 0.0
+        self.feedback_calibrated = 0.0
+        self.control_voltage = 0.0
+        self.control = 0.0
+
+        self.control_unit = 0.0
+        self.error = 0.0
+        self.integral = 0.0
+        self.previous_error = 0.0
+        self.previous_output = 0.0
+        self.output = 0.0
 
     def update_plot_nidaq(self):
-        self.feedback_value = self.task_ai.read()
+
+        # --- SAFETY FALLBACK ---
+        # If the task was never created (missing drivers), return dummy data to keep the thread alive safely
+        if not hasattr(self, 'task_ai'):
+            return (0.0, 0.0, self.setpoint, 0.0)
+        
+        values = self.task_ai.read()
+
+        if isinstance(values, list):
+            self.feedback_value = values[0]
+        else:
+            self.feedback_value = values
+
         self.feedback_calibrated = self.calibrationuv(self.feedback_value)
+        self.control_unit, self.error = self.update(self.feedback_calibrated)
         self.control_voltage = self.calibrationvu(self.control_unit)
         self.control = self.control_voltage
 
-        self.control = self.setpoint
         if(self.control <= 0):
             self.control = 0
         elif (self.control >= 5):
             self.control = 5
-        self.task_ao.write(self.control)
-        self.error = self.setpoint - self.feedback_calibrated
 
-        #print(f"Control (V)/(U): {self.control:.2f} / {self.control_unit:.2f}; Feedback (V)/(U): {self.feedback_value:.2f} / {self.feedback_calibrated:.2f}; Setpoint(U) {self.setpoint:.2f}; error (U) {self.error}")
-        return self.feedback_calibrated, self.error, self.setpoint, self.control
+        self.task_ao.write(self.control)
+
+        return (
+            self.feedback_calibrated,
+            self.error,
+            self.setpoint,
+            self.control
+        )
 
     def simulate_system(self):
+
         self.feedback_voltages = []
         self.controls_voltages = []
-        self.error = 0
-        self.feedback_value = 0
-        self.control = 0
-        self.control_voltage = 0
-        self.feedback_calibrated = 0
+        
+        self.feedback_value = 0.0
+        self.control = 0.0
+        self.control_voltage = 0.0
+        self.feedback_calibrated = 0.0
+
+        self.integral = 0.0
+        self.previous_error = 0.0
+        self.previous_output = 0.0
+        self.error = 0.0
+        self.output = 0.0
+        self.control_unit = 0.0
+
         numerator_cont = self.parse_polynomial(self.numerator)
         denominator_cont = self.parse_polynomial(self.denominator)
+
         self.system_cont = signal.TransferFunction(numerator_cont, denominator_cont)
 
     def update_simulated_system(self):
-        ordem = max(len(self.feedback_voltages), len(self.controls_voltages))  # Estimate the ordem
-        while len(self.feedback_voltages) < ordem:
-            self.feedback_voltages.insert(0, 0.0)  # Fill '0' 
-        while len(self.controls_voltages) < ordem:
-            self.controls_voltages.insert(0, 0.0)
-        self.control_unit, error = self.update(self.feedback_calibrated) 
+        
+        self.control_unit, self.error = self.update(self.feedback_calibrated)
         self.control_unit = self.control_unit - self.disturbe
         self.control_voltage = self.calibrationvu(self.control_unit)
         self.control = self.control_voltage
-
         self.feedback_calibrated = self.calibrationuv(self.feedback_value)
+        
         self.controls_voltages.append(self.control_voltage)
-        self.feedback_voltages.append(self.feedback_value) # This one goes to re-update the system and is in 'voltage'
+        self.feedback_voltages.append(self.feedback_value)
+        
+        _, val = self.get_value_simulate_system(self.system_cont,self.period,self.control,self.feedback_value,)
+        self.feedback_value = val
 
-        _, self.feedback_value = self.get_value_simulate_system(self.system_cont, self.period, self.control, self.feedback_value)  # Get the system response value by euler descritization of system
-        self.error = error
-
-        return self.feedback_calibrated, self.error, self.setpoint, self.control
+        return (self.feedback_calibrated, self.error, self.setpoint, self.control)
 
     def calibrationvu(self, output):
         if not self.calibration_equation_vu or not self.calibration_equation_vu.strip():
             return output
         else:
-            # WARNING: Using eval is a security risk if the equation string is not from a trusted source.
             # It can execute arbitrary code. For this application, we assume the user provides a safe
             # mathematical expression.
             try:
@@ -186,14 +256,13 @@ class PIDControl(Base):
                 output_calibrated = eval(self.calibration_equation_vu, {"__builtins__": None}, {"x": output})
                 return float(output_calibrated)
             except Exception as e:
-                print(f"Error evaluating calibration_equation_vu: {e}")
+                print(f"\n[PYDAQ] Error evaluating calibration_equation_vu: {e}")
                 return output # Return original value in case of error
 
     def calibrationuv(self, output):
         if not self.calibration_equation_uv or not self.calibration_equation_uv.strip():
             return output
         else:
-            # WARNING: Using eval is a security risk if the equation string is not from a trusted source.
             # It can execute arbitrary code. For this application, we assume the user provides a safe
             # mathematical expression.
             try:
@@ -201,7 +270,7 @@ class PIDControl(Base):
                 output_calibrated = eval(self.calibration_equation_uv, {"__builtins__": None}, {"x": output})
                 return float(output_calibrated)
             except Exception as e:
-                print(f"Error evaluating calibration_equation_uv: {e}")
+                print(f"\n[PYDAQ] Error evaluating calibration_equation_uv: {e}")
                 return output # Return original value in case of error
 
     def parse_polynomial(self,poly_str):
@@ -225,7 +294,7 @@ class PIDControl(Base):
                         if degree > max_degree:
                             max_degree = degree
                     except (ValueError, IndexError):
-                        raise ValueError(f"Invalid term format: {term}")
+                        raise ValueError(f"[PYDAQ] Invalid term format: {term}")
                 else: # s is present, but s** is not, so degree is 1
                     if 1 > max_degree:
                         max_degree = 1

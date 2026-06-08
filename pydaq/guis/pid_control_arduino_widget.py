@@ -6,9 +6,12 @@ import matplotlib.animation as animation
 from PySide6.QtGui import QIcon
 
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton
+from PySide6.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QPushButton, QMenu
 from PySide6.QtGui import *
 from PySide6.QtCore import *
+
+from pydaq.utils.base import Base, ClickableLineEdit
+from .error_window_gui import Error_window
 
 from ..uis.ui_PyDAQ_pid_control_Arduino_widget import Ui_Arduino_PID_Control
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -20,9 +23,8 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         super(PID_Control_Arduino_Widget, self).__init__()
         self.setupUi(self)
 
-# Calling the functions
+        # Calling the functions
         self.update_com_ports()
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
         self.setWindowTitle("PYDAQ - PID Control Arduino")
         self.reload_devices.clicked.connect(self.update_com_ports)
         self.on_unit_change()
@@ -37,8 +39,20 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
         # Setting the starting values for some widgets
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
-        )
-       
+        )   
+        self.kp = 1.0
+        self.ki = 0.0
+        self.kd = 0.0
+        # Available channels (Arduino logic)
+        self.available_ai_channels = [f"A{i}" for i in range(6)]
+        self.available_ao_channels = [f"D{i}" for i in range(0, 14)]
+
+        # Updating combo boxes for single channel selection
+        self.ai_channel_combo.clear()
+        self.ao_channel_combo.clear()
+        self.ai_channel_combo.addItems(self.available_ai_channels)
+        self.ao_channel_combo.addItems(self.available_ao_channels)
+
     def update_com_ports(self):  # Updating com ports
         self.com_ports = [i.description for i in serial.tools.list_ports.comports()]
         selected = self.comboBox_arduino.currentText()
@@ -82,12 +96,24 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             self.widget_polynomial.hide()
             self.label_system_equation.hide()
             self.label_i_polinomial.hide()
+            self.ai_channel_combo.show()
+            self.ao_channel_combo.show()
+            self.label_ai_channel.show()
+            self.label_ao_channel.show()
+            self.widget_ai_channel.show()
+            self.widget_ao_channel.show()
         elif self.simulate is True: #Simulate = True
             self.widget_arduino.hide()
             self.label_arduino.hide()
             self.widget_polynomial.show()
             self.label_system_equation.show()
             self.label_i_polinomial.show()
+            self.ai_channel_combo.hide()
+            self.ao_channel_combo.hide()
+            self.label_ai_channel.hide()
+            self.label_ao_channel.hide()
+            self.widget_ai_channel.hide()
+            self.widget_ao_channel.hide()
 
 # Enable the pid parameters inputs 
     def on_type_combo_changed(self, index):
@@ -150,36 +176,87 @@ class PID_Control_Arduino_Widget(QWidget, Ui_Arduino_PID_Control):
             widget_to_remove = self.image_layout.itemAt(i).widget()
             self.image_layout.removeWidget(widget_to_remove)
             widget_to_remove.setParent(None)
-        self.image_layout.addWidget(canvas)
+        self.image_layout.addWidget(canvas)        
 
 # Create the pid control window
     def show_graph_window(self):
-        self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
-        self.numerator = self.lineEdit_numerator.text()
-        self.denominator = self.lineEdit_denominator.text()
-        print('Simulated? ', self.simulate)
-        if self.simulate == False:
-            self.com_port = serial.tools.list_ports.comports()[
-                    self.com_ports.index(self.comboBox_arduino.currentText())
-                ].name
-            print ('Com port1 ', self.com_port)
-        else:    
-            self.com_port = ' '
-        self.setpoint = self.doubleSpinBox_setpoint.value()
-        self.getunit()
-        self.equationvu = self.lineEdit_equationvu.text()
-        self.equationuv = self.lineEdit_equationuv.text()
-        self.period = self.doubleSpinBox_period.value()
-        self.path = self.path_line_edit.text()
-        self.index = self.comboBox_type.currentIndex()
-        self.save = True if self.save_radio_group.checkedId() == -2 else False
-        print('Save? ', self.save)
-        self.board = 'arduino'
-        plot_window = PID_Control_Window_Dialog()
-        plot_window.check_board(self.board, self.com_port, None, None, None, self.simulate)
-        plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
-        plot_window.send_values.connect(self.update_values)
-        plot_window.exec()
+        try:
+            self.simulate = True if self.simulate_radio_group.checkedId() == -2 else False
+            # 1. Config Validation: Path
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+            self.path = self.path_line_edit.text()
+
+            if self.simulate:
+                self.channels = [" "]  # --- MOD --- simulation uses single virtual channel
+                self.ao_channels = [" "]
+                self.com_port = None
+            else:
+                # Single Channel Acquisition logic
+                self.channels = [self.ai_channel_combo.currentText()]
+                self.ao_channels = [self.ao_channel_combo.currentText()]
+
+                if not self.channels[0] or not self.ao_channels[0]:
+                     raise ValueError("[PYDAQ] Dimension mismatch: Please ensure device and channel are properly defined.")
+                
+                # 3. Config Validation: COM Port
+                try:
+                    self.com_port = serial.tools.list_ports.comports()[
+                        self.com_ports.index(self.comboBox_arduino.currentText())
+                    ].name
+                except (ValueError, IndexError):
+                    raise ValueError("[PYDAQ] Missing configuration: No valid COM port selected.")
+                
+                # 4. GUI-Level Firmware Verification (Fail Fast)
+                tester = Base()
+                tester.com_port = self.com_port
+                try:
+                    tester._open_serial()
+                    firmware_ok = tester._verify_arduino_firmware()
+                    tester.ser.close()
+                except Exception:
+                    firmware_ok = False
+                    if hasattr(tester, 'ser') and tester.ser.is_open:
+                        tester.ser.close()
+
+                if not firmware_ok:
+                    raise ValueError("[PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code.")
+                
+            # 5. Remaining Parameters
+            self.numerator = self.lineEdit_numerator.text()
+            self.denominator = self.lineEdit_denominator.text()
+            self.setpoint = self.doubleSpinBox_setpoint.value()
+            self.getunit()
+            self.equationvu = self.lineEdit_equationvu.text()
+            self.equationuv = self.lineEdit_equationuv.text()
+            self.period = self.doubleSpinBox_period.value()
+            self.index = self.comboBox_type.currentIndex()
+            self.save = True if self.save_radio_group.checkedId() == -2 else False
+            print('Save? ', self.save)
+            self.board = 'arduino'
+
+            print(f"\n[PYDAQ] Opening PID Control Dialog ...")
+            plot_window = PID_Control_Window_Dialog()
+            plot_window.check_board(self.board, self.com_port, self.ao_channels, self.channels, None, self.simulate)
+            plot_window.set_parameters(self.kp, self.ki, self.kd, self.index, self.numerator, self.denominator, self.setpoint, self.unit, self.equationvu, self.equationuv, self.period, self.path, self.save)
+            plot_window.send_values.connect(self.update_values)
+            plot_window.exec()
+
+        except BaseException as e:
+            # Standardized GUI Error Window
+            import warnings
+            err_msg = str(e)
+            if err_msg: 
+                warnings.warn(err_msg)
+
+            error_w = Error_window()
+
+            # Dynamic GUI Message routing
+            if "Firmware" in err_msg:
+                error_w.ui.confirm.setText("Firmware not detected on this board. Please go to the top menu and click on 'Arduino Firmware' to upload the correct code.")
+            else:
+                error_w.ui.confirm.setText("Missing configuration: Please ensure device, channels, and save path are properly defined.")
+            error_w.exec()
 
     def locate_path(self):  # Calling the Folder Browser Widget
         output_folder_path = QFileDialog.getExistingDirectory( # To locate the data path to armazenate

@@ -26,7 +26,7 @@ These are some basic steps to help us with coding:
 5. Install it in editable mode using
    ```console
    pip install -e /path/to/pydaq
-   ```   
+   ```
 6. Create a new branch.
 7. Make changes following the coding style of the project (or suggesting improvements).
 8. Run the tests.
@@ -40,33 +40,34 @@ These are some basic steps to help us with coding:
 
 # PYDAQ Structure
 
-The PyDAQ project is divided into various parts that handle different functionalities.  
+The PyDAQ project is divided into various parts that handle different functionalities.
 All the core source code is contained within the `pydaq/` directory.
 
 ---
 
-## 📁 Relevant Files
+## Relevant Files
 
 Below is a summary of the key files and their roles within the `pydaq/` folder:
 
-| File | Description |
-|------|--------------|
-| `pydaq/get_data.py` | Implements the data acquisition logic and filters. |
-| `pydaq/send_data.py` | Implements the data sending logic. |
+| File                     | Description |
+|------                    |--------------|
+| `pydaq/get_data.py`      | Implements the data acquisition logic and filters. |
+| `pydaq/send_data.py`     | Implements the data sending logic. |
 | `pydaq/step_response.py` | Implements the step response logic. |
 | `pydaq/pid_control.py` and `pid_control_window_dialog.py` | Implement the PID control logic. |
-| `pydaq/get_model.py` | Implements the system model identification logic. |
+| `pydaq/get_model.py`     | Implements the system model identification logic. |
+| `pydaq/lqr_control.py`   | Implements the lqr control logic. |
 
 All files include **inline comments** and **function docstrings** to help you understand their purpose and how to safely modify or extend their behavior.
 
 ---
 
-## 🧩 Contributing to Interface Design, Fixing Typos, or Adding Widgets
+## Contributing to Interface Design, Fixing Typos, or Adding Widgets
 
-If your contribution involves **interface design**, **layout adjustments**, or **adding new widgets**,  
+If your contribution involves **interface design**, **layout adjustments**, or **adding new widgets**,
 you’ll be working in the `pydaq/uis/` folder.
 
-The user interfaces are built using [Qt Design Studio](https://doc.qt.io/qtdesignstudio/),  
+The user interfaces are built using [Qt Design Studio](https://doc.qt.io/qtdesignstudio/),
 but you can also use the **Qt Designer** that comes with `PySide6` (recommended).
 
 ### Editing `.ui` Files
@@ -75,8 +76,8 @@ but you can also use the **Qt Designer** that comes with `PySide6` (recommended)
    ```bash
    pip install pyside6
    ```
-2. Open the desired `.ui` file (for example, `PYDAQ_Base.ui`) in Qt Designer or Qt Design Studio.  
-3. To export the layout directly to Python, use **"Save As Python File"** inside the Designer.  
+2. Open the desired `.ui` file (for example, `PYDAQ_Base.ui`) in Qt Designer or Qt Design Studio.
+3. To export the layout directly to Python, use **"Save As Python File"** inside the Designer.
    Alternatively, you can convert it manually via:
    ```bash
    pyuic6 NameOfFile.ui -o ui_NameOfFile.py
@@ -91,27 +92,27 @@ but you can also use the **Qt Designer** that comes with `PySide6` (recommended)
 
 ---
 
-## 🧱 Integrating New Widgets
+## Integrating New Widgets
 
-- When **adding a new widget** to `PYDAQ_Base.ui`, use the **Promote Widget** feature inside Qt Designer to properly integrate your custom widget into the PyDAQ application.  
-- If you’re **modifying an existing promoted widget**, simply re-export the `.ui` file as a `.py` module.  
+- When **adding a new widget** to `PYDAQ_Base.ui`, use the **Promote Widget** feature inside Qt Designer to properly integrate your custom widget into the PyDAQ application.
+- If you’re **modifying an existing promoted widget**, simply re-export the `.ui` file as a `.py` module.
 - Keep the naming pattern `ui_<OriginalFileName>.py` to ensure the application can import your updated interface automatically.
 
 ---
 
-## 🔍 Where to Start When Contributing
+## Where to Start When Contributing
 
 If you are unsure where to start contributing:
 
-- **For logic improvements:** check the corresponding `.py` file under `pydaq/`.  
-- **For UI changes:** explore the `.ui` files in `pydaq/uis/`.  
-- **For bug fixes:** look into the related functional area (PID, data acquisition, etc.).  
+- **For logic improvements:** check the corresponding `.py` file under `pydaq/`.
+- **For UI changes:** explore the `.ui` files in `pydaq/uis/`.
+- **For bug fixes:** look into the related functional area (PID, data acquisition, etc.).
 
 Each function and class is **documented** to make it easier to understand the flow before implementing your changes.
 
 ---
 
-## ✅ Summary
+## Summary
 
 | Area | Folder | What You’ll Find |
 |------|---------|------------------|

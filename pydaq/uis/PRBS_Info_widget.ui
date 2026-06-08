@@ -259,6 +259,9 @@ QPushButton#reload_devices:pressed{
 	border: 2px solid rgb(255, 255, 255);
 }</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0">
     <widget class="QWidget" name="widget" native="true">
@@ -339,7 +342,7 @@ QPushButton#reload_devices:pressed{
       <item row="1" column="0">
        <widget class="Line" name="line">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
        </widget>
       </item>

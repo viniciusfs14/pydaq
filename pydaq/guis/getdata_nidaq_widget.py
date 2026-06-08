@@ -1,11 +1,13 @@
 import os
-import nidaqmx
+import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+from PySide6.QtWidgets import QFileDialog, QWidget, QMenu
+from PySide6.QtGui import QAction
+from pydaq.utils.base import Base, NIDAQ_AVAILABLE, TerminalConfiguration, nidaqmx, System, ClickableLineEdit
 
-from PySide6.QtWidgets import QFileDialog, QWidget
 from pydaq.utils.signals import GuiSignals
 from scipy.signal import firwin, lfilter, freqz
 import scipy.signal as signal
@@ -17,7 +19,6 @@ from .error_window_gui import Error_window
 from ..get_data import GetData
 
 from scipy.signal import lfilter, butter, firwin, cheby1, cheby2, ellip
-import asyncio
 
 class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
     def __init__(self, *args):
@@ -28,10 +29,17 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self._nidaq_info()
 
         try:
-            chan = nidaqmx.system.device.Device(
-                self.device_names[0]
-            ).ai_physical_chans.channel_names
-            defchan = chan[0]
+            if NIDAQ_AVAILABLE and len(self.device_names) > 0:
+                chan = nidaqmx.system.device.Device(
+                    self.device_names[0]
+                ).ai_physical_chans.channel_names
+                defchan = chan[0]
+            else:
+                chan = []
+                defchan = ""
+        except BaseException:
+            chan = []
+            defchan = ""
 
         except BaseException:
             chan = ""
@@ -39,18 +47,13 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
 
         # Setting the starting values for some widgets
         self.device_combo.addItems(self.device_type)
-        self.channel_combo.addItems(chan)
+        self.available_channels = chan
+        self._setup_channel_selector()
+
         self.path_line_edit.setText(
             os.path.join(os.path.join(os.path.expanduser("~")), "Desktop")
         )
         self.terminal_config_combo.addItems(["Diff", "RSE", "NRSE"])
-
-        defchan_index = self.channel_combo.findText(defchan)
-
-        if defchan_index == -1:
-            pass
-        else:
-            self.channel_combo.setCurrentIndex(defchan_index)
 
         # Connecting Signals
         self.path_folder_browse.released.connect(self.locate_path)
@@ -67,6 +70,56 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.label_warning.show()
         else:
             self.label_warning.hide()
+    
+    def _setup_channel_selector(self):
+        self.channel_combo.setEditable(True)
+
+        clickable_line = ClickableLineEdit()
+        clickable_line.setReadOnly(True)
+        clickable_line.setPlaceholderText("No channels available")
+        
+        clickable_line.clicked.connect(self._show_channel_menu) 
+        
+        self.channel_combo.setLineEdit(clickable_line)
+
+        self.channel_menu = QMenu(self)
+        self.channel_actions = []
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        self.channel_combo.showPopup = self._show_channel_menu
+
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
+        else:
+            self.channel_combo.lineEdit().clear()
+                
+    def _show_channel_menu(self):
+        self.channel_menu.exec(
+            self.channel_combo.mapToGlobal(
+                self.channel_combo.rect().bottomLeft()
+            )
+        )
+
+    def _update_channel_text(self):
+        selected = self.get_selected_channels()
+
+        # Garante que ao menos 1 canal fique marcado
+        if not any(a.isChecked() for a in self.channel_actions):
+            self.channel_actions[0].setChecked(True)
+            selected = [self.channel_actions[0].text()]
+
+        self.channel_combo.lineEdit().setText(", ".join(selected))
+
+
+    def get_selected_channels(self):
+        selected = [a.text() for a in self.channel_actions if a.isChecked()]
+        return selected if selected else [self.available_channels[0]]
             
     def openFilterWindow(self):
         self.filterWindow = Digital_Filters_NIDAQ_Widget()
@@ -119,15 +172,36 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         else:
             self.path_line_edit.setText(output_folder_path.replace("/", "\\"))
 
-   
     def start_func_get_data(self):  # Start getting data
+        
+        # Safety lock: prevents dialog from opening if NI-DAQmx drivers are not found
+        if not NIDAQ_AVAILABLE:
+            warnings.warn("[PYDAQ] NI-DAQmx drivers not found! Cannot start hardware control.")
+            error_w = Error_window()
+            error_w.ui.confirm.setText("NI-DAQmx drivers not found! Please install NI-MAX.")
+            error_w.exec()
+            return
+
         try:
             # Instantiating the GetData class
             g = GetData()
 
             # Separating variables
-            g.device = self.channel_combo.currentText().split("/")[0]
-            g.channel = self.channel_combo.currentText().split("/")[1]
+            selected = self.get_selected_channels() 
+
+            # Checking if a path was set
+            if self.yes_save_radio.isChecked() and self.path_line_edit.text() == "":
+                raise ValueError("[PYDAQ] Missing configuration: Empty save path.")
+
+            g.path = self.path_line_edit.text()
+
+            if selected:
+                g.device = selected[0].split("/")[0]
+                # Sending the list of channel names (e.g., ["ao0", "ao1"])
+                g.channels = [ch.split("/")[1] for ch in selected]
+            else:
+                raise ValueError("[PYDAQ] Missing configuration: Please ensure device and channel are properly defined.")
+
             g.terminal = g.term_map[self.terminal_config_combo.currentText()]
             g.ts = self.Ts_in.value()
             g.session_duration = self.sesh_dur_in.value()
@@ -138,21 +212,23 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             else: # self.No_radio.isChecked()
                 g.plot_mode = 'no'
             g.save = True if self.save_radio_group.checkedId() == -2 else False
-            g.path = self.path_line_edit.text()
-
-            # Checking if a path was set
-            if self.path_line_edit.text() == "":
-                raise BaseException
 
             # Restarting variables
             g.data = []
             g.time_var = []
             g.error_path = False
 
-        except BaseException:
+        except BaseException as e :
+            # Standardized GUI Error Window
+            if str(e): # Only warn if there is a specific message
+                warnings.warn(str(e))
+
             error_w = Error_window()
+            error_w.ui.confirm.setText("Missing configuration: Please ensure device, channel, and path are properly defined.")
             error_w.exec()
+
             g.error_path = True
+            return
 
         # this conditional checks if will have filter or not
         if not g.error_path:
@@ -233,6 +309,10 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
         self.device_names = []
         self.device_categories = []
         self.device_type = []
+
+        if not NIDAQ_AVAILABLE:
+            return
+        
         self.local_system = nidaqmx.system.System.local()
 
         for device in self.local_system.devices:
@@ -241,26 +321,37 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
             self.device_type.append(device.product_type)
 
     def update_channels(self):
-        # Changing availables channels if device changes
-        new_ai_channels = nidaqmx.system.device.Device(
-            self.device_names[self.device_type.index(self.device_combo.currentText())]
-        ).ai_physical_chans.channel_names
-
-        # Default channel
+        
         try:
-            default_channel = new_ai_channels[0]
+            dev_name = self.device_names[
+                self.device_type.index(self.device_combo.currentText())
+            ]
+            
+            if NIDAQ_AVAILABLE:
+                new_ai_channels = nidaqmx.system.device.Device(dev_name).ai_physical_chans.channel_names
+            else:
+                new_ai_channels = []
         except BaseException:
-            default_channel = "There is no analog input in this board"
+            new_ai_channels = []
 
-        # Rewriting new ai channels into the right place
-        self.channel_combo.clear()
-        self.channel_combo.addItems(new_ai_channels)
-        defchan_index = self.channel_combo.findText(default_channel)
+        self.available_channels = new_ai_channels
 
-        if defchan_index == -1:
-            pass
+        # Recreate the channel menu
+        self.channel_menu.clear()
+        self.channel_actions = []
+
+        for ch in self.available_channels:
+            action = QAction(ch, self)
+            action.setCheckable(True)
+            action.toggled.connect(self._update_channel_text)
+            self.channel_menu.addAction(action)
+            self.channel_actions.append(action)
+
+        # Select the first channel by default if available
+        if self.channel_actions:
+            self.channel_actions[0].setChecked(True)
         else:
-            self.channel_combo.setCurrentIndex(defchan_index)
+            self.channel_combo.lineEdit().clear()
 
     def reload_devices_handler(self):
         """Updates the devices combo box"""
@@ -283,7 +374,18 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
                 y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
                 
-                ts = x[1] - x[0]
+                if x.size < 2:
+                    print("⚠️ Insufficient data to plot frequency response.")
+                    return
+
+                # --- Force 2D array for multi-channel support ---
+                if x.ndim == 1: x = x.reshape(-1, 1)
+                if y.ndim == 1: y = y.reshape(-1, 1)
+                if y2.ndim == 1: y2 = y2.reshape(-1, 1)
+                
+                num_channels = y2.shape[1]
+                
+                ts = x[1, 0] - x[0, 0]
                 fs = 1/ts
                 
                 w, h = signal.freqz(self.fir_coeff, 1.0, worN=None, fs=fs)
@@ -291,41 +393,51 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 phase = np.angle(h)
                 
                 dt = 1/(fs*2.5)  
-        
-                fft_data = np.fft.fft(y2)
-                freqs = np.fft.fftfreq(len(y2), dt)
+                channels_selected = self.get_selected_channels()
 
-                
-                fft_data_filtered = np.fft.fft(y)
+                # Loop to calculate and create a figure for each channel
+                for i in range(num_channels):
+                    # Get channel name from self.channels securely
 
+                    ch_name = channels_selected[i] if i < len(channels_selected) else f"CH {i}"
+                    
+                    orig_col = y2[:, i]
+                    filt_col = y[:, i]
+
+                    fft_data = np.fft.fft(orig_col)
+                    freqs = np.fft.fftfreq(len(orig_col), dt)
+
+                    fft_data_filtered = np.fft.fft(filt_col)
+
+                    positive_freqs = freqs[:len(freqs) // 2]
+                    fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+                    fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                    
+                    fft_data_magnitude_norm = (fft_data_magnitude/np.max(fft_data_magnitude))*100
+                    fft_data_filtered_magnitude_norm = (fft_data_filtered_magnitude/np.max(fft_data_filtered_magnitude))*100
+                    
+                    # Create a new figure for this specific channel
+                    plt.figure(figsize=(7,5))
+                    
+                    plt.subplot(2,1,1)
+                    plt.plot(positive_freqs, fft_data_magnitude_norm, label=f'FFT Original ({ch_name})', color='r')
+                    plt.title(f'Original Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.subplot(2,1,2)
+                    plt.plot(positive_freqs, fft_data_filtered_magnitude_norm, label=f'FFT Filtered ({ch_name})', color='r')
+                    plt.title(f'Filtered Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.tight_layout()
                 
-                positive_freqs = freqs[:len(freqs) // 2]
-                fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
-                fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
-                
-                fft_data_magnitude_norm = (fft_data_magnitude/np.max(fft_data_magnitude))*100
-                fft_data_filtered_magnitude_norm = (fft_data_filtered_magnitude/np.max(fft_data_filtered_magnitude))*100
-                
-                
-                plt.figure(figsize=(7,5))
-                
-                plt.subplot(2,1,1)
-                plt.plot(positive_freqs, fft_data_magnitude_norm, label='FFT Original', color='r')
-                plt.title('Original Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.subplot(2,1,2)
-                plt.plot(positive_freqs, fft_data_filtered_magnitude_norm, label='FFT Filtered', color='r')
-                plt.title('Filtered Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.tight_layout()
+                # Show all created figures at once
                 plt.show()
                 
             else:
@@ -333,46 +445,62 @@ class GetData_NIDAQ_Widget(QWidget, Ui_NIDAQ_GetData_W):
                 y = np.loadtxt(self.path_line_edit.text() + "\\" + "data_filtered.dat")
                 y2 = np.loadtxt(self.path_line_edit.text() + "\\" + "data.dat")
                 
-                ts = x[1] - x[0]
+                # --- Force 2D array for multi-channel support ---
+                if x.ndim == 1: x = x.reshape(-1, 1)
+                if y.ndim == 1: y = y.reshape(-1, 1)
+                if y2.ndim == 1: y2 = y2.reshape(-1, 1)
+                
+                num_channels = y2.shape[1]
+                
+                ts = x[1, 0] - x[0, 0]
                 fs = 1/ts
                 
                 w, h = signal.freqz(self.b, self.a, worN=None, fs=fs)
                 mag = 20*np.log10(np.abs(h))
                 phase = np.angle(h)
                 
-               
                 dt = 1/(fs*2.5)  # 1/(fs*2)
-        
                 
-                fft_data = np.fft.fft(y2)
-                freqs = np.fft.fftfreq(len(y2), dt)
+                # Loop to calculate and create a figure for each channel
+                for i in range(num_channels):
+                    # Get channel name from self.channels securely
+                    ch_name = self.channels[i] if hasattr(self, 'channels') and i < len(self.channels) else f"CH {i}"
+                    
+                    orig_col = y2[:, i]
+                    filt_col = y[:, i]
+                    
+                    fft_data = np.fft.fft(orig_col)
+                    freqs = np.fft.fftfreq(len(orig_col), dt)
 
-                fft_data_filtered = np.fft.fft(y)
+                    fft_data_filtered = np.fft.fft(filt_col)
 
-                positive_freqs = freqs[:len(freqs) // 2]
-                fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
-                fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                    positive_freqs = freqs[:len(freqs) // 2]
+                    fft_data_magnitude = np.abs(fft_data[:len(freqs) // 2])
+                    fft_data_filtered_magnitude = np.abs(fft_data_filtered[:len(freqs) // 2])
+                    
+                    # Create a new figure for this specific channel
+                    plt.figure(figsize=(7,5))
+                    
+                    plt.subplot(2,1,1)
+                    plt.plot(positive_freqs, fft_data_magnitude, label=f'FFT Original ({ch_name})', color='r')
+                    plt.title(f'Original Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.subplot(2,1,2)
+                    # Note: I corrected the label here from 'FFT Original' to 'FFT Filtered' based on your original code's typo
+                    plt.plot(positive_freqs, fft_data_filtered_magnitude, label=f'FFT Filtered ({ch_name})', color='r')
+                    plt.title(f'Filtered Signal in Frequency - {ch_name}')
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Magnitude')
+                    plt.legend()
+                    plt.grid()
+                    
+                    plt.tight_layout()
                 
-                
-                plt.figure(figsize=(7,5))
-                
-                plt.subplot(2,1,1)
-                plt.plot(positive_freqs, fft_data_magnitude, label='FFT Original', color='r')
-                plt.title('Original Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.subplot(2,1,2)
-                plt.plot(positive_freqs, fft_data_filtered_magnitude, label='FFT Original', color='r')
-                plt.title('Filtered Signal in Frequency')
-                plt.xlabel('Frequency (Hz)')
-                plt.ylabel('Magnitude')
-                plt.legend()
-                plt.grid()
-                
-                plt.tight_layout()
+                # Show all created figures at once
                 plt.show()
         else:
             pass

@@ -15,7 +15,7 @@ class Digital_Filters_NIDAQ_Widget(QWidget, Ui_Digitalfilters_NIDAQ_widget):
     def __init__(self, *args):
         super(Digital_Filters_NIDAQ_Widget, self).__init__()
         self.setupUi(self)
-        self.setWindowIcon(QIcon('docs/img/favicon.ico'))
+        self.setWindowIcon(QIcon(':/imgs/imgs/favicon.ico'))
         self.signals = GuiSignals()
         self.iir_widget.hide()
         self.fir_widget.show()

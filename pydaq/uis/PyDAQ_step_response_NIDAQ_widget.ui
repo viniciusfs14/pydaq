@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>786</width>
-    <height>675</height>
+    <height>671</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -538,7 +538,7 @@ QComboBox:disabled {
        <widget class="QWidget" name="widget_10" native="true">
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
-          <widget class="QComboBox" name="ai_channel_combo">
+          <widget class="QComboBox" name="ao_channel_combo">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -601,7 +601,7 @@ QComboBox:disabled {
        <widget class="QWidget" name="widget_3" native="true">
         <layout class="QGridLayout" name="gridLayout_4">
          <item row="0" column="0">
-          <widget class="QComboBox" name="ao_channel_combo">
+          <widget class="QComboBox" name="ai_channel_combo">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -634,7 +634,7 @@ QComboBox:disabled {
          </size>
         </property>
         <property name="text">
-         <string>AO channel:</string>
+         <string>AI channels:</string>
         </property>
        </widget>
       </item>
@@ -831,7 +831,7 @@ QComboBox:disabled {
          </size>
         </property>
         <property name="text">
-         <string>AI channel:</string>
+         <string>AO channels:</string>
         </property>
        </widget>
       </item>
@@ -1001,8 +1001,8 @@ QComboBox:disabled {
  </resources>
  <connections/>
  <buttongroups>
+  <buttongroup name="plot_radio_group"/>
   <buttongroup name="save_radio_group"/>
   <buttongroup name="pid_radio_group"/>
-  <buttongroup name="plot_radio_group"/>
  </buttongroups>
 </ui>

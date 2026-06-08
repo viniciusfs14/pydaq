@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'PyDAQ_get_data_NIDAQ_widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.2
+## Created by: Qt User Interface Compiler version 6.11.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -525,7 +525,7 @@ class Ui_NIDAQ_GetData_W(object):
         self.label_warning.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"<html><head/><body><p><img src=\":/imgs/imgs/Warning_logo.png\"/></p></body></html>", None))
         self.yes_ate_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"At the end", None))
         self.no_plot_radio.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"No", None))
-        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Channel:", None))
+        self.label_2.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"AI channels:", None))
         self.label_3.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Terminal Config.", None))
         self.label_4.setText(QCoreApplication.translate("NIDAQ_GetData_W", u"Sample period (s):", None))
     # retranslateUi

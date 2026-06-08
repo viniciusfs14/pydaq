@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>588</width>
+    <width>575</width>
     <height>1031</height>
    </rect>
   </property>
@@ -318,7 +318,26 @@ QDoubleSpinBox::down-button:hover{
 </string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="0">
+   <item row="4" column="0" alignment="Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter">
+    <widget class="QPushButton" name="pushButton_start">
+     <property name="minimumSize">
+      <size>
+       <width>120</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>150</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>PID CONTROL</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
     <widget class="QFrame" name="frame_equation">
      <property name="minimumSize">
       <size>
@@ -347,7 +366,7 @@ QDoubleSpinBox::down-button:hover{
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="1" column="0">
     <widget class="QWidget" name="widget_top" native="true">
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="6" column="0">
@@ -822,7 +841,7 @@ QDoubleSpinBox::down-button:hover{
       <item row="4" column="0">
        <widget class="QLabel" name="label_ai_channel">
         <property name="text">
-         <string>AI channel:</string>
+         <string>AI channels:</string>
         </property>
        </widget>
       </item>
@@ -945,7 +964,7 @@ QDoubleSpinBox::down-button:hover{
       <item row="5" column="0">
        <widget class="QLabel" name="label_ao_channel">
         <property name="text">
-         <string>AO channel:</string>
+         <string>AO channels:</string>
         </property>
        </widget>
       </item>
@@ -1059,20 +1078,7 @@ QDoubleSpinBox::down-button:hover{
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="Line" name="line_2">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
+   <item row="3" column="0">
     <widget class="Line" name="line_3">
      <property name="minimumSize">
       <size>
@@ -1085,25 +1091,6 @@ QDoubleSpinBox::down-button:hover{
      </property>
     </widget>
    </item>
-   <item row="5" column="0" alignment="Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter">
-    <widget class="QPushButton" name="pushButton_start">
-     <property name="minimumSize">
-      <size>
-       <width>120</width>
-       <height>30</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>150</width>
-       <height>30</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>PID CONTROL</string>
-     </property>
-    </widget>
-   </item>
   </layout>
  </widget>
  <resources>
@@ -1111,7 +1098,7 @@ QDoubleSpinBox::down-button:hover{
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="save_radio_group"/>
   <buttongroup name="simulate_radio_group"/>
+  <buttongroup name="save_radio_group"/>
  </buttongroups>
 </ui>
