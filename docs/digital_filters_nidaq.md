@@ -1,4 +1,4 @@
-# Digital Filtering with NIDAQ
+# Digital Filtering with NI-DAQ
 
 **NOTE**: Before working with PYDAQ, the device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
 

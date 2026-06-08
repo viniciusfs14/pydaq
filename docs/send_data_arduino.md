@@ -1,12 +1,11 @@
 # Sending Data with Arduino Boards
 
-**NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data
-Acquisition) device
+**NOTE 1**: before using PYDAQ with an Arduino board, make sure the board is recognized by your operating system as a USB/serial device. If the COM port does not appear in PYDAQ, install the required USB driver for your board, such as the Arduino IDE drivers or the CH340/CH341 driver for compatible boards, and reconnect the device.
 
-**NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
+**NOTE 2**: to acquire/send data with an Arduino board, the unified firmware provided here (located
 at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
 
-**NOTE 3**: Since digital output ports are used, the output will be
+**NOTE 3**: since digital output ports are used, the output will be
 0V if data < 2.5 and 5V otherwise.
 
 ## Sending Data using Graphical User Interface (GUI)

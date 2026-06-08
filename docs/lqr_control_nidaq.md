@@ -1,4 +1,4 @@
-# LQR Control with NIDAQ boards
+# LQR Control with NI-DAQ boards
 
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
 
@@ -31,15 +31,15 @@ from pydaq.pydaq_global import PydaqGui
 PydaqGui()
 ```
 
-After this command, the graphical user interface screen will show up, where the user should select the NIDAQ option and go to the LQR Control tab, to be able to define parameters and start the control loop.
+After this command, the graphical user interface screen will show up, where the user should select the NI-DAQ option and go to the LQR Control tab, to be able to define parameters and start the control loop.
 
 ![](img/lqr_control_nidaq_gui.png)
 
-The user is now able to select the desired NIDAQ device, analog input and analog output channels, as well as the analog input terminal configuration (e.g., Differential, RSE, NRSE). The user can also input the system matrices and tuning weights (Q and R), and adjust the sample period. Also, the user will define if the data will or not be plotted and saved.
+The user is now able to select the desired NI-DAQ device, analog input and analog output channels, as well as the analog input terminal configuration (e.g., Differential, RSE, NRSE). The user can also input the system matrices and tuning weights (Q and R), and adjust the sample period. Also, the user will define if the data will or not be plotted and saved.
 
 ## LQR Control using command line
 
-It will be presented how to use LQRControl (and lqr_control_nidaq) to perform an optimal closed-loop control experiment using a National Instruments board.
+It will be presented how to use LQRControl (and lqr_control_nidaq) to perform an optimal closed-loop control experiment using an NI-DAQ board.
 
 Firstly, import the library and define the parameters:
 

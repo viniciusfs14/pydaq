@@ -1,8 +1,8 @@
 # PID Control with Arduino
 
-**NOTE 1**: Before working with PYDAQ, the device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
+**NOTE 1**: before using PYDAQ with an Arduino board, make sure the board is recognized by your operating system as a USB/serial device. If the COM port does not appear in PYDAQ, install the required USB driver for your board, such as the Arduino IDE drivers or the CH340/CH341 driver for compatible boards, and reconnect the device.
 
-**NOTE 2** To acquire/send data with an Arduino board, the unified firmware provided here (located
+**NOTE 2**: to acquire/send data with an Arduino board, the unified firmware provided here (located
 at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. This firmware handles communication via serial CSV. To maintain theoretical rigor in classical control theory, the PID Control module operates strictly as a Single-Input Single-Output (SISO) system. Therefore, you must select exactly one analog input channel (e.g., A0) and one digital PWM output channel (e.g., D0).
 
 **NOTE 3**: PYDAQ is programmed to use 10 bits as ADC resolution and 0V to 5V as the input range.

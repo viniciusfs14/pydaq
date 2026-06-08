@@ -1,4 +1,4 @@
-# PID Control with NIDAQ
+# PID Control with NI-DAQ
 
 **NOTE**: Before working with PYDAQ, the device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
 
@@ -20,7 +20,7 @@ After running the command, the GUI will appear. Navigate to the "PID Control" sc
 
 - **Simulate**: If this option is selected, you can enter a mathematical equation to simulate a system and apply PID control to it.
 
-- **Device**: Select the NIDAQ board connected to your system.
+- **Device**: Select the NI-DAQ board connected to your system.
 
 - **AI channel and AO channel**: Specify the analog input (AI) and output (AO) channels used by your device.
 
@@ -56,7 +56,7 @@ A disturbance input can also be simulated during real-time control. It acts as a
 
 ![](img/pidcontrol_nidaq.gif)
 
-# PID Control with NIDAQ (GUI via code)
+# PID Control with NI-DAQ (GUI via code)
 
 It is possible to access the PID Control GUI directly with a few lines of code. This allows you to hardcode your hardware and controller settings for faster testing and deployment, bypassing the initial setup screens.
 

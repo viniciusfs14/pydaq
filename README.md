@@ -15,7 +15,7 @@
 
 # PYDAQ - Data Acquisition and Experimental Analysis with Python ([www.pydaq.org](https://www.pydaq.org))
 
-PYDAQ is a Python package for data acquisition, signal generation, system identification, digital filtering, and real-time control using Arduino and National Instruments DAQ devices.
+PYDAQ is a Python package for data acquisition, signal generation, system identification, digital filtering, and real-time control using Arduino and NI-DAQ devices.
 
 It provides a unified graphical interface, command-line tools, and Jupyter notebook examples for laboratory experiments, rapid prototyping, teaching, and research workflows.
 
@@ -27,7 +27,7 @@ PYDAQ supports the following experimental workflows:
 
 | Capability | Description |
 | :--- | :--- |
-| Data acquisition | Acquire, plot, and save experimental data from Arduino or National Instruments DAQ boards |
+| Data acquisition | Acquire, plot, and save experimental data from Arduino or NI-DAQ boards |
 | Signal generation | Send user-defined input signals, including nonlinear excitation signals |
 | Step-response experiments | Run automatic step-response tests and save the resulting data |
 | PRBS-based experiments | Generate excitation signals for system identification workflows |
@@ -35,7 +35,7 @@ PYDAQ supports the following experimental workflows:
 | Digital filtering | Apply FIR and IIR filters directly to acquired data in real time |
 | PID control | Run real-time or simulated P, PI, PD, and PID control with Ziegler-Nichols tuning |
 | LQR control | Simulate or implement Linear Quadratic Regulator control for state-space systems |
-| Multi-channel workflows | Work with multiple Arduino or National Instruments DAQ channels |
+| Multi-channel workflows | Work with multiple Arduino or NI-DAQ channels |
 | Benchmarking | Estimate the maximum reliable sampling frequency supported by the local system |
 
 Further details about benchmarking are available in the [benchmarking documentation](https://pydaq.org/benchmarking/).
@@ -55,7 +55,7 @@ Main dependencies include `numpy`, `scipy`, `matplotlib`, `pyserial`, `nidaqmx`,
 **Hardware notes:**
 
 - Arduino workflows do not require NI-DAQmx drivers.
-- National Instruments DAQ workflows require the [NI-DAQmx drivers](https://www.ni.com/en/support/downloads/drivers/download.ni-daq-mx.html#494676).
+- NI-DAQ workflows require the [NI-DAQmx drivers](https://www.ni.com/en/support/downloads/drivers/download.ni-daq-mx.html#494676).
 
 PYDAQ is tested up to Python 3.14. It may run on newer versions, but without guarantees.
 

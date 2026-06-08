@@ -2,14 +2,14 @@
 
 To use Arduino boards with PYDAQ, a specific firmware must be flashed onto the microcontroller. This firmware acts as a bridge, translating high-level Python commands into hardware actions, such as reading analog sensors or writing PWM/digital signals.
 
-Starting from **v0.0.7**, PYDAQ features a highly optimized, **Unified Firmware**. You only need to upload this code to your Arduino once, and it will work seamlessly across all PYDAQ tools (Get Data, Send Data, Step Response, PID Control, and LQR Control).
+You only need to upload this code to your Arduino once, and it will work seamlessly across all PYDAQ tools (Get Data, Send Data, Step Response, PID Control, and LQR Control).
 
 ## Key Features
 
 * **One Firmware for Everything:** A single `.ino` file handles all data acquisition and control routines simultaneously.
 * **Multi-Channel Support:** It supports reading from up to 6 Analog Inputs (A0 to A5) and writing to up to 14 Digital/PWM Outputs (D0 to D13) at the same time.
 * **Dynamic Configuration:** You **do not** need to edit the C++ code to change pins. Channel selection is handled dynamically within your Python script or the PYDAQ GUI.
-* **Universal CSV Protocol:** Uses a lightweight, high-speed serial communication protocol based on comma-separated values to ensure fast data rates and low latency.
+* **Universal Protocol:** Uses a lightweight, high-speed serial communication protocol based on comma-separated values to ensure fast data rates and low latency.
 * **Default Specifications:** Operates with a 10-bit ADC resolution (0 to 1023) mapping to a 0V to 5V input/output range.
 
 ## How to Upload the Firmware

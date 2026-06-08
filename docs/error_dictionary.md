@@ -41,7 +41,7 @@ Quick reference for common PYDAQ errors and how to fix them.
 | Error Reference | GUI Message | Terminal Message | Module | How to Fix |
 |----------------|------------|-----------------|--------|------------|
 | Firmware Not Detected | Firmware not detected on this board. Please go to the top menu and click on 'Arduino - Firmware' to upload the correct code. | [PYDAQ] PyDAQ Firmware not detected on this board! Please go to the top menu... | ALL Arduino | Upload the correct firmware via the Arduino menu. |
-| NI-DAQmx Driver Missing | NI-DAQmx drivers not found. | [PYDAQ] NI-DAQmx drivers not found. Cannot start hardware acquisition. | ALL NIDAQ | Install NI-DAQmx drivers (NI-MAX). |
+| NI-DAQmx Driver Missing | NI-DAQmx drivers not found. | [PYDAQ] NI-DAQmx drivers not found. Cannot start hardware acquisition. | ALL NI-DAQ | Install NI-DAQmx drivers (NI-MAX). |
 
 ---
 

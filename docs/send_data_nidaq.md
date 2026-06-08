@@ -1,4 +1,4 @@
-# Sending Data with NIDAQ Boards
+# Sending Data with NI-DAQ Boards
 
 **NOTE**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition)
 device
@@ -16,7 +16,7 @@ PydaqGui()
 ```
 
 After this command, the graphical user interface screen will show up, where the
-user should select the NIDAQ option and go to the Send Data tab,
+user should select the NI-DAQ option and go to the Send Data tab,
 to be able to define parameters and start to send data.
 
 ![](img/send_data_nidaq_gui.png)
@@ -28,7 +28,7 @@ configuration is done, the user only needs to click on **SEND DATA** button to s
 
 ## Sending data using command line
 
-It will be presented how to use SendData (and send_data_nidaq) to send a signal using a National Instruments board.
+It will be presented how to use SendData (and send_data_nidaq) to send a signal using an NI-DAQ board.
 
 Firstly, import library and define parameters:
 

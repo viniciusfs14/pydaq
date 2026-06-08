@@ -1,4 +1,4 @@
-# Step response with NIDAQ boards
+# Step response with NI-DAQ boards
 
 **NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data
 Acquisition) device
@@ -16,12 +16,12 @@ PydaqGui()
 ```
 
 After this command, the graphical user interface screen will show up, where the
-user should select the NIDAQ option and go to the Step Response tab,
+user should select the NI-DAQ option and go to the Step Response tab,
 to be able to define parameters and start to acquire data.
 
 ![](img/step_response_nidaq_gui.png)
 
-The user is now able to select desired NIDAQ device, analog input and
+The user is now able to select desired NI-DAQ device, analog input and
 analog output channel, as well as analog input terminal configuration.
 Step range and sample period can be adjusted along with session duration.
 Step will be applied in the defined time. Also, the user will define if
@@ -34,7 +34,7 @@ Additionally, the user can choose to **Calculate PID** tuning parameters (P, PI,
 ## Step Response using command line
 
 It will be presented how to use StepResponse (and step_response_nidaq) to
-perform a step response experiment using an NIDAQ board.
+perform a step response experiment using an NI-DAQ board.
 
 Firstly, import library and define parameters:
 

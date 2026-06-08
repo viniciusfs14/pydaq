@@ -1,4 +1,4 @@
-# Data Acquisition with NIDAQ Boards
+# Data Acquisition with NI-DAQ Boards
 
 **NOTE**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition)
 device
@@ -16,7 +16,7 @@ PydaqGui()
 ```
 
 After this command, the graphical user interface screen will show up, where the
-user should select the NIDAQ option and go to the Get Data tab,
+user should select the NI-DAQ option and go to the Get Data tab,
 to define parameters and start acquiring data.
 
 ![](img/get_data_nidaq.png)
@@ -28,7 +28,7 @@ save data.
 
 ## Data Acquisition using command line
 
-It will be presented how to use GetData (and get_data_nidaq) to acquire signal using a National Instruments board.
+It will be presented how to use GetData (and get_data_nidaq) to acquire signal using an NI-DAQ board.
 
 Firstly, import the library and define the parameters:
 

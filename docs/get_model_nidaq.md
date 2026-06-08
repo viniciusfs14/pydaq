@@ -1,4 +1,4 @@
-# Model Acquisition with NIDAQ Boards
+# Model Acquisition with NI-DAQ Boards
 
 **NOTE**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device
 

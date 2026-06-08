@@ -1,14 +1,14 @@
 # LQR Control with Arduino boards
 
-**NOTE 1**: before working with PYDAQ, device driver should be installed and working correctly as a DAQ (Data Acquisition) device.
+**NOTE 1**: before using PYDAQ with an Arduino board, make sure the board is recognized by your operating system as a USB/serial device. If the COM port does not appear in PYDAQ, install the required USB driver for your board, such as the Arduino IDE drivers or the CH340/CH341 driver for compatible boards, and reconnect the device.
 
-**NOTE 2**: To acquire/send data with an Arduino board, the unified firmware provided here (located at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first. Starting from v0.0.7, this single firmware supports multi-channel acquisition (A0 to A5) and sending (D0 to D13) simultaneously via serial CSV communication. There is no need to modify the .ino code to change ports; channel selection is now handled entirely within your Python script or GUI.
+**NOTE 2**: to acquire/send data with an Arduino board, the unified firmware provided here (located at [arduino_code](https://github.com/samirmartins/pydaq/tree/main/pydaq/arduino_code)) must be uploaded to the Arduino first.
 
 **NOTE 3**: LQR (Linear Quadratic Regulator) control requires defining the state-space matrices (A, B, C, D) of your system, as well as the weight matrices (Q and R) to calculate the optimal gain matrix K. Since digital output ports are used, the control effort output will be bounded between 0V and 5V.
 
-**NOTE 4**: The matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form (A_d, B_d, C_d, D_d). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
+**NOTE 4**: the matrices provided to the PYDAQ interface or script MUST be in their **discrete-time** form (A_d, B_d, C_d, D_d). The library assumes that the user has already discretized the continuous system model using a method of their choice (e.g., Euler or Zero-Order Hold) according to the defined sample period (`ts`).
 
-**NOTE 5**: The PYDAQ LQR interface allows users to define state references (x_{ref}) and equilibrium inputs (u_{eq}) for setpoint tracking through a dedicated widget. Within the control loop, these parameters are actively processed to calculate the state error and compute the optimal control law at each sampling period. 
+**NOTE 5**: the PYDAQ LQR interface allows users to define state references (x_{ref}) and equilibrium inputs (u_{eq}) for setpoint tracking through a dedicated widget. Within the control loop, these parameters are actively processed to calculate the state error and compute the optimal control law at each sampling period.
 
 Specifically, the regulator implements the following mathematical formulations:
 
@@ -50,11 +50,11 @@ Firstly, import library and define parameters:
 from pydaq.lqr_control import LQRControl
 
 # Defining LQR Matrices (Example for a 2-state, 1-input system)
-A_matrix = [[1.0, 0.1], 
+A_matrix = [[1.0, 0.1],
             [0.0, 1.0]]
-B_matrix = [[0.005], 
+B_matrix = [[0.005],
             [0.1]]
-Q_matrix = [[10.0, 0.0], 
+Q_matrix = [[10.0, 0.0],
             [0.0, 1.0]]
 R_matrix = [[0.1]]
 ```
